@@ -1,22 +1,23 @@
-Credits
+= Credits
 
-Shamelessly ripped off from here.
+Shamelessly ripped off from [here](https://www.promptworks.com/blog/handling-environment-secrets-in-docker-on-the-aws-container-service).
 
-Goal
+= Goal
 
 Create an encryption pipeline that satisfies the "90%" rule which is usable and easy for end users to consume and utilize.
 
-Value statement
+= Value statement
 
 Our customers will have secrets that they want to keep secret and away from hackers. This is also part of our drive to think about security "early and often."
 
-Tools used
+= Tools used
 
-Docker + docker-compose
-Rancher + rancher-compose
-AWS::KMS
-AWS::S3
-Workflow
+* Docker + docker-compose
+* Rancher + rancher-compose
+* AWS::KMS
+* AWS::S3
+
+= Workflow
 
 The idea here is to allow our users, or anyone for that matter, to store secrets in an encrypted way, then allow rancher to pass those secrets securely into a docker container. There are many ways of doing this and one good way that I've found that seems to work.
 
@@ -32,20 +33,22 @@ The solution that I have here uses KMS and S3 to store an encrypted environment 
 
 Let's look at a sample workflow that uses an RDS setup. In this example the operators ( ops ) will be creating a simple RDS instance, then handing the credentials over to the client team ( we'll use Snacks for this example ). The Snacks team would then use this workflow to manage their secrets.
 
-Ops create RDS. This produces three key artifacts: u/p/h ( username/password/hostname ).
-Ops encrypts this file into a repo for storage ( ops KMS key + gpg ).
-Ops sends the unencrypted file to s3 using SSE and the *client* KMS key.
-Ops negotiates with security team for appropriate IAM roles and rights.
-Ops provides Snacks team lead with scripts that can pull down the u/p/h payload using KMS.
+* Ops create RDS. This produces three key artifacts: u/p/h ( username/password/hostname ).
+* Ops encrypts this file into a repo for storage ( ops KMS key + gpg ).
+* Ops sends the unencrypted file to s3 using SSE and the *client* KMS key.
+* Ops negotiates with security team for appropriate IAM roles and rights.
+* Ops provides Snacks team lead with scripts that can pull down the u/p/h payload using KMS.
+
 Functionally this works by using the s3 SSE extensions to encrypt the file on the s3 side. This means that we could pull down the u/p/h file without using SSE and all we'd see is garbage. We have to use the SSE+KMS system in order to see the plaintext data.
 
 Using a client key for Snacks ( prod/dev/qa/etc... ) would further isolate the security profile by providing a KMS key for each environment that could be used for multiple payloads.
 
 We could go the extra step of creating IAM security profiles for the s3 access as well.
 
-s3 object access to the encrypted data
-KMS access for the services to decrypt the data.
-Example
+* s3 object access to the encrypted data
+* KMS access for the services to decrypt the data.
+
+= Example
 
 Snacks is a new service running on the PaaS. It's a complicate service that has many moving parts and requires encrypted secrets. Specifically we'll be creating an RDS instance for their use and setting up their u/p/h payload.
 
@@ -53,15 +56,21 @@ Snacks is a ruby application using sinatra. The team will be delivering docker i
 
 This system works by tapping into a neat little feature of dockers Entrypoint functionality. We've communicated to the Snacks-TL ( Tech Lead ) our process for handling secret data. They've made the changes to their docker CMD command as such:
 
+```
 CMD ["./in_s3_env", "mounts/api.rb"]
-The in_s3_env script is a wrapper for executing s3_kms_env. We wrap the s3_kms_env script because we don't want the output sent to STD[ERR,OUT], instead we want it piped into the CMD call, which will effectively pass whatever we output into the next command, which, in this case is mounts/api.rb.
+```
+
+The *in_s3_env* script is a wrapper for executing *s3_kms_env*. We wrap the s3_kms_env script because we don't want the output sent to STD[ERR,OUT], instead we want it piped into the CMD call, which will effectively pass whatever we output into the next command, which, in this case is mounts/api.rb.
 
 mounts/api.rb is the only script that needs access to the u/p/h payload.
 
 We assume that we've sent the env file to our client bucket: *s3://tw-snacks/dev/env*. If we did a quick and dirty s3 client that pulled down that file and tried to echo the content without using SSE+KMS we'd see this:
 
+```
 $ ./s3_kms_env
  "ys\xA6\xBF\u0003\xB0t\xB8\xEC$\xD0-\xFF\x86\xAA\xBC\u000Ek\x9F\x92\u0000\xA4*\xB6\xB4\u0018\x80t\xCA\u0019N\xB0\x8F\v\xD0=\b-O\u001C\xD5F\xA5f\x95(q\xA0"
+```
+
 However, if we did use SSE+KMS, we'd see something like this:
 
 $ ./s3_kms_env
