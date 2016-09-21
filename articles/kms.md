@@ -1,23 +1,23 @@
-= Credits
+# Credits
 
 Shamelessly ripped off from [here](https://www.promptworks.com/blog/handling-environment-secrets-in-docker-on-the-aws-container-service).
 
-= Goal
+# Goal
 
 Create an encryption pipeline that satisfies the "90%" rule which is usable and easy for end users to consume and utilize.
 
-= Value statement
+# Value statement
 
 Our customers will have secrets that they want to keep secret and away from hackers. This is also part of our drive to think about security "early and often."
 
-= Tools used
+# Tools used
 
 * Docker + docker-compose
 * Rancher + rancher-compose
 * AWS::KMS
 * AWS::S3
 
-= Workflow
+# Workflow
 
 The idea here is to allow our users, or anyone for that matter, to store secrets in an encrypted way, then allow rancher to pass those secrets securely into a docker container. There are many ways of doing this and one good way that I've found that seems to work.
 
@@ -48,7 +48,7 @@ We could go the extra step of creating IAM security profiles for the s3 access a
 * s3 object access to the encrypted data
 * KMS access for the services to decrypt the data.
 
-= Example
+# Example
 
 Snacks is a new service running on the PaaS. It's a complicate service that has many moving parts and requires encrypted secrets. Specifically we'll be creating an RDS instance for their use and setting up their u/p/h payload.
 
@@ -60,7 +60,7 @@ This system works by tapping into a neat little feature of dockers Entrypoint fu
 CMD ["./in_s3_env", "mounts/api.rb"]
 ```
 
-The *in_s3_env* script is a wrapper for executing *s3_kms_env*. We wrap the s3_kms_env script because we don't want the output sent to STD[ERR,OUT], instead we want it piped into the CMD call, which will effectively pass whatever we output into the next command, which, in this case is mounts/api.rb.
+The *in_s3_env* sript is a wrapper for executing *s3_kms_env*. We wrap the s3_kms_env script because we don't want the output sent to STD[ERR,OUT], instead we want it piped into the CMD call, which will effectively pass whatever we output into the next command, which, in this case is mounts/api.rb.
 
 mounts/api.rb is the only script that needs access to the u/p/h payload.
 
@@ -73,27 +73,35 @@ $ ./s3_kms_env
 
 However, if we did use SSE+KMS, we'd see something like this:
 
+```
 $ ./s3_kms_env
  DB_USERNAME='root'
  DB_PASSWORD='orange1'
  DB_HOSTNAME='blah.amazon.com'
+```
+
 When rancher spins up the service container it will first run in_s3_env which will wrap s3_kms_env the output creates:
 
+```
 export DB_USERNAME='root' export DB_PASSWORD='orange1' export DB_HOSTNAME='blah.amazon.com' mounts/api.rb
+```
+
 As far as I can tell, this final expressed command isn't piped to anything but the application and isn't exposed anywhere in the API or the logs.
 
 If we like this solution, we could possibly expand the scope of the *s3_kms_env* script to include more things:
 
-Failure conditions for s3/kms access failures.
-Connection failures.
-Additional safety checks.
-Callbacks to an internal ops service for logging/monitoring/alerting ( l/m/a )
-Logging into splunk, then splunk dashboards showing access of given credentials.
-Cloudwatch alarms.
-Reference material
+* Failure conditions for s3/kms access failures.
+* Connection failures.
+* Additional safety checks.
+* Callbacks to an internal ops service for logging/monitoring/alerting ( l/m/a )
+* Logging into splunk, then splunk dashboards showing access of given credentials.
+* Cloudwatch alarms.
+
+# Reference material
 
 Create a KMS key. Now let us take a look at the policy:
 
+```
 $ aws kms get-key-policy --key-id 8c60a5bd-KEY_ID-ee17391d7499 --policy-name default|jq '.Policy'|ruby -e "require 'json';puts JSON::parse(STDIN.read)"
  {
  "Version" : "2012-10-17",
@@ -122,9 +130,12 @@ $ aws kms get-key-policy --key-id 8c60a5bd-KEY_ID-ee17391d7499 --policy-name def
  "Resource" : "*"
  } ]
  }
+```
 
 This should be the same as doing the work via the ruby aws cli, but for some doesn't.
 
+```
  aws configure set default.s3.signature_version s3v4
  aws --profile project-team s3 cp --sse "aws:kms" --sse-kms-key-id 7c3446d-KEY_ID-430f03 s3://tw-snacks/dev/env /tmp/env
  aws --profile project-team s3 cp --sse "aws:kms" --sse-kms-key-id 7c3446d-KEY_ID-430f03 cp /tmp/env s3://tw-snacks/dev/env
+```
