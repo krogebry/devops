@@ -31,8 +31,15 @@ This is the 5.11 brand tactical shirt.  These are heavy shirts for sure, and wil
 
 # Travel
 
+## Carry-on luggage
+
+[![hazard_carryon][Hazard 4 Carry-On]](https://www.amazon.com/Hazard-Support-Rugged-Rolling-Carry/dp/B00AJ5F7BS/ref=pd_rhf_gw_p_img_11?ie=UTF8&psc=1&refRID=4Z2QXCKRS617V3NMBHJK)
+
+This is my main travel bag for weekend trips.
 
 
 
+
+[hazard_carryon]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/hazard_carryon.jpg
 [511_pants]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/511_pants.jpg
 [511_tactical_shirt]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/511_tactical_shirt.jpg
