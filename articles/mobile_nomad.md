@@ -26,6 +26,19 @@ This is the 5.11 brand tactical shirt.  These are heavy shirts for sure, and wil
 * The shirts have large breast pockets which can hold something as large as a kindle tablet, or as heavy as an Anker battery.  This is very handy for traveling.
 * There is a short sleeve and long sleeve variation on these shirts.  I generally use the short sleeve shirt for travel days, and the long sleeve shirts for more heavy duty work, or if I'm going to be out in the sun.  
 
+# Hotel living
+
+## Laundry basket
+
+[![camper_container]](https://www.amazon.com/gp/product/B00192KYE0/ref=oh_aui_detailpage_o01_s00?ie=UTF8&psc=1)
+
+This can fold up into a very small space and makes for a handy laundry basket.
+
+## Toiletries bag
+
+[![ab_toilet_bag]]
+
+This holds all of my grooming gear.
 
 # Gear
 
@@ -117,7 +130,8 @@ Having a storage unit also allows me to store anything else that I might want to
 
 
 
-
+[ab_toilet_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ab_toilet_bag.jpg
+[camper_container]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/camper_container.jpg
 
 [ab_usb_block]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ab_usb_block.jpg
 [ab_usb_cable]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ab_usb_cable.jpg
