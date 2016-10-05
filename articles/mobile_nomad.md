@@ -44,7 +44,7 @@ This holds all of my grooming gear.
 
 ## Laptop bag
 
-[![goruck_bag]]()
+<a href="http://goruck.com"><img src="https://github.com/krogebry/devops/raw/master/images/mobile_nomad/goruck_bag.jpeg" align="left" height="200"></a>
 
 Tough, rugged and functional bag for my every day carry.
 
