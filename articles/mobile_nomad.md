@@ -35,7 +35,7 @@ This is the 5.11 brand tactical shirt.  These are heavy shirts for sure, and wil
 
 ## MOLLE pouch
 
-[![drop_bag][e_bag]](https://www.amazon.com/gp/product/B00I81KSBY/ref=oh_aui_detailpage_o01_s01?ie=UTF8&psc=1)
+[![drop_bag]](https://www.amazon.com/gp/product/B00I81KSBY/ref=oh_aui_detailpage_o01_s01?ie=UTF8&psc=1)
 
 This bag is one of two bags that I use for my electronics load out.  It's big enough to hold my bigger, odder shaped gear:
 
@@ -46,7 +46,7 @@ This bag is one of two bags that I use for my electronics load out.  It's big en
 
 ## T&T Pouch
 
-[![e_bag][e_bag]](https://www.amazon.com/dp/B0046O0PEC/ref=twister_B0175GAGLE?th=1)
+[![ebag]](https://www.amazon.com/dp/B0046O0PEC/ref=twister_B0175GAGLE?th=1)
 
 This is the bag that I use for my smaller connector things and usb cables.
 
@@ -93,9 +93,8 @@ Having a storage unit also allows me to store anything else that I might want to
 
 
 
-
+[ebag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ebag.jpg
 [drop_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/drop_bag.jpg
-[e_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/e_bag.jpg
 
 [ab_toilet_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ab_toilet_bag.jpg
 [soms_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/soms_bag.jpg
