@@ -134,7 +134,7 @@ Having a storage unit also allows me to store anything else that I might want to
 
 
 
-[goruck_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/goruck_bag.jpg
+[goruck_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/goruck_bag.jpeg
 
 [ab_toilet_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ab_toilet_bag.jpg
 [camper_container]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/camper_container.jpg
