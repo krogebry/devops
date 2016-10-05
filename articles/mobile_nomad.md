@@ -84,9 +84,26 @@ When I travel back to home I pack the majority of my gear into my SOMS bag, then
 
 These are invaluable little organizers.
 
+* Underwear ( medium )
+* Work pants and shirts ( large )
+* Work and play socks ( small )
+* Workout shirts and shorts ( medium )
+* Hippy pants ( medium )
+
 # Electronics
 
+## AmazonBasics 6-port USB block
 
+[![ab_usb_block]]()
+
+## AmazonBasics USB cable
+
+[![ab_usb_cable]]()
+
+This comes in two varieties:
+
+* 3 foot
+* 6 foot
 
 # Logistics
 
@@ -101,6 +118,9 @@ Having a storage unit also allows me to store anything else that I might want to
 
 
 
+
+[ab_usb_block]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ab_usb_block.jpg
+[ab_usb_cable]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ab_usb_cable.jpg
 
 [ebag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ebag.jpg
 [drop_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/drop_bag.jpg
