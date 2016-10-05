@@ -36,11 +36,17 @@ This can fold up into a very small space and makes for a handy laundry basket.
 
 ## Toiletries bag
 
-[![ab_toilet_bag]]
+[![ab_toilet_bag]]()
 
 This holds all of my grooming gear.
 
 # Gear
+
+## Laptop bag
+
+[![goruck_bag]]()
+
+Tough, rugged and functional bag for my every day carry.
 
 ## MOLLE pouch
 
@@ -125,6 +131,10 @@ However, there is no security policy or replacement guarantee with the hotel; th
 Having a storage unit also allows me to store anything else that I might want to store, like a bike or compute equipment that I want to keep under my control.  Along with this I can also give access to this unit to other people in the office who might want the same thing as far as security.
 
 
+
+
+
+[goruck_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/goruck_bag.jpg
 
 [ab_toilet_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ab_toilet_bag.jpg
 [camper_container]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/camper_container.jpg
