@@ -78,6 +78,15 @@ When I first started I used the CAMS bag and ended up deciding that it's just to
 
 When I travel back to home I pack the majority of my gear into my SOMS bag, then throw it and some other things into a storage unit that's on the way to the airport.
 
+## AmazonBasics travel cubes
+
+[![luggage_blocks]](https://www.amazon.com/AmazonBasics-4-Piece-Packing-Cube-Set/dp/B014VBGUCA/ref=sr_1_2?ie=UTF8&qid=1475685393&sr=8-2&keywords=AmazonBasics%2Btravel%2Bcubes&th=1)
+
+These are invaluable little organizers.
+
+# Electronics
+
+
 
 # Logistics
 
@@ -95,7 +104,7 @@ Having a storage unit also allows me to store anything else that I might want to
 
 [ebag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ebag.jpg
 [drop_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/drop_bag.jpg
-
+[luggage_blocks]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/luggage_blocks.jpg
 [ab_toilet_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ab_toilet_bag.jpg
 [soms_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/soms_bag.jpg
 [511_pants]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/511_pants.jpg
