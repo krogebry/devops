@@ -42,10 +42,6 @@ This holds all of my grooming gear.
 
 # Gear
 
-## Toiletries bag
-
-[![ab_toilet_bag]]()
-
 ## MOLLE pouch
 
 [![drop_bag]](https://www.amazon.com/gp/product/B00I81KSBY/ref=oh_aui_detailpage_o01_s01?ie=UTF8&psc=1)
