@@ -29,6 +29,27 @@ This is the 5.11 brand tactical shirt.  These are heavy shirts for sure, and wil
 
 # Gear
 
+## Toiletries bag
+
+[![ab_toilet_bag]]()
+
+## MOLLE pouch
+
+[![drop_bag]](https://www.amazon.com/gp/product/B00I81KSBY/ref=oh_aui_detailpage_o01_s01?ie=UTF8&psc=1)
+
+This bag is one of two bags that I use for my electronics load out.  It's big enough to hold my bigger, odder shapped gear:
+
+* Moto 360 charger
+* Macbook charger cable
+* Beats pill
+* Outlet extender
+
+## T&T Pouch
+
+[![e_bag]](https://www.amazon.com/dp/B0046O0PEC/ref=twister_B0175GAGLE?th=1)
+
+This is the bag that I use for my smaller conector things and usb cables.
+
 # Travel
 
 ## Carry-on luggage
@@ -62,12 +83,22 @@ When I travel back to home I pack the majority of my gear into my SOMS bag, then
 
 ## Storage Unit
 
-I keep a 5x5 storage unit at the local Public Storage unit.
+I keep a 5x5 storage unit at the local Public Storage unit.  I have the option of storing my gear at the front desk of the hotel, but I started to worry about this a little.  The storage location at the hotel is just an office in the back, so there really is no security at all.  This isn't terribly worrysome as I doubt anyone would actually want any of my clothes and so far I haven't had a need to store anything terribly valuable.
+
+However, there is no security policy or replacement gaurantee with the hotel; they are storing my gear as a courtosy to me.  If there's an emergency at home or I decide to work from home for a week I worry that my gear isn't secure.  It really comes down to piece of mind for me on this one.  I want to know that my gear is stored behind a locked door that only I ( or maybe someone from work that I trust ) has access to it.
+
+Having a storage unit also alows me to store anything else that I might want to store, like a bike or compute equipment that I want to keep under my control.  Along with this I can also give access to this unit to other people in the office who might want the same thing as far as security.
 
 
 
 
 
+
+[drop_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/drop_bag.jpg
+[e_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/e_bag.jpg
+
+[ab_toilet_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ab_toilet_bag.jpg
+[soms_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/soms_bag.jpg
 [511_pants]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/511_pants.jpg
 [hazard_carryon]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/hazard_carryon.jpg
 [511_tactical_shirt]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/511_tactical_shirt.jpg
