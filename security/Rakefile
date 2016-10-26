@@ -1,0 +1,20 @@
+##
+# Security stuff.
+##
+require 'json'
+require 'yaml'
+
+namespace :secure do
+
+  SECURITY_KMS_KEY_NAME = "blah"
+
+  desc "Encrypt a target"
+  task :enc, :target do
+  end
+
+  desc "Decrypt a target"
+  task :dec, :target do
+  end
+
+end
+
