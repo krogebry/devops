@@ -4,6 +4,9 @@
 require 'pp'
 require 'logger'
 require 'aws-sdk'
+require 'fileutils'
+
+require './cloudtrail/tasks.rb'
 
 Log = Logger.new(STDOUT)
 
