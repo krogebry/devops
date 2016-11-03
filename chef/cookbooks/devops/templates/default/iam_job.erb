@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="87">
+  <server artifactsdir="artifacts" agentAutoRegisterKey="587e2774-1d5e-4ecb-a81a-f73ee4a0f0a0" commandRepositoryLocation="default" serverId="33f5f069-a768-46ef-bd41-95543d575814" />
+  <pipelines group="defaultGroup">
+    <pipeline name="test">
+      <materials>
+        <git url="https://github.com/krogebry/devops.git" />
+      </materials>
+      <stage name="defaultStage">
+        <jobs>
+          <job name="defaultJob">
+            <tasks>
+              <rake buildfile="Rakefile" target="test" />
+            </tasks>
+          </job>
+        </jobs>
+      </stage>
+    </pipeline>
+  </pipelines>
+</cruise>

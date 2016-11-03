@@ -8,6 +8,8 @@ require 'fileutils'
 
 require './cloudtrail/tasks.rb'
 
+require './cloudformation/tasks.rb'
+
 Log = Logger.new(STDOUT)
 
 # /usr/local/Cellar/node/6.1.0/libexec/npm/lib/node_modules/lambda-local/bin/lambda-local -l log-ids.js -h handler -e ../log.test.json 

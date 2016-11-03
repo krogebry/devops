@@ -1,0 +1,2 @@
+source 'https://supermarket.chef.io'
+cookbook 'gocd', '~> 1.3.0'
