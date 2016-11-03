@@ -1,0 +1,20 @@
+{
+  "name": "gocd-agent",
+  "description": "",
+  "json_class": "Chef::Role",
+  "default_attributes": {
+
+  },
+  "override_attributes": {
+
+  },
+  "chef_type": "role",
+  "run_list": [
+    "role[devops-base]", 
+    "recipe[devops::gocd-agent]",
+    "recipe[gocd::agent]"
+  ],
+  "env_run_lists": {
+
+  }
+}

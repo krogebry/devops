@@ -1,0 +1,66 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "",
+
+  "Parameters": { 
+    "StackVersion": {
+      "Type": "String",
+      "Description": "Role profile ARN"
+    }
+  },
+
+  "Resources": {
+
+    "DevCentralS3Bucket": {
+      "Type" : "AWS::S3::Bucket",
+      "Properties" : {
+				"Tags": [{
+          "Key": "Name",
+          "Value": "dev-central"
+        },{
+          "Key": "Version",
+          "Value": { "Ref": "StackVersion" }
+        }],
+        "BucketName" : { "Fn::Join": [ "", ["dev-central-", { "Ref": "StackVersion" }]]}
+      }
+    },
+
+		"DevCentralS3Policy" : {
+			"Type" : "AWS::S3::BucketPolicy",
+   		"Properties" : {
+        "PolicyDocument" : {
+          "Id" : "DevCentralS3Policy",
+         	"Version": "2012-10-17",
+         	"Statement" : [{
+            "Sid" : "ReadAccess",
+            "Action" : [ "s3:GetObject" ],
+            "Effect" : "Allow",
+            "Resource" : { "Fn::Join" : [ "", [ "arn:aws:s3:::", { "Ref" : "DevCentralS3Bucket" } , "/*" ] ] },
+            "Principal": { "Service": [ "ec2.amazonaws.com" ] }
+      		}]
+      	},
+				"Bucket" : { "Ref" : "DevCentralS3Bucket" }
+			}
+		},
+
+		"DevCentralSNSTopic" : {
+    	"Type" : "AWS::SNS::Topic",
+    	"Properties" : {
+      	"Subscription" : [ {
+        	"Endpoint" : "bkroger@thoughtworks.com",
+          "Protocol" : "email"
+        } ]
+    	}
+		},
+
+		"DevCentralQueue" : {
+    	"Type" : "AWS::SQS::Queue",
+    	"Properties" : {
+        "VisibilityTimeout" : "30"
+    	}
+		}
+
+	},
+
+  "Outputs": { }
+}
