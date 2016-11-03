@@ -1,0 +1,30 @@
+---
+name: "GoCD"
+owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+region: "us-east-1"
+template: "gocd"
+description: "GoCD service."
+params:
+  S3BucketName:
+    type: "s3_bucket"
+    tags:
+      Name: dev-central
+      Version: 0.1.3
+  MgtCidr: "172.31.0.0/16"
+  ImageId: "ami-55d7f342"
+  KeyName: "krogebry-0"
+  VpcId: 
+    type: 'vpc'
+    tags:
+      Name: "main"
+  Zones:
+    type: 'zones'
+    tags: null
+    zones:
+      - "us-east-1d"
+      - "us-east-1b"
+  Subnets:
+    type: 'subnets'
+    tags:
+        - Name: "private"
+        - Name: "public"

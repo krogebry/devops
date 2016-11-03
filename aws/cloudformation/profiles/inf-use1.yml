@@ -1,0 +1,6 @@
+---
+name: "Infrastructure"
+owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+region: "us-east-1"
+template: "inf"
+description: "Infrastructure things."

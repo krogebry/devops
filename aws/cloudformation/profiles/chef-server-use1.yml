@@ -1,0 +1,37 @@
+---
+name: "ChefServer"
+owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+region: "us-east-1"
+template: "chef-server"
+description: "ChefServer service."
+params:
+  S3BucketName:
+    type: "s3_bucket"
+    tags:
+      Name: dev-central
+      Version: 0.1.3
+  MgtCidr: "172.31.0.0/16"
+  ImageId: "ami-256c1d32"
+  DevCentralSNSTopicARN:
+    type: 'sns_topic_arn'
+    tags:
+      Name: "DevCentralSNSTopic"
+  KeyName: "krogebry-0"
+  Password: 
+    type: 'password'
+    tags: null
+  VpcId: 
+    type: 'vpc'
+    tags:
+      Name: "main"
+  Zones:
+    type: 'zones'
+    tags: null
+    zones:
+      - "us-east-1d"
+      - "us-east-1b"
+  Subnets:
+    type: 'subnets'
+    tags:
+        - Name: "private"
+        - Name: "public"

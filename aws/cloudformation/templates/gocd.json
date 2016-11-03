@@ -1,0 +1,337 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "",
+
+  "Parameters": { 
+    "VpcId": {
+      "Type": "AWS::EC2::VPC::Id",
+      "Description": "VpcId of your existing Virtual Private Cloud (VPC)",
+      "ConstraintDescription": "Must be the VPC Id of an existing Virtual Private Cloud."
+    },
+    
+    "StackVersion": {
+      "Type": "String",
+      "Description": "Role profile ARN"
+    },
+
+    "MgtCidr": {
+      "Type": "String",
+      "Description": "Role profile ARN"
+    },
+
+    "S3BucketName": {
+      "Type": "String",
+      "Description": "Role profile ARN"
+    },
+
+    "Subnets": {
+      "Type": "List<AWS::EC2::Subnet::Id>",
+      "Description": "The list of SubnetIds in your Virtual Private Cloud (VPC)",
+      "ConstraintDescription": "must be a list of an existing subnets in the selected Virtual Private Cloud."
+    },
+
+    "Zones": {
+      "Type": "List<String>",
+      "Description": "The list of AvailabilityZones for your Virtual Private Cloud (VPC)",
+      "ConstraintDescription": "must be a list if valid EC2 availability zones for the selected Virtual Private Cloud"
+    },
+
+    "KeyName": {
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "Description": "The EC2 Key Pair to allow SSH access to the instances",
+      "ConstraintDescription": "must be the name of an existing EC2 KeyPair."
+    },
+
+    "ImageId": {
+      "Type": "AWS::EC2::Image::Id",
+      "Description": "The EC2 Image Id",
+      "ConstraintDescription": "must be the name of an existing AMI."
+    }
+  },
+
+  "Resources": {
+
+    "InstanceRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version" : "2012-10-17",
+          "Statement": [ {
+            "Effect": "Allow",
+            "Principal": { "Service": [ "ec2.amazonaws.com" ] },
+            "Action": [ "sts:AssumeRole" ]
+          } ]
+        },
+        "Path": "/"
+      }
+    },
+
+    "RolePolicies": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "root",
+        "PolicyDocument": {
+          "Version" : "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }]
+        },
+        "Roles": [{ "Ref": "InstanceRole" }]
+      }
+    },
+
+    "RootInstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [{ "Ref": "InstanceRole" }]
+      }
+    },
+
+    "InstanceSG": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "Tags": [{
+          "Key": "Application",
+          "Value": "GoCD"
+        }],
+        "VpcId": { "Ref": "VpcId" },
+        "GroupDescription": "Enable HTTP access and SSH access",
+        "SecurityGroupIngress": [{
+          "ToPort": "8080",
+          "FromPort": "8080",
+          "IpProtocol": "tcp",
+          "SourceSecurityGroupId": { "Ref": "ELBSG" }
+        },{
+          "CidrIp": { "Ref": "MgtCidr" },
+          "ToPort": "8080",
+          "FromPort": "8080",
+          "IpProtocol": "tcp"
+        }, {
+          "CidrIp": { "Ref": "MgtCidr" },
+          "ToPort": "22",
+          "FromPort": "22",
+          "IpProtocol": "tcp"
+        }]
+      }
+    },
+
+ 		"ELBSG": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "Tags": [{
+          "Key": "Application",
+          "Value": "GoCD"
+        }],
+        "GroupDescription": "Enable HTTP access on port 80",
+        "VpcId": { "Ref": "VpcId" },
+        "SecurityGroupIngress": [ {
+          "CidrIp": { "Ref": "MgtCidr" },
+          "ToPort": "80",
+          "FromPort": "80",
+          "IpProtocol": "tcp"
+        }]
+      }
+    },
+
+    "GoCD": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "MinSize": "1",
+        "MaxSize": "3",
+        "DesiredCapacity": "1",
+        "AvailabilityZones": { "Ref": "Zones" },
+        "VPCZoneIdentifier": { "Ref": "Subnets" },
+        "LoadBalancerNames": [{ "Ref": "InternalELB" },{ "Ref": "ExternalELB"}],
+        "LaunchConfigurationName": { "Ref": "GoCDLC" }
+      },
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Timeout": "PT15M"
+        }
+      },
+      "UpdatePolicy": {
+        "AutoScalingRollingUpdate": {
+          "PauseTime": "PT15M",
+          "MaxBatchSize": "1",
+          "WaitOnResourceSignals": "true",
+          "MinInstancesInService": "1"
+        }
+      }
+    },
+
+    "GoCDLC": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata": {
+        "Comment": "Bootstrap a new GoCD instance.",
+				"AWS::CloudFormation::Authentication":{
+        	"S3AccessCreds":{
+          	"type":"S3",
+            "roleName":{
+            	"Ref":"InstanceRole"
+            }
+          }
+        },
+        "AWS::CloudFormation::Init": {
+          "config": {
+            "packages": {
+              "yum": {
+                "jq": [],
+                "sysstat": []
+              }
+            },
+
+            "files": {
+ 							"/etc/chef/validation.pem": {
+                "source": { "Fn::Join": [ "", [
+                  "http://",{ "Ref": "S3BucketName" },".s3.amazonaws.com/chef-server/devops/devops-validator.pem"
+                ]]},
+                "mode":"000400",
+                "owner":"root",
+                "group":"root",
+                "authentication":"S3AccessCreds"
+              },
+
+              "/etc/chef/client.rb": {
+                "mode": "000600",
+                "owner": "root",
+                "group": "root",
+                "content": { "Fn::Join": ["\n", [
+                  "chef_server_url \"https://internal-ChefServe-Internal-1GLOB3LOXHU6D-966854439.us-east-1.elb.amazonaws.com/organizations/devops/\"",
+                  "validation_client_name \"chef-validator\" \n",
+                  "ssl_verify_mode :verify_none\n",
+                  "log_location \"/var/log/chef/client.log\"",
+                  "log_level :info"
+                ]]}
+              },
+
+              "/etc/chef/dna.json": {
+                "mode": "000644",
+                "owner": "root",
+                "group": "root",
+                "content": { "Fn::Join": ["\n", [
+                  "{ \"run_list\": [ \"role[gocd-server]\" ] }"
+                ]]}
+              },
+
+              "/etc/cfn/cfn-hup.conf": {
+                "mode": "000400",
+                "owner": "root",
+                "group": "root",
+                "content": { "Fn::Join": ["", [
+                  "[main]\n",
+                  "stack=", { "Ref": "AWS::StackId" }, "\n",
+                  "region=", { "Ref": "AWS::Region" }, "\n"
+                ]]}
+              },
+
+              "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
+                "content": { "Fn::Join": ["", [
+                  "[cfn-auto-reloader-hook]\n",
+                  "triggers=post.update\n",
+                  "path=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init\n",
+                  "action=/opt/aws/bin/cfn-init -v ",
+                  " --stack ", { "Ref": "AWS::StackName" },
+                  " --resource GoCDLC ",
+                  " --region ", { "Ref": "AWS::Region" }, "\n",
+                  "runas=root\n"
+                ]]}
+              }
+            },
+
+            "services": {
+              "sysvinit": {
+                "cfn-hup": { "enabled": "true", "ensureRunning": "true",
+                              "files": ["/etc/cfn/cfn-hup.conf", "/etc/cfn/hooks.d/cfn-auto-reloader.conf"]}
+              }
+            }
+          }
+        }
+      },
+
+      "Properties": {
+        "KeyName": { "Ref": "KeyName" },
+        "ImageId": { "Ref": "ImageId" },
+        "UserData": { "Fn::Base64": { "Fn::Join": ["", [
+          "#!/bin/bash -xe\n",
+
+          "/opt/aws/bin/cfn-init -v ",
+          " --stack ", { "Ref": "AWS::StackName" },
+          " --resource GoCDLC ",
+          " --region ", { "Ref": "AWS::Region" }, "\n",
+
+          "mkdir -p /var/log/chef \n",
+          "chef-client -j /etc/chef/dna.json\n",
+
+          "/opt/aws/bin/cfn-signal -e $? ",
+          " --stack ", { "Ref": "AWS::StackName" },
+          " --resource GoCD ",
+          " --region ", { "Ref": "AWS::Region" }, "\n"
+        ]]}},
+        "InstanceType": "c3.large",
+        "SecurityGroups": [{ "Ref": "InstanceSG" }],
+        "IamInstanceProfile": { "Ref": "RootInstanceProfile" },
+        "AssociatePublicIpAddress": "true"
+      }
+    },
+
+    "ExternalELB": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+        "Subnets": { "Ref": "Subnets" },
+        "CrossZone": "true",
+        //"Policies": [{
+          //"PolicyName" : "GoCDWebSocketPolicy",
+          //"PolicyType" : "ProxyProtocolPolicyType",
+          //"Attributes" : [{ "Name" : "ProxyProtocol", "Value" : "true" }]
+        //}],
+        "Listeners": [{
+          "Protocol": "TCP",
+          "InstancePort": "8080",
+          "LoadBalancerPort": "80"
+        }],
+        "HealthCheck": {
+          "Target": "TCP:8080",
+          "Timeout": "2",
+          "Interval": "5",
+          "HealthyThreshold": "3",
+          "UnhealthyThreshold": "5"
+        },
+        "SecurityGroups": [{ "Ref": "ELBSG" }]
+      }
+    },
+
+    "InternalELB": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+        "Scheme": "internal",
+        "Subnets": { "Ref": "Subnets" },
+        //"Policies": [{
+          //"PolicyName" : "GoCDWebSocketPolicy",
+          //"PolicyType" : "ProxyProtocolPolicyType",
+          //"Attributes" : [{ "Name" : "ProxyProtocol", "Value" : "true" }]
+        //}],
+        "CrossZone": "true",
+        "Listeners": [{
+          "Protocol": "TCP",
+          "InstancePort": "8080",
+          "LoadBalancerPort": "80"
+        }],
+        "HealthCheck": {
+          "Target": "TCP:8080",
+          "Timeout": "2",
+          "Interval": "5",
+          "HealthyThreshold": "3",
+          "UnhealthyThreshold": "5"
+        },
+        "SecurityGroups": [{ "Ref": "ELBSG" }]
+      }
+    }
+
+  },
+
+  // No outputs right now, but eventally we'd probably want to expose the ELB endpoint here.
+  "Outputs": { }
+}
