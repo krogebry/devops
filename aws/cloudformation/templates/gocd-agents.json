@@ -105,21 +105,11 @@
       "Properties": {
         "Tags": [{
           "Key": "Application",
-          "Value": "GoCD"
+          "Value": "GoCDAgents"
         }],
         "VpcId": { "Ref": "VpcId" },
         "GroupDescription": "Enable HTTP access and SSH access",
         "SecurityGroupIngress": [{
-          "ToPort": "8081",
-          "FromPort": "8080",
-          "IpProtocol": "tcp",
-          "SourceSecurityGroupId": { "Ref": "ELBSG" }
-        },{
-          "CidrIp": { "Ref": "MgtCidr" },
-          "ToPort": "8081",
-          "FromPort": "8080",
-          "IpProtocol": "tcp"
-        }, {
           "CidrIp": { "Ref": "MgtCidr" },
           "ToPort": "22",
           "FromPort": "22",
@@ -128,35 +118,7 @@
       }
     },
 
- 		"ELBSG": {
-      "Type": "AWS::EC2::SecurityGroup",
-      "Properties": {
-        "Tags": [{
-          "Key": "Application",
-          "Value": "GoCD"
-        }],
-        "GroupDescription": "Enable HTTP access on port 80",
-        "VpcId": { "Ref": "VpcId" },
-        "SecurityGroupIngress": [{
-          "CidrIp": { "Ref": "MgtCidr" },
-          "ToPort": "80",
-          "FromPort": "80",
-          "IpProtocol": "tcp"
-        },{
-          "CidrIp": "0.0.0.0/0",
-          "ToPort": "80",
-          "FromPort": "80",
-          "IpProtocol": "tcp"
-        },{
-          "CidrIp": "0.0.0.0/0",
-          "ToPort": "443",
-          "FromPort": "443",
-          "IpProtocol": "tcp"
-        }]
-      }
-    },
-
-    "GoCD": {
+    "GoCDAgents": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
         "MinSize": "1",
@@ -164,8 +126,7 @@
         "DesiredCapacity": "1",
         "AvailabilityZones": { "Ref": "Zones" },
         "VPCZoneIdentifier": { "Ref": "Subnets" },
-        "LoadBalancerNames": [{ "Ref": "InternalELB" },{ "Ref": "ExternalELB"}],
-        "LaunchConfigurationName": { "Ref": "GoCDLC" }
+        "LaunchConfigurationName": { "Ref": "GoCDAgentsLC" }
       },
       "CreationPolicy": {
         "ResourceSignal": {
@@ -182,10 +143,10 @@
       }
     },
 
-    "GoCDLC": {
+    "GoCDAgentsLC": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Metadata": {
-        "Comment": "Bootstrap a new GoCD instance.",
+        "Comment": "Bootstrap a new GoCD agent instance.",
 				"AWS::CloudFormation::Authentication":{
         	"S3AccessCreds":{
           	"type":"S3",
@@ -232,7 +193,7 @@
                 "owner": "root",
                 "group": "root",
                 "content": { "Fn::Join": ["\n", [
-                  "{ \"run_list\": [ \"role[gocd-server]\" ] }"
+                  "{ \"run_list\": [ \"role[gocd-agent]\" ] }"
                 ]]}
               },
 
@@ -254,7 +215,7 @@
                   "path=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init\n",
                   "action=/opt/aws/bin/cfn-init -v ",
                   " --stack ", { "Ref": "AWS::StackName" },
-                  " --resource GoCDLC ",
+                  " --resource GoCDAgentsLC ",
                   " --region ", { "Ref": "AWS::Region" }, "\n",
                   "runas=root\n"
                 ]]}
@@ -279,7 +240,7 @@
 
           "/opt/aws/bin/cfn-init -v ",
           " --stack ", { "Ref": "AWS::StackName" },
-          " --resource GoCDLC ",
+          " --resource GoCDAgentsLC ",
           " --region ", { "Ref": "AWS::Region" }, "\n",
 
           "mkdir -p /var/log/chef \n",
@@ -287,64 +248,13 @@
 
           "/opt/aws/bin/cfn-signal -e $? ",
           " --stack ", { "Ref": "AWS::StackName" },
-          " --resource GoCD ",
+          " --resource GoCDAgents ",
           " --region ", { "Ref": "AWS::Region" }, "\n"
         ]]}},
         "InstanceType": "c3.large",
         "SecurityGroups": [{ "Ref": "InstanceSG" }],
         "IamInstanceProfile": { "Ref": "RootInstanceProfile" },
         "AssociatePublicIpAddress": "true"
-      }
-    },
-
-    "ExternalELB": {
-      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
-      "Properties": {
-        "Subnets": { "Ref": "Subnets" },
-        "CrossZone": "true",
-        "Listeners": [{
-          "Protocol": "HTTP",
-          "InstancePort": "8080",
-          "LoadBalancerPort": "80"
-        },{
-          "Protocol": "TCP",
-          "InstancePort": "8081",
-          "LoadBalancerPort": "443"
-        }],
-        "HealthCheck": {
-          "Target": "TCP:8080",
-          "Timeout": "2",
-          "Interval": "5",
-          "HealthyThreshold": "3",
-          "UnhealthyThreshold": "5"
-        },
-        "SecurityGroups": [{ "Ref": "ELBSG" }]
-      }
-    },
-
-    "InternalELB": {
-      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
-      "Properties": {
-        "Scheme": "internal",
-        "Subnets": { "Ref": "Subnets" },
-        "CrossZone": "true",
-        "Listeners": [{
-          "Protocol": "HTTP",
-          "InstancePort": "8080",
-          "LoadBalancerPort": "80"
-        },{
-          "Protocol": "TCP",
-          "InstancePort": "8081",
-          "LoadBalancerPort": "443"
-        }],
-        "HealthCheck": {
-          "Target": "TCP:8080",
-          "Timeout": "2",
-          "Interval": "5",
-          "HealthyThreshold": "3",
-          "UnhealthyThreshold": "5"
-        },
-        "SecurityGroups": [{ "Ref": "ELBSG" }]
       }
     }
 

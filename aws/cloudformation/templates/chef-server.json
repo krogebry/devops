@@ -248,13 +248,20 @@
     "ExternalELB": {
       "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
       "Properties": {
+        "Tags": [{
+          "Key": "Version",
+          "Value": { "Ref": "StackVersion" }
+        },{
+          "Key": "Role",
+          "Value": "External"
+        }],
         "Subnets": { "Ref": "Subnets" },
         "CrossZone": "true",
-        //"Policies": [{
-          //"PolicyName" : "ChefServerWebSocketPolicy",
-          //"PolicyType" : "ProxyProtocolPolicyType",
-          //"Attributes" : [{ "Name" : "ProxyProtocol", "Value" : "true" }]
-        //}],
+        "Policies": [{
+          "PolicyName" : "ChefServerWebSocketPolicy",
+          "PolicyType" : "ProxyProtocolPolicyType",
+          "Attributes" : [{ "Name" : "ProxyProtocol", "Value" : "true" }]
+        }],
         "Listeners": [{
           "Protocol": "TCP",
           "InstancePort": "443",
@@ -274,13 +281,20 @@
     "InternalELB": {
       "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
       "Properties": {
+        "Tags": [{
+          "Key": "Version",
+          "Value": { "Ref": "StackVersion" }
+        },{
+          "Key": "Role",
+          "Value": "Internal"
+        }],
         "Scheme": "internal",
         "Subnets": { "Ref": "Subnets" },
-        //"Policies": [{
-          //"PolicyName" : "ChefServerWebSocketPolicy",
-          //"PolicyType" : "ProxyProtocolPolicyType",
-          //"Attributes" : [{ "Name" : "ProxyProtocol", "Value" : "true" }]
-        //}],
+        "Policies": [{
+          "PolicyName" : "ChefServerWebSocketPolicy",
+          "PolicyType" : "ProxyProtocolPolicyType",
+          "Attributes" : [{ "Name" : "ProxyProtocol", "Value" : "true" }]
+        }],
         "CrossZone": "true",
         "Listeners": [{
           "Protocol": "TCP",

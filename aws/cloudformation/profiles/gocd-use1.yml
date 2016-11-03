@@ -5,26 +5,36 @@ region: "us-east-1"
 template: "gocd"
 description: "GoCD service."
 params:
+  ChefEnvName: "management"
+  ChefServerURL:
+    type: "elb_dns"
+    tags:
+      Role: "Internal"
+      Version: "0.2.2"
   S3BucketName:
     type: "s3_bucket"
     tags:
       Name: dev-central
-      Version: 0.1.3
+      Version: 0.2.1
   MgtCidr: "172.31.0.0/16"
-  ImageId: "ami-55d7f342"
+  ImageId: 
+    type: "ami"
+    tags:
+      Name: "devops"
+      Version: "0.1.0"
   KeyName: "krogebry-0"
   VpcId: 
-    type: 'vpc'
+    type: "vpc"
     tags:
       Name: "main"
   Zones:
-    type: 'zones'
+    type: "zones"
     tags: null
     zones:
       - "us-east-1d"
       - "us-east-1b"
   Subnets:
-    type: 'subnets'
+    type: "subnets"
     tags:
         - Name: "private"
         - Name: "public"

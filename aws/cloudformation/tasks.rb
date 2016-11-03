@@ -2,20 +2,24 @@
 # CFT stuff
 ##
 require 'yaml'
+require 'digest/sha1'
 require 'securerandom'
 
-def get_filters( a )
-  ro = []
-  a.each do |k,v|
-    ro.push({
-      name: format('tag:%s', k),
-      values: [v]
-    })
-  end
-  ro
-end
+require './cloudformation/params.rb'
 
 namespace :cf do
+
+  task :mk_chef_config, :stack_version, :region_name do |t,args|
+    version = args[:stack_version]
+    
+    creds = Aws::SharedCredentials.new()
+    ec2_client = Aws::EC2::Client.new(region: args[:region_name], credentials: creds)
+  end
+
+  desc "Flush cache"
+  task :flush_cache do |t,args|
+    `rm -rf /tmp/cache/*`
+  end
 
   desc 'Launch a stack based on a profile PROFILE_NAME STACK_NAME STACK_VERSION'
   task :launch, :profile_name, :stack_name, :stack_version do |t,args|
@@ -38,57 +42,12 @@ namespace :cf do
     ec2_client = Aws::EC2::Client.new(region: yaml['region'], credentials: creds)
     sns_client = Aws::SNS::Client.new(region: yaml['region'], credentials: creds)
 
-    yaml['params'] ||= []
-
-    ## Find any deps.
-    yaml['params'].each do |k,v|
-      Log.debug(format('%s - %s', k,v ))
-
-      if(v.class == Hash && v.has_key?( 'type' ) && v.has_key?( 'tags' ))
-        if(v['type'] == 'vpc')
-          vpcs = ec2_client.describe_vpcs({ filters: get_filters( v['tags'] )})
-          v['value'] = vpcs.vpcs.first['vpc_id']
-
-        elsif(v['type'] == 'password')
-          v['value'] = SecureRandom.hex
-
-        elsif(v['type'] == 's3_bucket')
-          bucket_name = format("%s-%s", v['tags']['Name'], v['tags']['Version'])
-
-          #Log.debug(format('Bucket: %s', bucket_name))
-          #buckets = s3_client.list_buckets()
-          #bucket = buckets.buckets.select{|b| b.name == bucket_name }.first
-          #if bucket == nil
-            #Log.fatal(format('Unable to find bucket: %s', bucket_name))
-            #exit
-          #end
-
-          v['value'] = bucket_name
-
-        elsif(v['type'] == 'zones')
-          v['value'] = v['zones'].join(',')
-
-        elsif(v['type'] == 'sns_topic_arn')
-          sns_topics = sns_client.list_topics()
-          Log.debug(format('Looking for: %s', v['tags']['Name']))
-          topic = sns_topics.topics.select{|t| t.topic_arn.match( /#{v['tags']['Name']}/ )}.first
-          if topic == nil
-            Log.fatal(format('Unable to find SNS topic: %s' % v['tags']['Name']))
-            exit
-          end
-          v['value'] = topic.topic_arn
-
-        elsif(v['type'] == 'subnets')
-          v['tags'].each do |t|
-            subnet = ec2_client.describe_subnets({ filters: get_filters( t )})
-            v['value'] ||= []
-            v['value'].push(subnet.subnets.first['subnet_id'])
-          end
-          v['value'] = v['value'].join(',')
-
-        end
-      end
+    if(yaml.has_key?( 'params' ))
+      p = ParamsProc.new( yaml )
+      yaml['params'] = p.compile() 
     end
+    #pp args
+    #exit
 
     stack_version = args[:stack_version]
 
@@ -103,6 +62,8 @@ namespace :cf do
 
     params = []
     params.push({ parameter_key: "StackVersion", parameter_value: stack_version })
+
+    yaml['params'] ||= []
 
     yaml['params'].each do |k,v|
       val = if(v.class == Hash)
@@ -124,6 +85,7 @@ namespace :cf do
     begin
       cf_client.describe_stacks({ stack_name: stack_name })
       ## Stack exists, update it.
+      Log.debug('Stack already exists')
 
     rescue Aws::CloudFormation::Errors::ValidationError => e
       Log.debug('Creating stack')
