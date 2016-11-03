@@ -1,0 +1,15 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    gpgme (2.0.12)
+      mini_portile2 (~> 2.1.0)
+    mini_portile2 (2.1.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  gpgme
+
+BUNDLED WITH
+   1.13.6
