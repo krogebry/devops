@@ -1,20 +1,52 @@
 ##
 # Security stuff.
 ##
+require 'pp'
 require 'json'
 require 'yaml'
+require 'gpgme'
+require 'logger'
+
+require 'aws-sdk'
+require 'fileutils'
+
+Log = Logger.new(STDOUT)
 
 namespace :secure do
 
-  SECURITY_KMS_KEY_NAME = "blah"
+  desc "Encrypt a target in the vault."
+  task :enc, :target do |t,args|
+    fs_vault_out = File.join( 'vault', format('%s.%s', args[:target], 'enc' ))
+    fs_vault_target = File.join( '/', 'tmp', 'vault', args[:target] )
 
-  desc "Encrypt a target"
-  task :enc, :target do
+    unless File.exists?( fs_vault_target )
+      Log.fatal(format('Unable to find vault target: %s', fs_vault_target))
+      exit
+    end
+
+    recipients = [ 'Bryan Kroger <bryan.kroger@gmail.com>' ]
+
+    cmd = format('gpg --output %s --encrypt --recipient "%s" %s', fs_vault_out, recipients.join(','), fs_vault_target)
+    Log.debug(format('CMD(gpg_encrypt): %s', cmd ))
+    system( cmd )
   end
 
-  desc "Decrypt a target"
-  task :dec, :target do
+  desc "Decrypt a target from the vault."
+  task :dec, :target do |t,args|
+    fs_vault_out = File.join( '/', 'tmp', 'vault', args[:target] )
+    fs_vault_target = File.join( 'vault', format('%s.%s', args[:target], 'enc' ))
+
+    unless File.exists?(File.dirname( fs_vault_out )) 
+      FileUtils::mkdir_p(File.dirname( fs_vault_out ))
+    end
+
+    unless File.exists?(File.dirname( fs_vault_target )) 
+      FileUtils::mkdir_p(File.dirname( fs_vault_target ))
+    end
+
+    cmd = format('gpg --output %s --decrypt %s', fs_vault_out, fs_vault_target)
+    Log.debug(format('CMD(gpg_decrypt): %s', cmd ))
+    system( cmd )
   end
 
 end
-
