@@ -1,0 +1,23 @@
+{
+  "name": "gocd-server",
+  "description": "",
+  "json_class": "Chef::Role",
+  "default_attributes": {
+
+  },
+  "override_attributes": {
+    "gocd": {
+      "server": {
+        "http_port": "8080",
+        "https_port": "8081"
+      }
+    }
+  },
+  "chef_type": "role",
+  "run_list": [
+    "role[devops-base]", "recipe[gocd::server]"
+  ],
+  "env_run_lists": {
+
+  }
+}

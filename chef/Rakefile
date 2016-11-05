@@ -1,0 +1,16 @@
+##
+# Rakefile for chef bits.
+##
+
+namespace :chef do
+
+  desc 'Bootstrap new, few install'
+  task :bootstrap do |t,args|
+    ## Berks deps
+    ## Envs
+    ## Data bags
+    ## Roles
+    ## Cookbooks
+  end
+
+end

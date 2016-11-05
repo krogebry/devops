@@ -1,0 +1,15 @@
+{
+  "name": "dev",
+  "description": "",
+  "cookbook_versions": {
+    "gocd": "= 1.3.0"
+  },
+  "json_class": "Chef::Environment",
+  "chef_type": "environment",
+  "default_attributes": {
+
+  },
+  "override_attributes": {
+
+  }
+}

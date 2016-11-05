@@ -1,0 +1,21 @@
+{
+    "StackName": "", 
+    "TemplateBody": "", 
+    //"TemplateURL": "", 
+    "Parameters": [
+        {
+            "ParameterKey": "", 
+            "ParameterValue": "", 
+            "UsePreviousValue": true
+        }
+    ], 
+    "DisableRollback": true, 
+    "TimeoutInMinutes": 130, 
+    //"NotificationARNs": [ "" ], 
+    "Capabilities": [ "CAPABILITY_IAM" ], 
+    //"ResourceTypes": [ "" ], 
+    //"OnFailure": "", 
+    //"StackPolicyBody": "", 
+    //"StackPolicyURL": "", 
+    "Tags": []
+}
