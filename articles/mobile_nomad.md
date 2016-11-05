@@ -1,21 +1,40 @@
 # Nomad
 
-Introduction into what this is and why.
+I wanted to write this up as a guide for anyone doing a mojority of travel for their job.  I've been working on a travel assignment for the last four months, so I'm still new to this.
+
+I wanted to have a comprehensive guide to making the mobile adventure fun and exciting.
+
+I welcome other people to add to this document to help it grow.  Add your experience and thoughts to help make this project better.
+
+My personal preferences are pretty obvious here.  One of the companies that I like buying from is <a href="http://www.511tactical.com/">5.11</a>.  Everything they make is tough as nails and built to last.  This is very important to me personally because I'm a large fella standing tall at 6'2" and 280 lbs.  Fashionable clothes are not practical for me in general, but I also enjoy being able to move around and know I'm not going to rip my crotch.  I can do basic PT during the day like squats and push-ups and know that I'm not going to rip my clothes.  Also, the pants are hydrophobic, which makes them easy to keep cleaner.
+
+In general I'll spend a little extra money for something that I know will last longer.  Having broken gear while on the road is not fun.  
+
+## TOC
+
+* [Clothes](#Clothes)
+* [Hotel living](#Hotel living)
+* [Gear](#Gear)
+* [Travel](#Travel)
+* [Electronics](#Electronics)
+* [Logistics](@Logistics)
 
 # Clothes
 
-For the most part I have managed to standardize my clothing.  Standardizing my clothing has helped me in managing my inventory of available items.  For example, I know I carry exactly 4 pairs of tactical pants and 1 pair of regular jeans.  This helps me when it comes to planning trips and knowing what I can pack and what I need to leave behind.
+For the most part I have managed to standardize my clothing.  Standardizing my clothing has helped me in managing my inventory of available items.  For example, I know I carry exactly 5 pairs of tactical pants and 2 pairs of regular jeans.  This helps me when it comes to planning trips and knowing what I can pack and what I need to leave behind.
 
 All of the 5.11 things have attributes that make these items particularly attractive:
-
 * Almost everything is double stitched, so things are extra tough and last longer.
 
 ## Tactical pants
 
-[![5.11 pants][511_pants]](https://www.amazon.com/5-11-74273-Mens-TacLite-38W-36L/dp/B001V2Z9F2/ref=pd_rhf_gw_p_img_12?ie=UTF8&psc=1&refRID=4Z2QXCKRS617V3NMBHJK)
+<a style="align: left;" target="_new" href="https://www.amazon.com/5-11-74273-Mens-TacLite-38W-36L/dp/B001V2Z9F2/ref=pd_rhf_gw_p_img_12?ie=UTF8&psc=1&refRID=4Z2QXCKRS617V3NMBHJK">
+  <img style="align: left;" src="https://github.com/krogebry/devops/raw/master/images/mobile_nomad/511_pants.jpg" />
+</a>
 
 * The pants have extra padding around the knees which doesn't really do me any good in the day-to-day actives, but does keep things from wearing down in that area.
 * They also have a knife pocket on the left hip, and a smaller, less obvious pocket on the right hip.  Some of the designs vary on this, but the idea is that there are extra front pockets for knifes or other gear.  I use the left pocket for my hotel key most of the time as it's a perfect fit.
+* Hydrophobic, which makes things easier to keep clean.
 
 ## Tactical shirt
 
@@ -27,6 +46,8 @@ This is the 5.11 brand tactical shirt.  These are heavy shirts for sure, and wil
 * There is a short sleeve and long sleeve variation on these shirts.  I generally use the short sleeve shirt for travel days, and the long sleeve shirts for more heavy duty work, or if I'm going to be out in the sun.  
 
 # Hotel living
+
+I try to make my hotel stays as comfy as possible.
 
 ## Laundry basket
 
@@ -44,11 +65,9 @@ This holds all of my grooming gear.
 
 ## Laptop bag
 
-<a href="http://goruck.com"><img src="https://github.com/krogebry/devops/raw/master/images/mobile_nomad/goruck_bag.jpeg" align="left" height="200"></a>
+<a href="http://goruck.com"><img src="https://github.com/krogebry/devops/raw/master/images/mobile_nomad/goruck_bag.jpeg" height="200"></a>
 
 Tough, rugged and functional bag for my every day carry.
-
-<hr/>
 
 ## MOLLE pouch
 
@@ -63,7 +82,9 @@ This bag is one of two bags that I use for my electronics load out.  It's big en
 
 ## T&T Pouch
 
-[![ebag]](https://www.amazon.com/dp/B0046O0PEC/ref=twister_B0175GAGLE?th=1)
+<a target="_new" href="https://www.amazon.com/dp/B0046O0PEC/ref=twister_B0175GAGLE?th=1"> 
+  <img src="https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ebag.jpg" width="200" />
+</a>
 
 This is the bag that I use for my smaller connector things and usb cables.
 
@@ -97,7 +118,9 @@ When I travel back to home I pack the majority of my gear into my SOMS bag, then
 
 ## AmazonBasics travel cubes
 
-[![luggage_blocks]](https://www.amazon.com/AmazonBasics-4-Piece-Packing-Cube-Set/dp/B014VBGUCA/ref=sr_1_2?ie=UTF8&qid=1475685393&sr=8-2&keywords=AmazonBasics%2Btravel%2Bcubes&th=1)
+<a href="https://www.amazon.com/AmazonBasics-4-Piece-Packing-Cube-Set/dp/B014VBGUCA/ref=sr_1_2?ie=UTF8&qid=1475685393&sr=8-2&keywords=AmazonBasics%2Btravel%2Bcubes&th=1">
+  <img width="200" src="https://github.com/krogebry/devops/raw/master/images/mobile_nomad/luggage_blocks.jpg" />
+</a>
 
 These are invaluable little organizers.
 
@@ -124,6 +147,12 @@ This comes in two varieties:
 
 # Logistics
 
+## Air travel
+
+## Hotel
+
+## Reward points
+
 ## Storage Unit
 
 I keep a 5x5 storage unit at the local Public Storage unit.  I have the option of storing my gear at the front desk of the hotel, but I started to worry about this a little.  The storage location at the hotel is just an office in the back, so there really is no security at all.  This isn't terribly worrisome as I doubt anyone would actually want any of my clothes and so far I haven't had a need to store anything terribly valuable.
@@ -144,11 +173,8 @@ Having a storage unit also allows me to store anything else that I might want to
 [ab_usb_block]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ab_usb_block.jpg
 [ab_usb_cable]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ab_usb_cable.jpg
 
-[ebag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ebag.jpg
 [drop_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/drop_bag.jpg
-[luggage_blocks]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/luggage_blocks.jpg
 [ab_toilet_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/ab_toilet_bag.jpg
 [soms_bag]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/soms_bag.jpg
-[511_pants]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/511_pants.jpg
 [hazard_carryon]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/hazard_carryon.jpg
 [511_tactical_shirt]: https://github.com/krogebry/devops/raw/master/images/mobile_nomad/511_tactical_shirt.jpg

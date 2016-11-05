@@ -4,6 +4,9 @@
 require 'pp'
 require 'logger'
 require 'aws-sdk'
+require 'fileutils'
+
+require './cloudtrail/tasks.rb'
 
 require './cloudformation/tasks.rb'
 
