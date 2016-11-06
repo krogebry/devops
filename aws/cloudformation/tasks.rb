@@ -21,6 +21,7 @@ namespace :cf do
     #pp elb_tags
 
     v = { 'tags' => {
+      'Name' => 'ChefServer',
       'Role' => 'External',
       'Version' => version
     }}

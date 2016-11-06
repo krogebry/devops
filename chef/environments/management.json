@@ -7,7 +7,11 @@
   "json_class": "Chef::Environment",
   "chef_type": "environment",
   "default_attributes": {
-
+    "devops": {
+      "inf_version": "0.5.0",
+      "es_cluster_version": "0.5.0",
+      "chef_server_version": "0.5.0"
+    }
   },
   "override_attributes": {
 

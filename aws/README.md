@@ -5,6 +5,13 @@ AWS things.
 # TODO list
 
 * [krogebry - Sun Nov  6 10:42:44 CST 2016]: linking/unlinking of knife.rb
+* [krogebry - Sun Nov  6 15:25:42 CST 2016]: 
+  * Create logstash client things.
+  * Log standard log files.
+  * Log chef things.
+  * Grafana service, with nodes reporting via collectd.
+  * Sensu stack for alarming.
+
 
 # Launch
 

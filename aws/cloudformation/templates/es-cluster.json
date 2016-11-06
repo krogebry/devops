@@ -110,14 +110,14 @@
         "VpcId": { "Ref": "VpcId" },
         "GroupDescription": "Enable HTTP access and SSH access",
         "SecurityGroupIngress": [{
-          "ToPort": "8081",
-          "FromPort": "8080",
+          "ToPort": "9300",
+          "FromPort": "9200",
           "IpProtocol": "tcp",
           "SourceSecurityGroupId": { "Ref": "ELBSG" }
         },{
           "CidrIp": { "Ref": "MgtCidr" },
-          "ToPort": "8081",
-          "FromPort": "8080",
+          "ToPort": "9300",
+          "FromPort": "9200",
           "IpProtocol": "tcp"
         }, {
           "CidrIp": { "Ref": "MgtCidr" },
@@ -139,18 +139,13 @@
         "VpcId": { "Ref": "VpcId" },
         "SecurityGroupIngress": [{
           "CidrIp": { "Ref": "MgtCidr" },
-          "ToPort": "80",
-          "FromPort": "80",
+          "ToPort": "9300",
+          "FromPort": "9200",
           "IpProtocol": "tcp"
         },{
           "CidrIp": "0.0.0.0/0",
-          "ToPort": "80",
-          "FromPort": "80",
-          "IpProtocol": "tcp"
-        },{
-          "CidrIp": "0.0.0.0/0",
-          "ToPort": "443",
-          "FromPort": "443",
+          "ToPort": "9300",
+          "FromPort": "9200",
           "IpProtocol": "tcp"
         }]
       }
@@ -301,19 +296,29 @@
     "ExternalELB": {
       "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
       "Properties": {
+				"Tags": [{
+          "Key": "Version",
+          "Value": { "Ref": "StackVersion" }
+        },{
+          "Key": "Name",
+          "Value": "ESCluster"
+        },{
+          "Key": "Role",
+          "Value": "External"
+        }],
         "Subnets": { "Ref": "Subnets" },
         "CrossZone": "true",
         "Listeners": [{
           "Protocol": "HTTP",
-          "InstancePort": "8080",
-          "LoadBalancerPort": "80"
+          "InstancePort": "9200",
+          "LoadBalancerPort": "9200"
         },{
           "Protocol": "TCP",
-          "InstancePort": "8081",
-          "LoadBalancerPort": "443"
+          "InstancePort": "9300",
+          "LoadBalancerPort": "9300"
         }],
         "HealthCheck": {
-          "Target": "TCP:8080",
+          "Target": "HTTP:9200",
           "Timeout": "2",
           "Interval": "5",
           "HealthyThreshold": "3",
@@ -326,20 +331,30 @@
     "InternalELB": {
       "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
       "Properties": {
+				"Tags": [{
+          "Key": "Version",
+          "Value": { "Ref": "StackVersion" }
+        },{
+          "Key": "Name",
+          "Value": "ESCluster"
+        },{
+          "Key": "Role",
+          "Value": "Internal"
+        }],
         "Scheme": "internal",
         "Subnets": { "Ref": "Subnets" },
         "CrossZone": "true",
         "Listeners": [{
           "Protocol": "HTTP",
-          "InstancePort": "8080",
-          "LoadBalancerPort": "80"
+          "InstancePort": "9200",
+          "LoadBalancerPort": "9200"
         },{
           "Protocol": "TCP",
-          "InstancePort": "8081",
-          "LoadBalancerPort": "443"
+          "InstancePort": "9300",
+          "LoadBalancerPort": "9300"
         }],
         "HealthCheck": {
-          "Target": "TCP:8080",
+          "Target": "HTTP:9200",
           "Timeout": "2",
           "Interval": "5",
           "HealthyThreshold": "3",

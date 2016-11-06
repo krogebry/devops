@@ -1,32 +1,32 @@
 ---
-name: "Global stuff"
+name: "Sensu"
 owner: "Bryan Kroger (bkroger@thoughtworks.com)"
 region: "us-east-1"
-description: "Global variables."
+template: "sensu"
+description: "Sensu service."
 params:
+  ChefEnvName: "management"
+  ChefServerURL:
+    type: "elb_dns"
+    tags:
+      Role: "Internal"
+      Version: "0.4.0"
   S3BucketName:
     type: "s3_bucket"
     tags:
       Name: "dev-central"
       Version: "0.4.0"
-  MgtCidr:
+  MgtCidr: 
     type: "vpc_cidr"
     tags:
       Name: "main"
-  ImageId:
+  ImageId: 
     type: "ami"
     tags:
       Name: "devops"
       Version: "0.1.0"
-  DevCentralSNSTopicARN:
-    type: "sns_topic_arn"
-    tags:
-      Name: "DevCentralSNSTopic"
   KeyName: "krogebry-0"
-  Password:
-    type: "password"
-    tags: null
-  VpcId:
+  VpcId: 
     type: "vpc"
     tags:
       Name: "main"
@@ -39,5 +39,5 @@ params:
   Subnets:
     type: "subnets"
     tags:
-      - Name: "private"
-      - Name: "public"
+        - Name: "private"
+        - Name: "public"

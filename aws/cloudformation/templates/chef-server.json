@@ -257,6 +257,9 @@
           "Key": "Version",
           "Value": { "Ref": "StackVersion" }
         },{
+          "Key": "Name",
+          "Value": "ChefServer"
+        },{
           "Key": "Role",
           "Value": "External"
         }],
@@ -289,6 +292,9 @@
         "Tags": [{
           "Key": "Version",
           "Value": { "Ref": "StackVersion" }
+        },{
+          "Key": "Name",
+          "Value": "ChefServer"
         },{
           "Key": "Role",
           "Value": "Internal"
