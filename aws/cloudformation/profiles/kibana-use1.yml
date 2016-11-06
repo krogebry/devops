@@ -1,9 +1,9 @@
 ---
-name: "GoCD"
+name: "Kibana"
 owner: "Bryan Kroger (bkroger@thoughtworks.com)"
 region: "us-east-1"
-template: "gocd"
-description: "GoCD service."
+template: "kibana"
+description: "Kibana service."
 params:
   ChefEnvName: "management"
   ChefServerURL:

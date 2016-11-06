@@ -1,9 +1,9 @@
 ---
-name: "GoCD"
+name: "ESCluster"
 owner: "Bryan Kroger (bkroger@thoughtworks.com)"
 region: "us-east-1"
-template: "gocd"
-description: "GoCD service."
+template: "es-cluster"
+description: "ESCluster service."
 params:
   ChefEnvName: "management"
   ChefServerURL:

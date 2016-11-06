@@ -105,7 +105,7 @@
       "Properties": {
         "Tags": [{
           "Key": "Application",
-          "Value": "GoCD"
+          "Value": "Kibana"
         }],
         "VpcId": { "Ref": "VpcId" },
         "GroupDescription": "Enable HTTP access and SSH access",
@@ -133,7 +133,7 @@
       "Properties": {
         "Tags": [{
           "Key": "Application",
-          "Value": "GoCD"
+          "Value": "Kibana"
         }],
         "GroupDescription": "Enable HTTP access on port 80",
         "VpcId": { "Ref": "VpcId" },
@@ -156,7 +156,7 @@
       }
     },
 
-    "GoCD": {
+    "Kibana": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
         "MinSize": "1",
@@ -165,7 +165,7 @@
         "AvailabilityZones": { "Ref": "Zones" },
         "VPCZoneIdentifier": { "Ref": "Subnets" },
         "LoadBalancerNames": [{ "Ref": "InternalELB" },{ "Ref": "ExternalELB"}],
-        "LaunchConfigurationName": { "Ref": "GoCDLC" }
+        "LaunchConfigurationName": { "Ref": "KibanaLC" }
       },
       "CreationPolicy": {
         "ResourceSignal": {
@@ -182,10 +182,10 @@
       }
     },
 
-    "GoCDLC": {
+    "KibanaLC": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Metadata": {
-        "Comment": "Bootstrap a new GoCD instance.",
+        "Comment": "Bootstrap a new Kibana instance.",
 				"AWS::CloudFormation::Authentication":{
         	"S3AccessCreds":{
           	"type":"S3",
@@ -232,7 +232,7 @@
                 "owner": "root",
                 "group": "root",
                 "content": { "Fn::Join": ["\n", [
-                  "{ \"run_list\": [ \"role[gocd-server]\" ] }"
+                  "{ \"run_list\": [ \"role[kibana]\" ] }"
                 ]]}
               },
 
@@ -254,7 +254,7 @@
                   "path=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init\n",
                   "action=/opt/aws/bin/cfn-init -v ",
                   " --stack ", { "Ref": "AWS::StackName" },
-                  " --resource GoCDLC ",
+                  " --resource KibanaLC ",
                   " --region ", { "Ref": "AWS::Region" }, "\n",
                   "runas=root\n"
                 ]]}
@@ -279,7 +279,7 @@
 
           "/opt/aws/bin/cfn-init -v ",
           " --stack ", { "Ref": "AWS::StackName" },
-          " --resource GoCDLC ",
+          " --resource KibanaLC ",
           " --region ", { "Ref": "AWS::Region" }, "\n",
 
           "mkdir -p /var/log/chef \n",
@@ -288,7 +288,7 @@
 
           "/opt/aws/bin/cfn-signal -e $? ",
           " --stack ", { "Ref": "AWS::StackName" },
-          " --resource GoCD ",
+          " --resource Kibana ",
           " --region ", { "Ref": "AWS::Region" }, "\n"
         ]]}},
         "InstanceType": "c3.large",

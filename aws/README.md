@@ -2,19 +2,23 @@
 
 AWS things.
 
+# TODO list
+
+* [krogebry - Sun Nov  6 10:42:44 CST 2016]: linking/unlinking of knife.rb
+
 # Launch
 
 Launch the stacks.
-
 
 ## Create the infrastructure
 
 ```bash
 source ~/.aws/TARGET
+rake cf:flush_cache
 rake cf:launch['inf-use1, Inf, 0.2.0']
 ```
 
-## Update profiles to reflect Inf version.
+## Update profiles to reflect Inf version
 
 ```bash
 vi cloudformation/profiles/chef-server-use1.yml
@@ -25,6 +29,29 @@ Update *S3BucketName - Version* to the version of the Inf stack.
 
 ```bash
 rake cf:launch['chef-server-use1, Chef-Server, 0.2.0']
+```
+
+## Bootstrap chef server
+
+First, update the knife config
+
+```bash
+rake cf:mk_chef_config['0.4.0, us-east-1']
+unlink knife.rb
+ln -s knife-0.4.0.rb knife.rb
+knife node list
+```
+
+Now bootstrap the chef server.
+
+```bash
+cd ../chef
+rake chef:bootstrap
+```
+
+## Now create the GoCD service
+
+```bash
 rake cf:launch['gocd-use1, GoCD, 0.2.0']
 ```
 

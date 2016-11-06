@@ -244,6 +244,7 @@
           " --region ", { "Ref": "AWS::Region" }, "\n",
 
           "mkdir -p /var/log/chef \n",
+          "aws s3 cp s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/devops-validator.pem /etc/chef/validation.pem \n",
           "chef-client -j /etc/chef/dna.json -E ",{ "Ref": "ChefEnvName" },"\n",
 
           "/opt/aws/bin/cfn-signal -e $? ",

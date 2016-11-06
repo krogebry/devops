@@ -1,32 +1,37 @@
 ---
-name: "GoCD"
+name: "Global stuff"
 owner: "Bryan Kroger (bkroger@thoughtworks.com)"
 region: "us-east-1"
-template: "gocd"
-description: "GoCD service."
+description: "Global variables."
 params:
-  ChefEnvName: "management"
-  ChefServerURL:
-    type: "elb_dns"
-    tags:
-      Role: "Internal"
-      Version: "0.4.0"
   S3BucketName:
     type: "s3_bucket"
     tags:
       Name: "dev-central"
       Version: "0.4.0"
-  MgtCidr: 
+
+  # MgtCidr: "172.31.0.0/16"
+  MgtCidr:
     type: "vpc_cidr"
     tags:
       Name: "main"
-  ImageId: 
+
+  # ImageId: "ami-256c1d32"
+  ImageId:
     type: "ami"
     tags:
       Name: "devops"
       Version: "0.1.0"
+
+  DevCentralSNSTopicARN:
+    type: "sns_topic_arn"
+    tags:
+      Name: "DevCentralSNSTopic"
   KeyName: "krogebry-0"
-  VpcId: 
+  Password:
+    type: "password"
+    tags: null
+  VpcId:
     type: "vpc"
     tags:
       Name: "main"
@@ -39,5 +44,5 @@ params:
   Subnets:
     type: "subnets"
     tags:
-        - Name: "private"
-        - Name: "public"
+      - Name: "private"
+      - Name: "public"
