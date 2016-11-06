@@ -1,16 +1,43 @@
 ##
 # Rakefile for chef bits.
 ##
+require 'pp'
+require 'logger'
+require 'fileutils'
+
+Log = Logger.new(STDOUT)
 
 namespace :chef do
 
   desc 'Bootstrap new, few install'
   task :bootstrap do |t,args|
     ## Berks deps
+    cmd_berks = format('berks ; berks upload')
+    system(cmd_berks)
+
     ## Envs
+    Dir.glob('environments/*.json') do |r|
+      Log.debug(format('Loading environment: %s', r))
+      cmd_load_role = format('knife environment from file %s', r)
+      system(cmd_load_role)
+    end
+
     ## Data bags
+
     ## Roles
+    Dir.glob('roles/*.json') do |r|
+      Log.debug(format('Loading role: %s', r))
+      cmd_load_role = format('knife role from file %s', r)
+      system(cmd_load_role)
+    end
+
     ## Cookbooks
+    #Dir.glob('cookbooks/') do |r|
+      #Log.debug(format('Loading environment: %s', r))
+      #cmd_load_role = format('knife environment from file %s', r)
+      #system(cmd_load_role)
+    #end
+    cmd_upload_cookbooks = format('knife cookbook upload devops')
   end
 
 end
