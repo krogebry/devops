@@ -1,0 +1,11 @@
+chef_server_url "https://<%= chef_server_url %>/organizations/devops/"
+client_key format('%s/.chef/keys/bkroger-<%= stack_version %>.pem', ENV['HOME'])
+node_name 'bkroger'
+
+ssl_verify_mode :verify_none
+
+cookbook_path [
+  format('%s/dev/devops/chef/cookbooks', ENV['HOME']),
+  format('%s/.chef/cookbooks', ENV['HOME'])
+]
+

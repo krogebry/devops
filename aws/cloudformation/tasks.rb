@@ -2,6 +2,7 @@
 # CFT stuff
 ##
 require 'yaml'
+require 'erubis'
 require 'digest/sha1'
 require 'securerandom'
 
@@ -9,11 +10,45 @@ require './cloudformation/params.rb'
 
 namespace :cf do
 
+  desc 'Create the chef config.'
   task :mk_chef_config, :stack_version, :region_name do |t,args|
     version = args[:stack_version]
-    
+
+    #yaml = YAML::load(File::read( fs_profile_file ))
+    p = ParamsProc.new({ 'region' => args[:region_name] })
+
+    (elbs, elb_tags) = p.get_elbs_with_tags()
+    #pp elb_tags
+
+    v = { 'tags' => {
+      'Role' => 'External',
+      'Version' => version
+    }}
+
+    elb_target = elb_tags['tag_descriptions'].select{|elb| elb['tags'].select{|t| v['tags'].select{|k,v| t['key'] == k && t['value'] == v}.size == 1 }.compact.size == v['tags'].size }.first
+    chef_dns_name = elbs['load_balancer_descriptions'].select{|elb| elb['load_balancer_name'] == elb_target['load_balancer_name'] }.first['dns_name']
+    #pp dns_name
+
+    input = File.read('knife.rb.erb')
+    eruby = Erubis::Eruby.new(input) 
+
+    cfg = {
+      :stack_version => version,
+      :chef_server_url => chef_dns_name.downcase
+    }
+    #puts eruby.result(binding())
+    #puts eruby.result( cfg )
+    File.open(format('%s/.chef/knife-%s.rb', ENV['HOME'], version), 'w') do |f|
+      f.write eruby.result( cfg )
+    end
+
     creds = Aws::SharedCredentials.new()
-    ec2_client = Aws::EC2::Client.new(region: args[:region_name], credentials: creds)
+    s3_client = Aws::S3::Client.new(region: args[:region_name], credentials: creds)
+
+    r = s3_client.get_object(bucket: format('dev-central-%s', version), key: 'chef-server/devops/bkroger.pem')
+    File.open(format('%s/.chef/keys/bkroger-%s.pem', ENV['HOME'], version), 'w') do |f|
+      f.write r.body.read
+    end
   end
 
   desc "Flush cache"
