@@ -1,9 +1,9 @@
 ---
-name: "GoCD"
+name: "Sensu"
 owner: "Bryan Kroger (bkroger@thoughtworks.com)"
 region: "us-east-1"
-template: "gocd"
-description: "GoCD service."
+template: "sensu"
+description: "Sensu service."
 params:
   ChefEnvName: "management"
   ChefServerURL:

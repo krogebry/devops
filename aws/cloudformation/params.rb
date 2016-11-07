@@ -3,7 +3,7 @@
 ##
 
 class ParamsProc
-  @yaml
+  @config
   @params
   @cf_client
   @s3_client
@@ -29,7 +29,7 @@ class ParamsProc
     @ec2_client = Aws::EC2::Client.new(region: yaml['region'], credentials: creds)
     @elb_client = Aws::ElasticLoadBalancing::Client.new(region: yaml['region'], credentials: creds)
     @sns_client = Aws::SNS::Client.new(region: yaml['region'], credentials: creds)
-    @yaml = yaml
+    @config = yaml
     @params = yaml['params']
   end
 
@@ -69,7 +69,7 @@ class ParamsProc
   end
 
   def vpc_cidr( v )
-    cache_key = format('vpcs-%s-%s', @yaml['region'], ENV['AWS_PROFILE'])
+    cache_key = format('vpcs-%s-%s', @config['region'], ENV['AWS_PROFILE'])
     vpcs = cached_json( cache_key ) do 
       @ec2_client.describe_vpcs({ filters: get_filters( v['tags'] )}).data.to_h.to_json
     end
@@ -77,7 +77,7 @@ class ParamsProc
   end
 
   def ami( v )
-    cache_key = format('images-%s-%s-%s', @yaml['region'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( v['tags'].to_s ))
+    cache_key = format('images-%s-%s-%s', @config['region'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( v['tags'].to_s ))
     Log.debug(cache_key)
     objects = cached_json( cache_key ) do 
       @ec2_client.describe_images({ filters: get_filters( v['tags'] )}).data.to_h.to_json
@@ -86,25 +86,31 @@ class ParamsProc
     v
   end
 
-  def elb_dns( v )
-    cache_key = format('elb-%s-%s', @yaml['region'], ENV['AWS_PROFILE'])
-    elbs = cached_json( cache_key ) do
+  def get_elbs()
+    cache_key = format('elb-%s-%s', @config['region'], ENV['AWS_PROFILE'])
+    cached_json( cache_key ) do
       @elb_client.describe_load_balancers().data.to_h.to_json
     end
+  end
 
-    #elb_names = elbs['load_balancer_descriptions'].fetch_values{|elb| elb['load_balancer_name'] }.compact
+  def get_elb_tags( elb_names )
+    cache_key = format('elb-%s-%s-tags', @config['region'], ENV['AWS_PROFILE'])
+    cached_json( cache_key ) do
+      @elb_client.describe_tags({ load_balancer_names: elb_names }).data.to_h.to_json
+    end
+  end
+
+  def get_elbs_with_tags()
+    elbs = get_elbs
     elb_names = []
     elbs['load_balancer_descriptions'].each do |elb|
       elb_names.push( elb['load_balancer_name'] )
     end
-    #pp elb_names
+    [elbs, get_elb_tags( elb_names )]
+  end
 
-    cache_key = format('elb-%s-%s-tags', @yaml['region'], ENV['AWS_PROFILE'])
-    elb_tags = cached_json( cache_key ) do
-      @elb_client.describe_tags({ load_balancer_names: elb_names }).data.to_h.to_json
-    end
-
-    #pp elb_tags
+  def elb_dns( v )
+    (elbs, elb_tags) = get_elbs_with_tags()
 
     ## Find the number of targets that have the same number of match tags as were past from the params yaml data.
     elb_target = elb_tags['tag_descriptions'].select{|elb| elb['tags'].select{|t| v['tags'].select{|k,v| t['key'] == k && t['value'] == v}.size == 1 }.compact.size == v['tags'].size }.first
@@ -128,13 +134,21 @@ class ParamsProc
 
   def s3_bucket( v )
     bucket_name = format("%s-%s", v['tags']['Name'], v['tags']['Version'])
-    #Log.debug(format('Bucket: %s', bucket_name))
-    #buckets = s3_client.list_buckets()
-    #bucket = buckets.buckets.select{|b| b.name == bucket_name }.first
-    #if bucket == nil
-      #Log.fatal(format('Unable to find bucket: %s', bucket_name))
-      #exit
-    #end
+    Log.debug(format('Bucket: %s', bucket_name))
+
+    cache_key = format('s3_buckets-%s-%s', @config['region'], ENV['AWS_PROFILE'])
+
+    buckets = cached_json( cache_key ) do
+      @s3_client.list_buckets().data.to_h.to_json
+    end
+    bucket = buckets['buckets'].select{|b| b['name'] == bucket_name }.first
+
+    ## Fail if we can't find the bucket.
+    if bucket == nil
+      Log.fatal(format('Unable to find bucket: %s', bucket_name))
+      exit
+    end
+
     v['value'] = bucket_name
     v
   end

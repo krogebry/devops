@@ -1,9 +1,9 @@
 ---
-name: "GoCD"
+name: "Grafana"
 owner: "Bryan Kroger (bkroger@thoughtworks.com)"
 region: "us-east-1"
-template: "gocd"
-description: "GoCD service."
+template: "grafana"
+description: "Grafana service."
 params:
   ChefEnvName: "management"
   ChefServerURL:

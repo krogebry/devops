@@ -10,12 +10,12 @@ params:
     type: "elb_dns"
     tags:
       Role: "Internal"
-      Version: "0.2.2"
+      Version: "0.4.0"
   S3BucketName:
     type: "s3_bucket"
     tags:
-      Name: dev-central
-      Version: 0.2.1
+      Name: "dev-central"
+      Version: "0.4.0"
   MgtCidr:
     type: "vpc_cidr"
     tags:

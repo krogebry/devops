@@ -9,7 +9,7 @@ params:
     type: "s3_bucket"
     tags:
       Name: "dev-central"
-      Version: "0.2.1"
+      Version: "0.4.0"
 
   # MgtCidr: "172.31.0.0/16"
   MgtCidr:

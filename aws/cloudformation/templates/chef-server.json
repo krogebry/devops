@@ -104,6 +104,11 @@
           "ToPort": "443",
           "FromPort": "443",
           "IpProtocol": "tcp"
+        },{
+          "CidrIp": "0.0.0.0/0",
+          "ToPort": "443",
+          "FromPort": "443",
+          "IpProtocol": "tcp"
         }]
       }
     },
@@ -252,6 +257,9 @@
           "Key": "Version",
           "Value": { "Ref": "StackVersion" }
         },{
+          "Key": "Name",
+          "Value": "ChefServer"
+        },{
           "Key": "Role",
           "Value": "External"
         }],
@@ -284,6 +292,9 @@
         "Tags": [{
           "Key": "Version",
           "Value": { "Ref": "StackVersion" }
+        },{
+          "Key": "Name",
+          "Value": "ChefServer"
         },{
           "Key": "Role",
           "Value": "Internal"

@@ -105,19 +105,19 @@
       "Properties": {
         "Tags": [{
           "Key": "Application",
-          "Value": "GoCD"
+          "Value": "ESCluster"
         }],
         "VpcId": { "Ref": "VpcId" },
         "GroupDescription": "Enable HTTP access and SSH access",
         "SecurityGroupIngress": [{
-          "ToPort": "8081",
-          "FromPort": "8080",
+          "ToPort": "9300",
+          "FromPort": "9200",
           "IpProtocol": "tcp",
           "SourceSecurityGroupId": { "Ref": "ELBSG" }
         },{
           "CidrIp": { "Ref": "MgtCidr" },
-          "ToPort": "8081",
-          "FromPort": "8080",
+          "ToPort": "9300",
+          "FromPort": "9200",
           "IpProtocol": "tcp"
         }, {
           "CidrIp": { "Ref": "MgtCidr" },
@@ -133,30 +133,25 @@
       "Properties": {
         "Tags": [{
           "Key": "Application",
-          "Value": "GoCD"
+          "Value": "ESCluster"
         }],
         "GroupDescription": "Enable HTTP access on port 80",
         "VpcId": { "Ref": "VpcId" },
         "SecurityGroupIngress": [{
           "CidrIp": { "Ref": "MgtCidr" },
-          "ToPort": "80",
-          "FromPort": "80",
+          "ToPort": "9300",
+          "FromPort": "9200",
           "IpProtocol": "tcp"
         },{
           "CidrIp": "0.0.0.0/0",
-          "ToPort": "80",
-          "FromPort": "80",
-          "IpProtocol": "tcp"
-        },{
-          "CidrIp": "0.0.0.0/0",
-          "ToPort": "443",
-          "FromPort": "443",
+          "ToPort": "9300",
+          "FromPort": "9200",
           "IpProtocol": "tcp"
         }]
       }
     },
 
-    "GoCD": {
+    "ESCluster": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
         "MinSize": "1",
@@ -165,7 +160,7 @@
         "AvailabilityZones": { "Ref": "Zones" },
         "VPCZoneIdentifier": { "Ref": "Subnets" },
         "LoadBalancerNames": [{ "Ref": "InternalELB" },{ "Ref": "ExternalELB"}],
-        "LaunchConfigurationName": { "Ref": "GoCDLC" }
+        "LaunchConfigurationName": { "Ref": "ESClusterLC" }
       },
       "CreationPolicy": {
         "ResourceSignal": {
@@ -182,10 +177,10 @@
       }
     },
 
-    "GoCDLC": {
+    "ESClusterLC": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Metadata": {
-        "Comment": "Bootstrap a new GoCD instance.",
+        "Comment": "Bootstrap a new ESCluster instance.",
 				"AWS::CloudFormation::Authentication":{
         	"S3AccessCreds":{
           	"type":"S3",
@@ -232,7 +227,7 @@
                 "owner": "root",
                 "group": "root",
                 "content": { "Fn::Join": ["\n", [
-                  "{ \"run_list\": [ \"role[gocd-server]\" ] }"
+                  "{ \"run_list\": [ \"role[es-cluster]\" ] }"
                 ]]}
               },
 
@@ -254,7 +249,7 @@
                   "path=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init\n",
                   "action=/opt/aws/bin/cfn-init -v ",
                   " --stack ", { "Ref": "AWS::StackName" },
-                  " --resource GoCDLC ",
+                  " --resource ESClusterLC ",
                   " --region ", { "Ref": "AWS::Region" }, "\n",
                   "runas=root\n"
                 ]]}
@@ -279,7 +274,7 @@
 
           "/opt/aws/bin/cfn-init -v ",
           " --stack ", { "Ref": "AWS::StackName" },
-          " --resource GoCDLC ",
+          " --resource ESClusterLC ",
           " --region ", { "Ref": "AWS::Region" }, "\n",
 
           "mkdir -p /var/log/chef \n",
@@ -288,7 +283,7 @@
 
           "/opt/aws/bin/cfn-signal -e $? ",
           " --stack ", { "Ref": "AWS::StackName" },
-          " --resource GoCD ",
+          " --resource ESCluster ",
           " --region ", { "Ref": "AWS::Region" }, "\n"
         ]]}},
         "InstanceType": "c3.large",
@@ -306,7 +301,7 @@
           "Value": { "Ref": "StackVersion" }
         },{
           "Key": "Name",
-          "Value": "GoCD"
+          "Value": "ESCluster"
         },{
           "Key": "Role",
           "Value": "External"
@@ -315,15 +310,15 @@
         "CrossZone": "true",
         "Listeners": [{
           "Protocol": "HTTP",
-          "InstancePort": "8080",
-          "LoadBalancerPort": "80"
+          "InstancePort": "9200",
+          "LoadBalancerPort": "9200"
         },{
           "Protocol": "TCP",
-          "InstancePort": "8081",
-          "LoadBalancerPort": "443"
+          "InstancePort": "9300",
+          "LoadBalancerPort": "9300"
         }],
         "HealthCheck": {
-          "Target": "TCP:8080",
+          "Target": "HTTP:9200",
           "Timeout": "2",
           "Interval": "5",
           "HealthyThreshold": "3",
@@ -341,25 +336,25 @@
           "Value": { "Ref": "StackVersion" }
         },{
           "Key": "Name",
-          "Value": "GoCD"
+          "Value": "ESCluster"
         },{
           "Key": "Role",
-          "Value": "External"
+          "Value": "Internal"
         }],
         "Scheme": "internal",
         "Subnets": { "Ref": "Subnets" },
         "CrossZone": "true",
         "Listeners": [{
           "Protocol": "HTTP",
-          "InstancePort": "8080",
-          "LoadBalancerPort": "80"
+          "InstancePort": "9200",
+          "LoadBalancerPort": "9200"
         },{
           "Protocol": "TCP",
-          "InstancePort": "8081",
-          "LoadBalancerPort": "443"
+          "InstancePort": "9300",
+          "LoadBalancerPort": "9300"
         }],
         "HealthCheck": {
-          "Target": "TCP:8080",
+          "Target": "HTTP:9200",
           "Timeout": "2",
           "Interval": "5",
           "HealthyThreshold": "3",
