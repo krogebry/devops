@@ -14,6 +14,11 @@
       "Description": "Role profile ARN"
     },
 
+    "InstanceType": {
+      "Type": "String",
+      "Description": "Size of instance"
+    },
+
     "DevCentralSNSTopicARN": {
       "Type": "String",
       "Description": "ARN for the DC SNS topic."
@@ -136,12 +141,12 @@
       },
       "CreationPolicy": {
         "ResourceSignal": {
-          "Timeout": "PT15M"
+          "Timeout": "PT30M"
         }
       },
       "UpdatePolicy": {
         "AutoScalingRollingUpdate": {
-          "PauseTime": "PT15M",
+          "PauseTime": "PT30M",
           "MaxBatchSize": "1",
           "WaitOnResourceSignals": "true",
           "MinInstancesInService": "1"
@@ -234,15 +239,16 @@
           "chef-server-ctl user-create bkroger Bryan Kroger bkroger@thoughtworks.com '",{ "Ref": "Password" },"' --filename /etc/chef/bkroger.pem \n",
           "chef-server-ctl org-create devops 'DevOps Central' --association_user bkroger --filename /etc/chef/devops-validator.pem \n",
 
-          "aws s3 cp /etc/chef/bkroger.pem s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/ \n",
-          "aws s3 cp /etc/chef/devops-validator.pem s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/ \n",
+          "pip install --upgrade awscli \n",
+          "aws s3 cp /etc/chef/bkroger.pem s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/ --region ",{ "Ref": "AWS::Region" }, " \n",
+          "aws s3 cp /etc/chef/devops-validator.pem s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/ --region ", { "Ref": "AWS::Region" }, " \n",
 
           "/opt/aws/bin/cfn-signal -e $? ",
           " --stack ", { "Ref": "AWS::StackName" },
           " --resource ChefServerASG ",
           " --region ", { "Ref": "AWS::Region" }, "\n"
         ]]}},
-        "InstanceType": "c3.large",
+        "InstanceType": { "Ref": "InstanceType" },
         "SecurityGroups": [{ "Ref": "InstanceSG" }],
 
         "IamInstanceProfile": { "Ref": "RootInstanceProfile" },

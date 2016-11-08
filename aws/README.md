@@ -17,25 +17,27 @@ AWS things.
 
 Launch the stacks.
 
+*~/.aws/PROFILE*
+
+```bash
+export AWS_PROFILE="PROFILE"
+export INF_VERSION="0.5.0" 
+export CHEF_VERSION="0.5.4" 
+export AWS_REGION="us-east-2"
+```
+
 ## Create the infrastructure
 
 ```bash
 source ~/.aws/TARGET
 rake cf:flush_cache
-rake cf:launch['inf-use1, Inf, 0.2.0']
+AWS_REGION="us-east-2" rake cf:launch['inf, Inf, 0.6.0']
 ```
 
-## Update profiles to reflect Inf version
+## Create the chef server
 
 ```bash
-vi cloudformation/profiles/chef-server-use1.yml
-vi cloudformation/profiles/gocd-use1.yml
-```
-
-Update *S3BucketName - Version* to the version of the Inf stack.
-
-```bash
-rake cf:launch['chef-server-use1, Chef-Server, 0.2.0']
+INF_VERSION="0.6.0" AWS_REGION="us-east-2" rake cf:launch['inf, Inf, 0.6.0']
 ```
 
 ## Bootstrap chef server
@@ -43,9 +45,9 @@ rake cf:launch['chef-server-use1, Chef-Server, 0.2.0']
 First, update the knife config
 
 ```bash
-rake cf:mk_chef_config['0.4.0, us-east-1']
-unlink knife.rb
-ln -s knife-0.4.0.rb knife.rb
+AWS_PROFILE='sysco-adlm' rake cf:mk_chef_config['0.5.4, 0.5.0, us-east-2']
+unlink ~/.chef/knife.rb
+ln -s ~/.chef/knife-0.4.0.rb ~/.chef/knife.rb
 knife node list
 ```
 
