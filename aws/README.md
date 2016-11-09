@@ -24,20 +24,21 @@ export AWS_PROFILE="PROFILE"
 export INF_VERSION="0.5.0" 
 export CHEF_VERSION="0.5.4" 
 export AWS_REGION="us-east-2"
+
+source ~/.aws/PROFILE
 ```
 
 ## Create the infrastructure
 
 ```bash
-source ~/.aws/TARGET
 rake cf:flush_cache
-AWS_REGION="us-east-2" rake cf:launch['inf, Inf, 0.6.0']
+rake cf:launch['inf, Inf, 0.6.2']
 ```
 
 ## Create the chef server
 
 ```bash
-INF_VERSION="0.6.0" AWS_REGION="us-east-2" rake cf:launch['inf, Inf, 0.6.0']
+rake cf:launch['chef-server, ChefServer, 0.6.2']
 ```
 
 ## Bootstrap chef server
@@ -45,7 +46,7 @@ INF_VERSION="0.6.0" AWS_REGION="us-east-2" rake cf:launch['inf, Inf, 0.6.0']
 First, update the knife config
 
 ```bash
-AWS_PROFILE='sysco-adlm' rake cf:mk_chef_config['0.5.4, 0.5.0, us-east-2']
+rake cf:mk_chef_config['0.5.4, 0.5.0, us-east-2']
 unlink ~/.chef/knife.rb
 ln -s ~/.chef/knife-0.4.0.rb ~/.chef/knife.rb
 knife node list
@@ -58,10 +59,15 @@ cd ../chef
 rake chef:bootstrap
 ```
 
-## Now create the GoCD service
+## Now create the services
 
 ```bash
-rake cf:launch['gocd-use1, GoCD, 0.2.0']
+rake cf:launch['gocd, GoCD, 0.6.2']
+rake cf:launch['gocd-agents, GoCDAgents, 0.6.2']
+rake cf:launch['es-cluster, ESCluster, 0.6.2']
+rake cf:launch['kibana, Kibana, 0.6.2']
+rake cf:launch['vault, Vault, 0.6.2']
+rake cf:launch['sensu, Sensu, 0.6.2']
 ```
 
 ## Security

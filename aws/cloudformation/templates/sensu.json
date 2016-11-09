@@ -14,6 +14,11 @@
       "Description": "Role profile ARN"
     },
 
+    "DevCentralSNSTopicARN": {
+      "Type": "String",
+      "Description": "ARN for the DC SNS topic."
+    },
+
     "ChefServerURL": {
       "Type": "String",
       "Description": "URL for the chef server."
@@ -110,14 +115,14 @@
         "VpcId": { "Ref": "VpcId" },
         "GroupDescription": "Enable HTTP access and SSH access",
         "SecurityGroupIngress": [{
-          "ToPort": "80",
-          "FromPort": "80",
+          "ToPort": "8081",
+          "FromPort": "8080",
           "IpProtocol": "tcp",
           "SourceSecurityGroupId": { "Ref": "ELBSG" }
         },{
           "CidrIp": { "Ref": "MgtCidr" },
-          "ToPort": "443",
-          "FromPort": "443",
+          "ToPort": "8081",
+          "FromPort": "8080",
           "IpProtocol": "tcp"
         }, {
           "CidrIp": { "Ref": "MgtCidr" },
@@ -165,7 +170,16 @@
         "AvailabilityZones": { "Ref": "Zones" },
         "VPCZoneIdentifier": { "Ref": "Subnets" },
         "LoadBalancerNames": [{ "Ref": "InternalELB" },{ "Ref": "ExternalELB"}],
-        "LaunchConfigurationName": { "Ref": "SensuLC" }
+        "LaunchConfigurationName": { "Ref": "SensuLC" },
+ 				"NotificationConfigurations": [{
+          "TopicARN" : { "Ref" : "DevCentralSNSTopicARN" },
+          "NotificationTypes" : [
+            "autoscaling:EC2_INSTANCE_LAUNCH",
+            "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+            "autoscaling:EC2_INSTANCE_TERMINATE",
+            "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
+          ]
+        }]
       },
       "CreationPolicy": {
         "ResourceSignal": {
@@ -232,7 +246,7 @@
                 "owner": "root",
                 "group": "root",
                 "content": { "Fn::Join": ["\n", [
-                  "{ \"run_list\": [ \"role[kibana]\" ] }"
+                  "{ \"run_list\": [ \"role[sensu-server]\" ] }"
                 ]]}
               },
 
@@ -315,15 +329,15 @@
         "CrossZone": "true",
         "Listeners": [{
           "Protocol": "HTTP",
-          "InstancePort": "80",
+          "InstancePort": "8080",
           "LoadBalancerPort": "80"
         },{
           "Protocol": "TCP",
-          "InstancePort": "443",
+          "InstancePort": "8081",
           "LoadBalancerPort": "443"
         }],
         "HealthCheck": {
-          "Target": "HTTP:80",
+          "Target": "TCP:8080",
           "Timeout": "2",
           "Interval": "5",
           "HealthyThreshold": "3",
@@ -344,22 +358,22 @@
           "Value": "Sensu"
         },{
           "Key": "Role",
-          "Value": "Internal"
+          "Value": "External"
         }],
         "Scheme": "internal",
         "Subnets": { "Ref": "Subnets" },
         "CrossZone": "true",
         "Listeners": [{
           "Protocol": "HTTP",
-          "InstancePort": "80",
+          "InstancePort": "8080",
           "LoadBalancerPort": "80"
         },{
           "Protocol": "TCP",
-          "InstancePort": "443",
+          "InstancePort": "8081",
           "LoadBalancerPort": "443"
         }],
         "HealthCheck": {
-          "Target": "HTTP:80",
+          "Target": "TCP:8080",
           "Timeout": "2",
           "Interval": "5",
           "HealthyThreshold": "3",

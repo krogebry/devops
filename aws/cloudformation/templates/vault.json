@@ -14,11 +14,6 @@
       "Description": "Role profile ARN"
     },
 
-    "DevCentralSNSTopicARN": {
-      "Type": "String",
-      "Description": "ARN for the DC SNS topic."
-    },
-
     "ChefServerURL": {
       "Type": "String",
       "Description": "URL for the chef server."
@@ -110,11 +105,21 @@
       "Properties": {
         "Tags": [{
           "Key": "Application",
-          "Value": "GoCDAgents"
+          "Value": "Kibana"
         }],
         "VpcId": { "Ref": "VpcId" },
         "GroupDescription": "Enable HTTP access and SSH access",
         "SecurityGroupIngress": [{
+          "ToPort": "80",
+          "FromPort": "80",
+          "IpProtocol": "tcp",
+          "SourceSecurityGroupId": { "Ref": "ELBSG" }
+        },{
+          "CidrIp": { "Ref": "MgtCidr" },
+          "ToPort": "443",
+          "FromPort": "443",
+          "IpProtocol": "tcp"
+        }, {
           "CidrIp": { "Ref": "MgtCidr" },
           "ToPort": "22",
           "FromPort": "22",
@@ -123,7 +128,35 @@
       }
     },
 
-    "GoCDAgents": {
+ 		"ELBSG": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "Tags": [{
+          "Key": "Application",
+          "Value": "Kibana"
+        }],
+        "GroupDescription": "Enable HTTP access on port 80",
+        "VpcId": { "Ref": "VpcId" },
+        "SecurityGroupIngress": [{
+          "CidrIp": { "Ref": "MgtCidr" },
+          "ToPort": "80",
+          "FromPort": "80",
+          "IpProtocol": "tcp"
+        },{
+          "CidrIp": "0.0.0.0/0",
+          "ToPort": "80",
+          "FromPort": "80",
+          "IpProtocol": "tcp"
+        },{
+          "CidrIp": "0.0.0.0/0",
+          "ToPort": "443",
+          "FromPort": "443",
+          "IpProtocol": "tcp"
+        }]
+      }
+    },
+
+    "Kibana": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
         "MinSize": "1",
@@ -131,16 +164,8 @@
         "DesiredCapacity": "1",
         "AvailabilityZones": { "Ref": "Zones" },
         "VPCZoneIdentifier": { "Ref": "Subnets" },
-        "LaunchConfigurationName": { "Ref": "GoCDAgentsLC" },
- 				"NotificationConfigurations": [{
-          "TopicARN" : { "Ref" : "DevCentralSNSTopicARN" },
-          "NotificationTypes" : [
-            "autoscaling:EC2_INSTANCE_LAUNCH",
-            "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
-            "autoscaling:EC2_INSTANCE_TERMINATE",
-            "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
-          ]
-        }]
+        "LoadBalancerNames": [{ "Ref": "InternalELB" },{ "Ref": "ExternalELB"}],
+        "LaunchConfigurationName": { "Ref": "KibanaLC" }
       },
       "CreationPolicy": {
         "ResourceSignal": {
@@ -157,10 +182,10 @@
       }
     },
 
-    "GoCDAgentsLC": {
+    "KibanaLC": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Metadata": {
-        "Comment": "Bootstrap a new GoCD agent instance.",
+        "Comment": "Bootstrap a new Kibana instance.",
 				"AWS::CloudFormation::Authentication":{
         	"S3AccessCreds":{
           	"type":"S3",
@@ -207,7 +232,7 @@
                 "owner": "root",
                 "group": "root",
                 "content": { "Fn::Join": ["\n", [
-                  "{ \"run_list\": [ \"role[gocd-agent]\" ] }"
+                  "{ \"run_list\": [ \"role[vault]\" ] }"
                 ]]}
               },
 
@@ -229,7 +254,7 @@
                   "path=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init\n",
                   "action=/opt/aws/bin/cfn-init -v ",
                   " --stack ", { "Ref": "AWS::StackName" },
-                  " --resource GoCDAgentsLC ",
+                  " --resource KibanaLC ",
                   " --region ", { "Ref": "AWS::Region" }, "\n",
                   "runas=root\n"
                 ]]}
@@ -254,7 +279,7 @@
 
           "/opt/aws/bin/cfn-init -v ",
           " --stack ", { "Ref": "AWS::StackName" },
-          " --resource GoCDAgentsLC ",
+          " --resource KibanaLC ",
           " --region ", { "Ref": "AWS::Region" }, "\n",
 
           "mkdir -p /var/log/chef \n",
@@ -263,13 +288,84 @@
 
           "/opt/aws/bin/cfn-signal -e $? ",
           " --stack ", { "Ref": "AWS::StackName" },
-          " --resource GoCDAgents ",
+          " --resource Kibana ",
           " --region ", { "Ref": "AWS::Region" }, "\n"
         ]]}},
         "InstanceType": "c3.large",
         "SecurityGroups": [{ "Ref": "InstanceSG" }],
         "IamInstanceProfile": { "Ref": "RootInstanceProfile" },
         "AssociatePublicIpAddress": "true"
+      }
+    },
+
+    "ExternalELB": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+				"Tags": [{
+          "Key": "Version",
+          "Value": { "Ref": "StackVersion" }
+        },{
+          "Key": "Name",
+          "Value": "Kibana"
+        },{
+          "Key": "Role",
+          "Value": "External"
+        }],
+        "Subnets": { "Ref": "Subnets" },
+        "CrossZone": "true",
+        "Listeners": [{
+          "Protocol": "HTTP",
+          "InstancePort": "80",
+          "LoadBalancerPort": "80"
+        },{
+          "Protocol": "TCP",
+          "InstancePort": "443",
+          "LoadBalancerPort": "443"
+        }],
+        "HealthCheck": {
+          "Target": "HTTP:80/index.html",
+          "Timeout": "2",
+          "Interval": "5",
+          "HealthyThreshold": "3",
+          "UnhealthyThreshold": "5"
+        },
+        "SecurityGroups": [{ "Ref": "ELBSG" }]
+      }
+    },
+
+    "InternalELB": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+				"Tags": [{
+          "Key": "Version",
+          "Value": { "Ref": "StackVersion" }
+        },{
+          "Key": "Name",
+          "Value": "Kibana"
+        },{
+          "Key": "Role",
+          "Value": "Internal"
+        }],
+        "Scheme": "internal",
+        "Subnets": { "Ref": "Subnets" },
+        "CrossZone": "true",
+        "Listeners": [{
+          "Protocol": "HTTP",
+          "InstancePort": "80",
+          "LoadBalancerPort": "80"
+        },{
+          "Protocol": "TCP",
+          "InstancePort": "443",
+          "LoadBalancerPort": "443"
+        }],
+        "HealthCheck": {
+          "Target": "HTTP:80/index.html",
+          "Timeout": "2",
+          "Interval": "5",
+          "HealthyThreshold": "3",
+          "UnhealthyThreshold": "5"
+        },
+        "SecurityGroups": [{ "Ref": "ELBSG" }]
       }
     }
 

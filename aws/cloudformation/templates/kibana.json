@@ -323,7 +323,7 @@
           "LoadBalancerPort": "443"
         }],
         "HealthCheck": {
-          "Target": "HTTP:80",
+          "Target": "HTTP:80/index.html",
           "Timeout": "2",
           "Interval": "5",
           "HealthyThreshold": "3",
@@ -359,7 +359,7 @@
           "LoadBalancerPort": "443"
         }],
         "HealthCheck": {
-          "Target": "HTTP:80",
+          "Target": "HTTP:80/index.html",
           "Timeout": "2",
           "Interval": "5",
           "HealthyThreshold": "3",

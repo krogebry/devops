@@ -38,6 +38,7 @@ namespace :chef do
       #system(cmd_load_role)
     #end
     cmd_upload_cookbooks = format('knife cookbook upload devops')
+    system(cmd_upload_cookbooks)
   end
 
 end
