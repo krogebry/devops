@@ -1,47 +1,43 @@
 ---
-name: "ChefServer"
+name: "GoCD"
 owner: "Bryan Kroger (bkroger@thoughtworks.com)"
-region: "us-east-1"
-template: "chef-server"
-description: "ChefServer service."
+template: "gocd"
+description: "GoCD service."
 params:
+  ChefEnvName: "management"
+  ChefServerURL:
+    type: "elb_dns"
+    tags:
+      Role: "Internal"
+      Version: "ENV:CHEF_VERSION"
   S3BucketName:
     type: "s3_bucket"
     tags:
       Name: "dev-central"
-      Version: "0.4.0"
-
-  # MgtCidr: "172.31.0.0/16"
-  MgtCidr:
+      Version: "ENV:INF_VERSION"
+  MgtCidr: 
     type: "vpc_cidr"
     tags:
       Name: "main"
-
-  # ImageId: "ami-256c1d32"
-  ImageId:
-    type: "ami"
-    tags:
-      Name: "devops"
-      Version: "0.1.0"
-
   DevCentralSNSTopicARN:
     type: "sns_topic_arn"
     tags:
       Name: "DevCentralSNSTopic"
+  ImageId: 
+    type: "ami"
+    tags:
+      Name: "devops"
+      Version: "0.1.0"
   KeyName: "krogebry-0"
-  Password:
-    type: "password"
-    tags: null
-  VpcId:
+  VpcId: 
     type: "vpc"
     tags:
       Name: "main"
   Zones:
     type: "zones"
-    tags: null
-    zones:
-      - "us-east-1d"
-      - "us-east-1b"
+    tags:
+      - Name: "private"
+      - Name: "public"
   Subnets:
     type: "subnets"
     tags:

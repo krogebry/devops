@@ -14,6 +14,13 @@ class ParamsProc
   def get_filters( a )
     ro = []
     a.each do |k,v|
+      Log.debug(format('%s - %s', k, v))
+      if v.match( /^ENV:/ )
+        Log.debug(format('Doing sub on: %s', k))
+        (env, var_name) = v.split( ':' )
+        v = ENV[var_name]
+      end
+
       ro.push({
         name: format('tag:%s', k),
         values: [v]
@@ -24,7 +31,7 @@ class ParamsProc
 
   def initialize( yaml )
     creds = Aws::SharedCredentials.new()
-    @cf_client = Aws::CloudFormation::Client.new(region: yaml['region'], credentials: creds)
+    #@cf_client = Aws::CloudFormation::Client.new(region: yaml['region'], credentials: creds)
     @s3_client = Aws::S3::Client.new(region: yaml['region'], credentials: creds)
     @ec2_client = Aws::EC2::Client.new(region: yaml['region'], credentials: creds)
     @elb_client = Aws::ElasticLoadBalancing::Client.new(region: yaml['region'], credentials: creds)
@@ -73,6 +80,12 @@ class ParamsProc
     vpcs = cached_json( cache_key ) do 
       @ec2_client.describe_vpcs({ filters: get_filters( v['tags'] )}).data.to_h.to_json
     end
+
+    if(vpcs['vpcs'].size == 0)
+      Log.fatal(format('Unable to find VPC!'))
+      exit
+    end
+
     v['value'] = vpcs['vpcs'].first['cidr_block']
   end
 
@@ -82,6 +95,12 @@ class ParamsProc
     objects = cached_json( cache_key ) do 
       @ec2_client.describe_images({ filters: get_filters( v['tags'] )}).data.to_h.to_json
     end
+
+    if(objects['images'].size == 0)
+      Log.fatal(format('Unable to find image!'))
+      exit
+    end
+
     v['value'] = objects['images'].first['image_id']
     v
   end
@@ -112,11 +131,25 @@ class ParamsProc
   def elb_dns( v )
     (elbs, elb_tags) = get_elbs_with_tags()
 
-    ## Find the number of targets that have the same number of match tags as were past from the params yaml data.
-    elb_target = elb_tags['tag_descriptions'].select{|elb| elb['tags'].select{|t| v['tags'].select{|k,v| t['key'] == k && t['value'] == v}.size == 1 }.compact.size == v['tags'].size }.first
-    #pp elb_target
+    tags = {}
+    v['tags'].each do |k,v|
+      if v.match( /^ENV:/ )
+        Log.debug(format('Doing sub on: %s', k))
+        (env, var_name) = v.split( ':' )
+        v = ENV[var_name]
+      end
+      tags[k] = v
+    end
+    pp tags
 
-    #v['value'] = elb_target['load_balancer_name']
+    ## Find the number of targets that have the same number of match tags as were past from the params yaml data.
+    elb_target = elb_tags['tag_descriptions'].select{|elb| elb['tags'].select{|t| r = tags.select{|k,v| t['key'] == k && t['value'] == v }.size == 1 }.compact.size == tags.size }.first
+
+    if(elb_target == nil)
+      Log.fatal(format('Unable to find ELB DNS!'))
+      exit
+    end
+
     v['value'] = elbs['load_balancer_descriptions'].select{|elb| elb['load_balancer_name'] == elb_target['load_balancer_name'] }.first['dns_name']
     v
   end
@@ -133,7 +166,9 @@ class ParamsProc
   end
 
   def s3_bucket( v )
-    bucket_name = format("%s-%s", v['tags']['Name'], v['tags']['Version'])
+    filters = get_filters( v['tags'] )
+
+    bucket_name = format("%s-%s", filters.select{|f| f[:name] == 'tag:Name' }.first[:values][0], filters.select{|f| f[:name] == 'tag:Version' }.first[:values][0])
     Log.debug(format('Bucket: %s', bucket_name))
 
     cache_key = format('s3_buckets-%s-%s', @config['region'], ENV['AWS_PROFILE'])
@@ -153,29 +188,47 @@ class ParamsProc
     v
   end
 
-  def zones( v )
-    v['value'] = v['zones'].join(',')
-  end
-
   def sns_topic_arn( v )
-    sns_topics = @sns_client.list_topics()
+    cache_key = format('sns_topics-%s-%s', @config['region'], ENV['AWS_PROFILE'])
+    sns_topics = cached_json( cache_key ) do
+      @sns_client.list_topics().data.to_h.to_json
+    end
     Log.debug(format('Looking for: %s', v['tags']['Name']))
-    topic = sns_topics.topics.select{|t| t.topic_arn.match( /#{v['tags']['Name']}/ )}.first
+
+    topic = sns_topics['topics'].select{|t| t['topic_arn'].match( /#{v['tags']['Name']}/ )}.first
     if topic == nil
       Log.fatal(format('Unable to find SNS topic: %s' % v['tags']['Name']))
       exit
     end
-    v['value'] = topic.topic_arn
+
+    v['value'] = topic['topic_arn']
+    v
+  end
+
+  def zones( v )
+    zones = []
+    v['tags'].each do |tag|
+      cache_key = format('subnets-%s-%s-%s', @config['region'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( tag.to_s ))
+      subnet = cached_json( cache_key ) do
+        @ec2_client.describe_subnets({ filters: get_filters( tag )}).data.to_h.to_json
+      end
+      zones.push( subnet['subnets'].first['availability_zone'] )
+    end
+    v['value'] = zones.join(',')
     v
   end
 
   def subnets( v )
-    v['tags'].each do |t|
-      subnet = @ec2_client.describe_subnets({ filters: get_filters( t )})
-      v['value'] ||= []
-      v['value'].push(subnet.subnets.first['subnet_id'])
+    subnets = []
+    v['tags'].each do |tag|
+      cache_key = format('subnets-%s-%s-%s', @config['region'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( tag.to_s ))
+      subnet = cached_json( cache_key ) do
+        @ec2_client.describe_subnets({ filters: get_filters( tag )})
+      end
+      subnets.push( subnet['subnets'].first['subnet_id'] )
     end
-    v['value'] = v['value'].join(',')
+    v['value'] = subnets.join(',')
+    v
   end
 
 end

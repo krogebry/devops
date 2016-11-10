@@ -14,6 +14,11 @@
       "Description": "Role profile ARN"
     },
 
+    "InstanceType": {
+      "Type": "String",
+      "Description": "Role profile ARN"
+    },
+
     "ChefServerURL": {
       "Type": "String",
       "Description": "URL for the chef server."
@@ -277,16 +282,17 @@
           " --resource ESClusterLC ",
           " --region ", { "Ref": "AWS::Region" }, "\n",
 
-          "mkdir -p /var/log/chef \n",
-          "aws s3 cp s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/devops-validator.pem /etc/chef/validation.pem \n",
-          "chef-client -j /etc/chef/dna.json -E ",{ "Ref": "ChefEnvName" },"\n",
+          //"mkdir -p /var/log/chef \n",
+          "pip install --upgrade awscli \n",
+          "aws s3 cp s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/devops-validator.pem /etc/chef/validation.pem --region ", { "Ref": "AWS::Region" }, " \n",
+          "chef-client -j /etc/chef/dna.json -E ",{ "Ref": "ChefEnvName" }," \n",
 
           "/opt/aws/bin/cfn-signal -e $? ",
           " --stack ", { "Ref": "AWS::StackName" },
           " --resource ESCluster ",
           " --region ", { "Ref": "AWS::Region" }, "\n"
         ]]}},
-        "InstanceType": "c3.large",
+        "InstanceType": { "Ref": "InstanceType" },
         "SecurityGroups": [{ "Ref": "InstanceSG" }],
         "IamInstanceProfile": { "Ref": "RootInstanceProfile" },
         "AssociatePublicIpAddress": "true"
@@ -318,7 +324,7 @@
           "LoadBalancerPort": "9300"
         }],
         "HealthCheck": {
-          "Target": "HTTP:9200",
+          "Target": "HTTP:9200/_nodes",
           "Timeout": "2",
           "Interval": "5",
           "HealthyThreshold": "3",
@@ -354,7 +360,7 @@
           "LoadBalancerPort": "9300"
         }],
         "HealthCheck": {
-          "Target": "HTTP:9200",
+          "Target": "HTTP:9200/_nodes",
           "Timeout": "2",
           "Interval": "5",
           "HealthyThreshold": "3",

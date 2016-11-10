@@ -14,6 +14,11 @@
       "Description": "Role profile ARN"
     },
 
+    "DevCentralSNSTopicARN": {
+      "Type": "String",
+      "Description": "ARN for the DC SNS topic."
+    },
+
     "ChefServerURL": {
       "Type": "String",
       "Description": "URL for the chef server."
@@ -165,7 +170,16 @@
         "AvailabilityZones": { "Ref": "Zones" },
         "VPCZoneIdentifier": { "Ref": "Subnets" },
         "LoadBalancerNames": [{ "Ref": "InternalELB" },{ "Ref": "ExternalELB"}],
-        "LaunchConfigurationName": { "Ref": "GoCDLC" }
+        "LaunchConfigurationName": { "Ref": "GoCDLC" },
+ 				"NotificationConfigurations": [{
+          "TopicARN" : { "Ref" : "DevCentralSNSTopicARN" },
+          "NotificationTypes" : [
+            "autoscaling:EC2_INSTANCE_LAUNCH",
+            "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+            "autoscaling:EC2_INSTANCE_TERMINATE",
+            "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
+          ]
+        }]
       },
       "CreationPolicy": {
         "ResourceSignal": {

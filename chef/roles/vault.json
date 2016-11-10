@@ -1,5 +1,5 @@
 {
-  "name": "devops-base",
+  "name": "vault",
   "description": "",
   "json_class": "Chef::Role",
   "default_attributes": {
@@ -9,10 +9,7 @@
 
   },
   "chef_type": "role",
-  "run_list": [
-    "recipe[chef-client::default]",
-    "recipe[elkstack::agent]"
-  ],
+  "run_list": [ "role[devops-base]", "recipe[hashicorp-vault::default]" ],
   "env_run_lists": {
 
   }

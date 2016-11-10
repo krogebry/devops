@@ -1,5 +1,5 @@
 {
-  "name": "kibana",
+  "name": "rancher-host-capacity",
   "description": "",
   "json_class": "Chef::Role",
   "default_attributes": {
@@ -11,10 +11,7 @@
   "chef_type": "role",
   "run_list": [
     "role[devops-base]", 
-    "recipe[devops::kibana]", 
-    "recipe[chef_nginx]", 
-    "recipe[kibana::nginx]", 
-    "recipe[elkstack::kibana]"
+    "recipe[devops::rancher-host-capacity]"
   ],
   "env_run_lists": {
 

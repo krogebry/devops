@@ -1,12 +1,21 @@
 ##
 # Kibana overrides.
 ##
-require 'aws-sdk'
+#gem_package 'aws-sdk'
+execute "install gem"
+  command "/opt/chef/embedded/bin/gem install aws-sdk"
+end
+
+#ruby_block "require gem" do
+  #code <<EOF
+    require 'aws-sdk'
+#EOF
+#end
 
 ## Disable the default site.
 node.default['nginx']['default_site_enabled'] = false
 
-elb_client = Aws::ElasticLoadBalancing::Client.new(region: yaml['region'], credentials: creds)
+elb_client = Aws::ElasticLoadBalancing::Client.new()
 
 elbs = elb_client.describe_load_balancers().data.to_h.to_json
 elb_names = []

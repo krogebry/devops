@@ -10,7 +10,9 @@
   },
   "chef_type": "role",
   "run_list": [
-    "role[devops-base]", "recipe[devops::es-cluster]", "recipe[elasticsearch]"
+    "role[devops-base]", 
+    "recipe[elkstack::elasticsearch]",
+    "recipe[devops::es-cluster]"
   ],
   "env_run_lists": {
 

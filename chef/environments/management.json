@@ -8,9 +8,17 @@
   "chef_type": "environment",
   "default_attributes": {
     "devops": {
-      "inf_version": "0.5.0",
-      "es_cluster_version": "0.5.0",
-      "chef_server_version": "0.5.0"
+      "rancher": {
+        "db": {
+          "type": "mysql",
+          "name": "cattle",
+          "port": 3306,
+          "hostname": "blah"
+        }
+      },
+      "inf_version": "0.6.10",
+      "es_cluster_version": "0.6.10",
+      "chef_server_version": "0.6.10"
     }
   },
   "override_attributes": {

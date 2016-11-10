@@ -1,0 +1,33 @@
+---
+name: "Bootstrap"
+owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+#region: "us-east-1"
+template: "bootstrap"
+description: "Bootstrap"
+params:
+
+  # MgtCidr: "172.31.0.0/16"
+  MgtCidr:
+    type: "vpc_cidr"
+    tags:
+      Name: "main"
+
+  ## us-east-2 amzn-ami-hvm-2016.09.0.20160923-x86_64-ebs
+  ImageId: "ami-9cca91f9"
+
+  KeyName: "krogebry-0"
+
+  VpcId:
+    type: "vpc"
+    tags:
+      Name: "main"
+  Zones:
+    type: "zones"
+    tags: 
+      - Name: "private"
+      - Name: "public"
+  Subnets:
+    type: "subnets"
+    tags:
+      - Name: "private"
+      - Name: "public"

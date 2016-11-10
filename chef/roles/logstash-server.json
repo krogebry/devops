@@ -1,5 +1,5 @@
 {
-  "name": "kibana",
+  "name": "logstash-server",
   "description": "",
   "json_class": "Chef::Role",
   "default_attributes": {
@@ -10,11 +10,8 @@
   },
   "chef_type": "role",
   "run_list": [
-    "role[devops-base]", 
-    "recipe[devops::kibana]", 
-    "recipe[chef_nginx]", 
-    "recipe[kibana::nginx]", 
-    "recipe[elkstack::kibana]"
+    "role[devops-base]",
+    "recipe[elkstack::logstash]"
   ],
   "env_run_lists": {
 

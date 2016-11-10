@@ -1,25 +1,28 @@
 ---
-name: "Grafana"
+name: "Rancher Management"
 owner: "Bryan Kroger (bkroger@thoughtworks.com)"
-region: "us-east-1"
-template: "grafana"
-description: "Grafana service."
+template: "rancher-mgt"
+description: "Rancher management service."
 params:
   ChefEnvName: "management"
   ChefServerURL:
     type: "elb_dns"
     tags:
       Role: "Internal"
-      Version: "0.4.0"
+      Version: "ENV:CHEF_VERSION"
+  DevCentralSNSTopicARN:
+    type: "sns_topic_arn"
+    tags:
+      Name: "DevCentralSNSTopic"
   S3BucketName:
     type: "s3_bucket"
     tags:
       Name: "dev-central"
-      Version: "0.4.0"
-  MgtCidr: 
-    type: "vpc_cidr"
-    tags:
-      Name: "main"
+      Version: "ENV:INF_VERSION"
+  MgtCidr: "54.147.185.114/32"
+    #type: "vpc_cidr"
+    #tags:
+      #Name: "main"
   ImageId: 
     type: "ami"
     tags:
@@ -32,12 +35,11 @@ params:
       Name: "main"
   Zones:
     type: "zones"
-    tags: null
-    zones:
-      - "us-east-1d"
-      - "us-east-1b"
+    tags:
+      - Name: "private"
+      - Name: "public"
   Subnets:
     type: "subnets"
     tags:
-        - Name: "private"
-        - Name: "public"
+      - Name: "private"
+      - Name: "public"

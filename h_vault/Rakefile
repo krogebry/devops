@@ -1,0 +1,33 @@
+## 
+# Hashicorp vault stuff
+##
+require 'pp'
+require 'logger'
+require 'aws-sdk'
+require 'fileutils'
+
+Log = Logger.new(STDOUT)
+
+## write secret: ./vault write secret/devops/rancher/management username=user_name
+
+namespace :hvault do
+
+  desc "Create a token."
+  task :mk_token do |t,args|
+    cmd_push = "VAULT_ADDR='http://174.129.117.119:443' ~/tmp/vault token-create --format json --policy rancher_mgt"
+    json = JSON::parse(`#{cmd_push}`)
+    pp json
+
+    client_token = json['auth']['client_token']
+
+    ## Push the ct to KMS.
+  end
+
+  task :push_policies do |t,args|
+    cmd_push = "./vault policy-write rancher_mgt ~/dev/devops/h_vault/rancher_mgt.hcl"
+  end
+
+
+end
+
+
