@@ -1,0 +1,10 @@
+{
+  "id": "management",
+  "name": "data_bag_item_rancher_management",
+  "json_class": "Chef::DataBagItem",
+  "chef_type": "data_bag_item",
+  "data_bag": "rancher",
+  "raw_data": {
+    "key": "value"
+  }
+}

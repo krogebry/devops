@@ -1,5 +1,5 @@
 {
-  "name": "vault",
+  "name": "rancher-management",
   "description": "",
   "json_class": "Chef::Role",
   "default_attributes": {
@@ -9,7 +9,10 @@
 
   },
   "chef_type": "role",
-  "run_list": [ "role[devops-base]", "recipe[hashicorp-vault::default]" ],
+  "run_list": [
+    "role[devops-base]", 
+    "recipe[devops::rancher-management]"
+  ],
   "env_run_lists": {
 
   }

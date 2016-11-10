@@ -1,10 +1,11 @@
 DEPENDENCIES
   chef-client
+  docker
   elkstack (~> 6.0.4)
   gocd
+  hashicorp-vault (~> 2.4.0)
   nginx
   sensu
-  vault
 
 GRAPH
   ant (1.0.4)
@@ -32,6 +33,8 @@ GRAPH
   cron (3.0.0)
   curl (2.0.3)
   dmg (3.0.0)
+  docker (2.9.8)
+    compat_resource (>= 12.14.7)
   dpkg_autostart (0.2.0)
   elasticsearch (0.3.14)
     ark (>= 0.2.4)
@@ -71,6 +74,13 @@ GRAPH
     java (>= 0.0.0)
     windows (>= 0.0.0)
     yum (>= 0.0.0)
+  golang (1.7.0)
+  hashicorp-vault (2.4.0)
+    build-essential (>= 0.0.0)
+    golang (~> 1.7)
+    poise (~> 2.6)
+    poise-service (~> 1.1)
+    rubyzip (~> 1.0)
   homebrew (2.1.2)
     build-essential (>= 2.1.2)
   htpasswd (0.2.4)
@@ -134,6 +144,8 @@ GRAPH
   poise-python (1.5.1)
     poise (~> 2.7)
     poise-languages (~> 2.0)
+  poise-service (1.4.2)
+    poise (~> 2.0)
   python (1.4.6)
     build-essential (>= 0.0.0)
     yum-epel (>= 0.0.0)
@@ -150,6 +162,8 @@ GRAPH
     ulimit (>= 0.1.2)
   rsyslog (4.0.1)
     compat_resource (>= 0.0.0)
+  rubyzip (1.3.1)
+    poise (~> 2.2)
   runit (3.0.0)
     packagecloud (>= 0.0.0)
     yum-epel (>= 0.0.0)
@@ -163,7 +177,6 @@ GRAPH
   seven_zip (2.0.2)
     windows (>= 1.2.2)
   ulimit (0.4.0)
-  vault (0.2.0)
   windows (2.0.2)
   yum (3.13.0)
   yum-epel (0.7.1)

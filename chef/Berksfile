@@ -2,10 +2,13 @@ source 'https://supermarket.chef.io'
 
 cookbook 'gocd'
 cookbook 'sensu'
-cookbook 'vault'
+#cookbook 'vault'
+cookbook 'hashicorp-vault', '~> 2.4.0'
 cookbook 'nginx'
 
 cookbook 'chef-client'
+
+cookbook 'docker'
 
 #cookbook 'kibana', '~> 0.2.1'
 #cookbook 'logstash', '~> 0.12.0'

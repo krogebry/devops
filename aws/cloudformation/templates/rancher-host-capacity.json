@@ -14,6 +14,11 @@
       "Description": "Role profile ARN"
     },
 
+    "DevCentralSNSTopicARN": {
+      "Type": "String",
+      "Description": "ARN for the DC SNS topic."
+    },
+
     "ChefServerURL": {
       "Type": "String",
       "Description": "URL for the chef server."
@@ -105,19 +110,19 @@
       "Properties": {
         "Tags": [{
           "Key": "Application",
-          "Value": "Vault"
+          "Value": "RancherHostCapacity"
         }],
         "VpcId": { "Ref": "VpcId" },
         "GroupDescription": "Enable HTTP access and SSH access",
         "SecurityGroupIngress": [{
-          "ToPort": "80",
-          "FromPort": "80",
+          "ToPort": "8081",
+          "FromPort": "8080",
           "IpProtocol": "tcp",
           "SourceSecurityGroupId": { "Ref": "ELBSG" }
         },{
           "CidrIp": { "Ref": "MgtCidr" },
-          "ToPort": "443",
-          "FromPort": "443",
+          "ToPort": "8081",
+          "FromPort": "8080",
           "IpProtocol": "tcp"
         }, {
           "CidrIp": { "Ref": "MgtCidr" },
@@ -133,7 +138,7 @@
       "Properties": {
         "Tags": [{
           "Key": "Application",
-          "Value": "Vault"
+          "Value": "RancherHostCapacity"
         }],
         "GroupDescription": "Enable HTTP access on port 80",
         "VpcId": { "Ref": "VpcId" },
@@ -156,7 +161,7 @@
       }
     },
 
-    "Vault": {
+    "RancherHostCapacity": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
         "MinSize": "1",
@@ -165,7 +170,16 @@
         "AvailabilityZones": { "Ref": "Zones" },
         "VPCZoneIdentifier": { "Ref": "Subnets" },
         "LoadBalancerNames": [{ "Ref": "InternalELB" },{ "Ref": "ExternalELB"}],
-        "LaunchConfigurationName": { "Ref": "VaultLC" }
+        "LaunchConfigurationName": { "Ref": "RancherHostCapacityLC" },
+ 				"NotificationConfigurations": [{
+          "TopicARN" : { "Ref" : "DevCentralSNSTopicARN" },
+          "NotificationTypes" : [
+            "autoscaling:EC2_INSTANCE_LAUNCH",
+            "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+            "autoscaling:EC2_INSTANCE_TERMINATE",
+            "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
+          ]
+        }]
       },
       "CreationPolicy": {
         "ResourceSignal": {
@@ -182,10 +196,10 @@
       }
     },
 
-    "VaultLC": {
+    "RancherHostCapacityLC": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Metadata": {
-        "Comment": "Bootstrap a new Vault instance.",
+        "Comment": "Bootstrap a new RancherHostCapacity instance.",
 				"AWS::CloudFormation::Authentication":{
         	"S3AccessCreds":{
           	"type":"S3",
@@ -232,7 +246,7 @@
                 "owner": "root",
                 "group": "root",
                 "content": { "Fn::Join": ["\n", [
-                  "{ \"run_list\": [ \"role[vault]\" ] }"
+                  "{ \"run_list\": [ \"role[rancher-host-capacity]\" ] }"
                 ]]}
               },
 
@@ -254,7 +268,7 @@
                   "path=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init\n",
                   "action=/opt/aws/bin/cfn-init -v ",
                   " --stack ", { "Ref": "AWS::StackName" },
-                  " --resource VaultLC ",
+                  " --resource RancherHostCapacityLC ",
                   " --region ", { "Ref": "AWS::Region" }, "\n",
                   "runas=root\n"
                 ]]}
@@ -279,7 +293,7 @@
 
           "/opt/aws/bin/cfn-init -v ",
           " --stack ", { "Ref": "AWS::StackName" },
-          " --resource VaultLC ",
+          " --resource RancherHostCapacityLC ",
           " --region ", { "Ref": "AWS::Region" }, "\n",
 
           "mkdir -p /var/log/chef \n",
@@ -288,7 +302,7 @@
 
           "/opt/aws/bin/cfn-signal -e $? ",
           " --stack ", { "Ref": "AWS::StackName" },
-          " --resource Vault ",
+          " --resource RancherHostCapacity ",
           " --region ", { "Ref": "AWS::Region" }, "\n"
         ]]}},
         "InstanceType": "c3.large",
@@ -306,7 +320,7 @@
           "Value": { "Ref": "StackVersion" }
         },{
           "Key": "Name",
-          "Value": "Vault"
+          "Value": "RancherHostCapacity"
         },{
           "Key": "Role",
           "Value": "External"
@@ -315,15 +329,15 @@
         "CrossZone": "true",
         "Listeners": [{
           "Protocol": "HTTP",
-          "InstancePort": "80",
+          "InstancePort": "8080",
           "LoadBalancerPort": "80"
         },{
           "Protocol": "TCP",
-          "InstancePort": "443",
+          "InstancePort": "8081",
           "LoadBalancerPort": "443"
         }],
         "HealthCheck": {
-          "Target": "HTTP:80/index.html",
+          "Target": "TCP:8080",
           "Timeout": "2",
           "Interval": "5",
           "HealthyThreshold": "3",
@@ -341,25 +355,25 @@
           "Value": { "Ref": "StackVersion" }
         },{
           "Key": "Name",
-          "Value": "Vault"
+          "Value": "RancherHostCapacity"
         },{
           "Key": "Role",
-          "Value": "Internal"
+          "Value": "External"
         }],
         "Scheme": "internal",
         "Subnets": { "Ref": "Subnets" },
         "CrossZone": "true",
         "Listeners": [{
           "Protocol": "HTTP",
-          "InstancePort": "80",
+          "InstancePort": "8080",
           "LoadBalancerPort": "80"
         },{
           "Protocol": "TCP",
-          "InstancePort": "443",
+          "InstancePort": "8081",
           "LoadBalancerPort": "443"
         }],
         "HealthCheck": {
-          "Target": "HTTP:80/index.html",
+          "Target": "TCP:8080",
           "Timeout": "2",
           "Interval": "5",
           "HealthyThreshold": "3",
