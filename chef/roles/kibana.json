@@ -1,5 +1,5 @@
 {
-  "name": "devops-base",
+  "name": "kibana",
   "description": "",
   "json_class": "Chef::Role",
   "default_attributes": {
@@ -10,8 +10,11 @@
   },
   "chef_type": "role",
   "run_list": [
-    "recipe[chef-client::default]",
-    "recipe[elkstack::agent]"
+    "role[devops-base]", 
+    "recipe[devops::kibana]", 
+    "recipe[chef_nginx]", 
+    "recipe[kibana::nginx]", 
+    "recipe[elkstack::kibana]"
   ],
   "env_run_lists": {
 

@@ -1,5 +1,5 @@
 {
-  "name": "devops-base",
+  "name": "logstash-server",
   "description": "",
   "json_class": "Chef::Role",
   "default_attributes": {
@@ -10,8 +10,8 @@
   },
   "chef_type": "role",
   "run_list": [
-    "recipe[chef-client::default]",
-    "recipe[elkstack::agent]"
+    "role[devops-base]",
+    "recipe[elkstack::logstash]"
   ],
   "env_run_lists": {
 

@@ -14,27 +14,7 @@
       "Description": "Role profile ARN"
     },
 
-    "DevCentralSNSTopicARN": {
-      "Type": "String",
-      "Description": "ARN for the DC SNS topic."
-    },
-
-    "ChefServerURL": {
-      "Type": "String",
-      "Description": "URL for the chef server."
-    },
-
-    "ChefEnvName": {
-      "Type": "String",
-      "Description": "Name for the chef environment."
-    },
-
     "MgtCidr": {
-      "Type": "String",
-      "Description": "Role profile ARN"
-    },
-
-    "S3BucketName": {
       "Type": "String",
       "Description": "Role profile ARN"
     },
@@ -110,7 +90,7 @@
       "Properties": {
         "Tags": [{
           "Key": "Application",
-          "Value": "GoCDAgents"
+          "Value": "Bootstrap"
         }],
         "VpcId": { "Ref": "VpcId" },
         "GroupDescription": "Enable HTTP access and SSH access",
@@ -123,7 +103,7 @@
       }
     },
 
-    "GoCDAgents": {
+    "Bootstrap": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
         "MinSize": "1",
@@ -131,16 +111,7 @@
         "DesiredCapacity": "1",
         "AvailabilityZones": { "Ref": "Zones" },
         "VPCZoneIdentifier": { "Ref": "Subnets" },
-        "LaunchConfigurationName": { "Ref": "GoCDAgentsLC" },
- 				"NotificationConfigurations": [{
-          "TopicARN" : { "Ref" : "DevCentralSNSTopicARN" },
-          "NotificationTypes" : [
-            "autoscaling:EC2_INSTANCE_LAUNCH",
-            "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
-            "autoscaling:EC2_INSTANCE_TERMINATE",
-            "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
-          ]
-        }]
+        "LaunchConfigurationName": { "Ref": "BootstrapLC" }
       },
       "CreationPolicy": {
         "ResourceSignal": {
@@ -157,10 +128,10 @@
       }
     },
 
-    "GoCDAgentsLC": {
+    "BootstrapLC": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Metadata": {
-        "Comment": "Bootstrap a new GoCD agent instance.",
+        "Comment": "Bootstrap a new Bootstrap instance.",
 				"AWS::CloudFormation::Authentication":{
         	"S3AccessCreds":{
           	"type":"S3",
@@ -179,38 +150,6 @@
             },
 
             "files": {
- 							"/etc/chef/validation.pem": {
-                "source": { "Fn::Join": [ "", [
-                  "http://",{ "Ref": "S3BucketName" },".s3.amazonaws.com/chef-server/devops/devops-validator.pem"
-                ]]},
-                "mode":"000400",
-                "owner":"root",
-                "group":"root",
-                "authentication":"S3AccessCreds"
-              },
-
-              "/etc/chef/client.rb": {
-                "mode": "000600",
-                "owner": "root",
-                "group": "root",
-                "content": { "Fn::Join": ["", [
-                  "chef_server_url \"https://",{ "Ref": "ChefServerURL" }, "/organizations/devops/\" \n",
-                  "validation_client_name \"devops-validator\" \n",
-                  "ssl_verify_mode :verify_none \n",
-                  "log_location \"/var/log/chef/client.log\" \n",
-                  "log_level :info \n"
-                ]]}
-              },
-
-              "/etc/chef/dna.json": {
-                "mode": "000644",
-                "owner": "root",
-                "group": "root",
-                "content": { "Fn::Join": ["\n", [
-                  "{ \"run_list\": [ \"role[gocd-agent]\" ] }"
-                ]]}
-              },
-
               "/etc/cfn/cfn-hup.conf": {
                 "mode": "000400",
                 "owner": "root",
@@ -229,7 +168,7 @@
                   "path=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init\n",
                   "action=/opt/aws/bin/cfn-init -v ",
                   " --stack ", { "Ref": "AWS::StackName" },
-                  " --resource GoCDAgentsLC ",
+                  " --resource BootstrapLC ",
                   " --region ", { "Ref": "AWS::Region" }, "\n",
                   "runas=root\n"
                 ]]}
@@ -254,19 +193,22 @@
 
           "/opt/aws/bin/cfn-init -v ",
           " --stack ", { "Ref": "AWS::StackName" },
-          " --resource GoCDAgentsLC ",
+          " --resource BootstrapLC ",
           " --region ", { "Ref": "AWS::Region" }, "\n",
 
           "mkdir -p /var/log/chef \n",
-          "aws s3 cp s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/devops-validator.pem /etc/chef/validation.pem \n",
-          "chef-client -j /etc/chef/dna.json -E ",{ "Ref": "ChefEnvName" },"\n",
+          "yum update -y \n",
+          "pip install --upgrade awscli \n",
+          "wget https://packages.chef.io/stable/el/7/chef-12.15.19-1.el7.x86_64.rpm \n",
+          "rpm -i chef-12.15.19-1.el7.x86_64.rpm \n",
+          "rm -rf chef-12.15.19-1.el7.x86_64.rpm \n",
 
           "/opt/aws/bin/cfn-signal -e $? ",
           " --stack ", { "Ref": "AWS::StackName" },
-          " --resource GoCDAgents ",
+          " --resource Bootstrap ",
           " --region ", { "Ref": "AWS::Region" }, "\n"
         ]]}},
-        "InstanceType": "c3.large",
+        "InstanceType": "c4.large",
         "SecurityGroups": [{ "Ref": "InstanceSG" }],
         "IamInstanceProfile": { "Ref": "RootInstanceProfile" },
         "AssociatePublicIpAddress": "true"

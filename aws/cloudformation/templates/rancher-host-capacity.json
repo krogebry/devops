@@ -14,28 +14,27 @@
       "Description": "Role profile ARN"
     },
 
-    "InstanceType": {
-      "Type": "String",
-      "Description": "Size of instance"
-    },
-
     "DevCentralSNSTopicARN": {
       "Type": "String",
       "Description": "ARN for the DC SNS topic."
     },
 
-    "Password": {
+    "ChefServerURL": {
       "Type": "String",
-      "NoEcho": "true",
-      "Description": "Password for the admin user"
+      "Description": "URL for the chef server."
     },
 
-    "S3BucketName": {
+    "ChefEnvName": {
+      "Type": "String",
+      "Description": "Name for the chef environment."
+    },
+
+    "MgtCidr": {
       "Type": "String",
       "Description": "Role profile ARN"
     },
 
-    "MgtCidr": {
+    "S3BucketName": {
       "Type": "String",
       "Description": "Role profile ARN"
     },
@@ -67,24 +66,63 @@
 
   "Resources": {
 
+    "InstanceRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version" : "2012-10-17",
+          "Statement": [ {
+            "Effect": "Allow",
+            "Principal": { "Service": [ "ec2.amazonaws.com" ] },
+            "Action": [ "sts:AssumeRole" ]
+          } ]
+        },
+        "Path": "/"
+      }
+    },
+
+    "RolePolicies": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "root",
+        "PolicyDocument": {
+          "Version" : "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }]
+        },
+        "Roles": [{ "Ref": "InstanceRole" }]
+      }
+    },
+
+    "RootInstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [{ "Ref": "InstanceRole" }]
+      }
+    },
+
     "InstanceSG": {
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
         "Tags": [{
           "Key": "Application",
-          "Value": "ChefServer"
+          "Value": "RancherHostCapacity"
         }],
         "VpcId": { "Ref": "VpcId" },
         "GroupDescription": "Enable HTTP access and SSH access",
         "SecurityGroupIngress": [{
-          "ToPort": "443",
-          "FromPort": "443",
+          "ToPort": "8081",
+          "FromPort": "8080",
           "IpProtocol": "tcp",
           "SourceSecurityGroupId": { "Ref": "ELBSG" }
         },{
           "CidrIp": { "Ref": "MgtCidr" },
-          "ToPort": "443",
-          "FromPort": "443",
+          "ToPort": "8081",
+          "FromPort": "8080",
           "IpProtocol": "tcp"
         }, {
           "CidrIp": { "Ref": "MgtCidr" },
@@ -100,14 +138,19 @@
       "Properties": {
         "Tags": [{
           "Key": "Application",
-          "Value": "ChefServer"
+          "Value": "RancherHostCapacity"
         }],
         "GroupDescription": "Enable HTTP access on port 80",
         "VpcId": { "Ref": "VpcId" },
-        "SecurityGroupIngress": [ {
+        "SecurityGroupIngress": [{
           "CidrIp": { "Ref": "MgtCidr" },
-          "ToPort": "443",
-          "FromPort": "443",
+          "ToPort": "80",
+          "FromPort": "80",
+          "IpProtocol": "tcp"
+        },{
+          "CidrIp": "0.0.0.0/0",
+          "ToPort": "80",
+          "FromPort": "80",
           "IpProtocol": "tcp"
         },{
           "CidrIp": "0.0.0.0/0",
@@ -118,18 +161,17 @@
       }
     },
 
-    "ChefServerASG": {
+    "RancherHostCapacity": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
         "MinSize": "1",
         "MaxSize": "3",
         "DesiredCapacity": "1",
-
         "AvailabilityZones": { "Ref": "Zones" },
         "VPCZoneIdentifier": { "Ref": "Subnets" },
         "LoadBalancerNames": [{ "Ref": "InternalELB" },{ "Ref": "ExternalELB"}],
-        "LaunchConfigurationName": { "Ref": "ChefServerLC" },
-        "NotificationConfigurations": [{
+        "LaunchConfigurationName": { "Ref": "RancherHostCapacityLC" },
+ 				"NotificationConfigurations": [{
           "TopicARN" : { "Ref" : "DevCentralSNSTopicARN" },
           "NotificationTypes" : [
             "autoscaling:EC2_INSTANCE_LAUNCH",
@@ -141,12 +183,12 @@
       },
       "CreationPolicy": {
         "ResourceSignal": {
-          "Timeout": "PT30M"
+          "Timeout": "PT15M"
         }
       },
       "UpdatePolicy": {
         "AutoScalingRollingUpdate": {
-          "PauseTime": "PT30M",
+          "PauseTime": "PT15M",
           "MaxBatchSize": "1",
           "WaitOnResourceSignals": "true",
           "MinInstancesInService": "1"
@@ -154,27 +196,48 @@
       }
     },
 
-    "ChefServerLC": {
+    "RancherHostCapacityLC": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Metadata": {
-        "Comment": "Bootstrap a new ChefServer instance.",
+        "Comment": "Bootstrap a new RancherHostCapacity instance.",
+				"AWS::CloudFormation::Authentication":{
+        	"S3AccessCreds":{
+          	"type":"S3",
+            "roleName":{
+            	"Ref":"InstanceRole"
+            }
+          }
+        },
         "AWS::CloudFormation::Init": {
           "config": {
             "packages": {
               "yum": {
+                "jq": [],
                 "sysstat": []
               }
             },
 
             "files": {
+ 							"/etc/chef/validation.pem": {
+                "source": { "Fn::Join": [ "", [
+                  "http://",{ "Ref": "S3BucketName" },".s3.amazonaws.com/chef-server/devops/devops-validator.pem"
+                ]]},
+                "mode":"000400",
+                "owner":"root",
+                "group":"root",
+                "authentication":"S3AccessCreds"
+              },
 
               "/etc/chef/client.rb": {
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root",
-                "content": { "Fn::Join": ["\n", [
-                  "chef_server_url: \"https://chef\"",
-                  "log_level :info"
+                "content": { "Fn::Join": ["", [
+                  "chef_server_url \"https://",{ "Ref": "ChefServerURL" }, "/organizations/devops/\" \n",
+                  "validation_client_name \"devops-validator\" \n",
+                  "ssl_verify_mode :verify_none \n",
+                  "log_location \"/var/log/chef/client.log\" \n",
+                  "log_level :info \n"
                 ]]}
               },
 
@@ -183,7 +246,7 @@
                 "owner": "root",
                 "group": "root",
                 "content": { "Fn::Join": ["\n", [
-                  "{ \"run_list\": [ \"role[gocd-server]\" ] }"
+                  "{ \"run_list\": [ \"role[rancher-host-capacity]\" ] }"
                 ]]}
               },
 
@@ -205,7 +268,7 @@
                   "path=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init\n",
                   "action=/opt/aws/bin/cfn-init -v ",
                   " --stack ", { "Ref": "AWS::StackName" },
-                  " --resource ChefServerLC ",
+                  " --resource RancherHostCapacityLC ",
                   " --region ", { "Ref": "AWS::Region" }, "\n",
                   "runas=root\n"
                 ]]}
@@ -230,27 +293,20 @@
 
           "/opt/aws/bin/cfn-init -v ",
           " --stack ", { "Ref": "AWS::StackName" },
-          " --resource ChefServerLC ",
+          " --resource RancherHostCapacityLC ",
           " --region ", { "Ref": "AWS::Region" }, "\n",
 
-          "wget https://packages.chef.io/stable/el/7/chef-server-core-12.10.0-1.el7.x86_64.rpm \n",
-          "rpm -i chef-server-core-12.10.0-1.el7.x86_64.rpm \n",
-          "chef-server-ctl reconfigure \n",
-          "chef-server-ctl user-create bkroger Bryan Kroger bkroger@thoughtworks.com '",{ "Ref": "Password" },"' --filename /etc/chef/bkroger.pem \n",
-          "chef-server-ctl org-create devops 'DevOps Central' --association_user bkroger --filename /etc/chef/devops-validator.pem \n",
-
-          "pip install --upgrade awscli \n",
-          "aws s3 cp /etc/chef/bkroger.pem s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/ --region ",{ "Ref": "AWS::Region" }, " \n",
-          "aws s3 cp /etc/chef/devops-validator.pem s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/ --region ", { "Ref": "AWS::Region" }, " \n",
+          "mkdir -p /var/log/chef \n",
+          "aws s3 cp s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/devops-validator.pem /etc/chef/validation.pem \n",
+          "chef-client -j /etc/chef/dna.json -E ",{ "Ref": "ChefEnvName" },"\n",
 
           "/opt/aws/bin/cfn-signal -e $? ",
           " --stack ", { "Ref": "AWS::StackName" },
-          " --resource ChefServerASG ",
+          " --resource RancherHostCapacity ",
           " --region ", { "Ref": "AWS::Region" }, "\n"
         ]]}},
-        "InstanceType": { "Ref": "InstanceType" },
+        "InstanceType": "c3.large",
         "SecurityGroups": [{ "Ref": "InstanceSG" }],
-
         "IamInstanceProfile": { "Ref": "RootInstanceProfile" },
         "AssociatePublicIpAddress": "true"
       }
@@ -259,30 +315,29 @@
     "ExternalELB": {
       "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
       "Properties": {
-        "Tags": [{
+				"Tags": [{
           "Key": "Version",
           "Value": { "Ref": "StackVersion" }
         },{
           "Key": "Name",
-          "Value": "ChefServer"
+          "Value": "RancherHostCapacity"
         },{
           "Key": "Role",
           "Value": "External"
         }],
         "Subnets": { "Ref": "Subnets" },
         "CrossZone": "true",
-        "Policies": [{
-          "PolicyName" : "ChefServerWebSocketPolicy",
-          "PolicyType" : "ProxyProtocolPolicyType",
-          "Attributes" : [{ "Name" : "ProxyProtocol", "Value" : "true" }]
-        }],
         "Listeners": [{
+          "Protocol": "HTTP",
+          "InstancePort": "8080",
+          "LoadBalancerPort": "80"
+        },{
           "Protocol": "TCP",
-          "InstancePort": "443",
+          "InstancePort": "8081",
           "LoadBalancerPort": "443"
         }],
         "HealthCheck": {
-          "Target": "TCP:443",
+          "Target": "TCP:8080",
           "Timeout": "2",
           "Interval": "5",
           "HealthyThreshold": "3",
@@ -295,76 +350,36 @@
     "InternalELB": {
       "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
       "Properties": {
-        "Tags": [{
+				"Tags": [{
           "Key": "Version",
           "Value": { "Ref": "StackVersion" }
         },{
           "Key": "Name",
-          "Value": "ChefServer"
+          "Value": "RancherHostCapacity"
         },{
           "Key": "Role",
-          "Value": "Internal"
+          "Value": "External"
         }],
         "Scheme": "internal",
         "Subnets": { "Ref": "Subnets" },
-        "Policies": [{
-          "PolicyName" : "ChefServerWebSocketPolicy",
-          "PolicyType" : "ProxyProtocolPolicyType",
-          "Attributes" : [{ "Name" : "ProxyProtocol", "Value" : "true" }]
-        }],
         "CrossZone": "true",
         "Listeners": [{
+          "Protocol": "HTTP",
+          "InstancePort": "8080",
+          "LoadBalancerPort": "80"
+        },{
           "Protocol": "TCP",
-          "InstancePort": "443",
+          "InstancePort": "8081",
           "LoadBalancerPort": "443"
         }],
         "HealthCheck": {
-          "Target": "TCP:443",
+          "Target": "TCP:8080",
           "Timeout": "2",
           "Interval": "5",
           "HealthyThreshold": "3",
           "UnhealthyThreshold": "5"
         },
         "SecurityGroups": [{ "Ref": "ELBSG" }]
-      }
-    },
-
-		"RootRole": {
-    	"Type": "AWS::IAM::Role",
-      "Properties": {
-      	"AssumeRolePolicyDocument": {
-        	"Version" : "2012-10-17",
-          "Statement": [ {
-          	"Effect": "Allow",
-            "Principal": { "Service": [ "ec2.amazonaws.com" ] },
-            "Action": [ "sts:AssumeRole" ]
-          } ]
-        },
-        "Path": "/"
-      }
-    },
-
-    "RolePolicies": {
-      "Type": "AWS::IAM::Policy",
-      "Properties": {
-        "PolicyName": "root",
-        "PolicyDocument": {
-          "Version" : "2012-10-17",
-          "Statement": [{
-            "Effect": "Allow",
-            "Action": "*",
-            "Resource": "*"
-          }]
-        },
-        "Roles": [{ "Ref": "RootRole" }]
-      }
-    },
-
-    "RootInstanceProfile": {
-      "Type": "AWS::IAM::InstanceProfile",
-      "Properties": {
-        "Path": "/",
-        "Roles": [{ "Ref": "RootRole" }]
       }
     }
 

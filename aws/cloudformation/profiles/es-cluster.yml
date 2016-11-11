@@ -1,22 +1,23 @@
 ---
-name: "GoCD Agents"
+name: "ESCluster"
 owner: "Bryan Kroger (bkroger@thoughtworks.com)"
-region: "us-east-1"
-template: "gocd-agents"
-description: "GoCD agents service."
+template: "es-cluster"
+description: "ESCluster service."
 params:
   ChefEnvName: "management"
   ChefServerURL:
     type: "elb_dns"
     tags:
+      Name: "ChefServer"
       Role: "Internal"
-      Version: "0.3.3"
+      Version: "ENV:CHEF_VERSION"
+  InstanceType: "c4.large"
   S3BucketName:
     type: "s3_bucket"
     tags:
       Name: "dev-central"
-      Version: "0.3.0"
-  MgtCidr:
+      Version: "ENV:INF_VERSION"
+  MgtCidr: 
     type: "vpc_cidr"
     tags:
       Name: "main"
@@ -32,12 +33,11 @@ params:
       Name: "main"
   Zones:
     type: "zones"
-    tags: null
-    zones:
-      - "us-east-1d"
-      - "us-east-1b"
+    tags:
+      - Name: "private"
+      - Name: "public"
   Subnets:
     type: "subnets"
     tags:
-        - Name: "private"
-        - Name: "public"
+      - Name: "private"
+      - Name: "public"

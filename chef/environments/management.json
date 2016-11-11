@@ -7,7 +7,19 @@
   "json_class": "Chef::Environment",
   "chef_type": "environment",
   "default_attributes": {
-
+    "devops": {
+      "rancher": {
+        "db": {
+          "type": "mysql",
+          "name": "cattle",
+          "port": 3306,
+          "hostname": "blah"
+        }
+      },
+      "inf_version": "0.6.10",
+      "es_cluster_version": "0.6.10",
+      "chef_server_version": "0.6.10"
+    }
   },
   "override_attributes": {
 

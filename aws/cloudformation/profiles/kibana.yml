@@ -1,0 +1,41 @@
+---
+name: "Kibana"
+owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+template: "kibana"
+description: "Kibana service."
+params:
+  ChefEnvName: "management"
+  ChefServerURL:
+    type: "elb_dns"
+    tags:
+      Role: "Internal"
+      Version: "ENV:CHEF_VERSION"
+  S3BucketName:
+    type: "s3_bucket"
+    tags:
+      Name: "dev-central"
+      Version: "ENV:INF_VERSION"
+  MgtCidr: 
+    type: "vpc_cidr"
+    tags:
+      Name: "main"
+  ImageId: 
+    type: "ami"
+    tags:
+      Name: "devops"
+      Version: "0.1.0"
+  KeyName: "krogebry-0"
+  VpcId: 
+    type: "vpc"
+    tags:
+      Name: "main"
+  Zones:
+    type: "zones"
+    tags:
+      - Name: "private"
+      - Name: "public"
+  Subnets:
+    type: "subnets"
+    tags:
+      - Name: "private"
+      - Name: "public"

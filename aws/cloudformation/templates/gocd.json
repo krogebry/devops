@@ -14,6 +14,11 @@
       "Description": "Role profile ARN"
     },
 
+    "DevCentralSNSTopicARN": {
+      "Type": "String",
+      "Description": "ARN for the DC SNS topic."
+    },
+
     "ChefServerURL": {
       "Type": "String",
       "Description": "URL for the chef server."
@@ -165,7 +170,16 @@
         "AvailabilityZones": { "Ref": "Zones" },
         "VPCZoneIdentifier": { "Ref": "Subnets" },
         "LoadBalancerNames": [{ "Ref": "InternalELB" },{ "Ref": "ExternalELB"}],
-        "LaunchConfigurationName": { "Ref": "GoCDLC" }
+        "LaunchConfigurationName": { "Ref": "GoCDLC" },
+ 				"NotificationConfigurations": [{
+          "TopicARN" : { "Ref" : "DevCentralSNSTopicARN" },
+          "NotificationTypes" : [
+            "autoscaling:EC2_INSTANCE_LAUNCH",
+            "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+            "autoscaling:EC2_INSTANCE_TERMINATE",
+            "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
+          ]
+        }]
       },
       "CreationPolicy": {
         "ResourceSignal": {
@@ -283,6 +297,7 @@
           " --region ", { "Ref": "AWS::Region" }, "\n",
 
           "mkdir -p /var/log/chef \n",
+          "aws s3 cp s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/devops-validator.pem /etc/chef/validation.pem \n",
           "chef-client -j /etc/chef/dna.json -E ",{ "Ref": "ChefEnvName" },"\n",
 
           "/opt/aws/bin/cfn-signal -e $? ",
@@ -300,6 +315,16 @@
     "ExternalELB": {
       "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
       "Properties": {
+				"Tags": [{
+          "Key": "Version",
+          "Value": { "Ref": "StackVersion" }
+        },{
+          "Key": "Name",
+          "Value": "GoCD"
+        },{
+          "Key": "Role",
+          "Value": "External"
+        }],
         "Subnets": { "Ref": "Subnets" },
         "CrossZone": "true",
         "Listeners": [{
@@ -325,6 +350,16 @@
     "InternalELB": {
       "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
       "Properties": {
+				"Tags": [{
+          "Key": "Version",
+          "Value": { "Ref": "StackVersion" }
+        },{
+          "Key": "Name",
+          "Value": "GoCD"
+        },{
+          "Key": "Role",
+          "Value": "External"
+        }],
         "Scheme": "internal",
         "Subnets": { "Ref": "Subnets" },
         "CrossZone": "true",
