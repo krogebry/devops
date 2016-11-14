@@ -19,7 +19,8 @@ params:
     tags:
       Name: "dev-central"
       Version: "ENV:INF_VERSION"
-  MgtCidr: "54.147.185.114/32"
+  #MgtCidr: "54.147.185.114/32"
+  MgtCidr: "12.48.121.66/32"
     #type: "vpc_cidr"
     #tags:
       #Name: "main"

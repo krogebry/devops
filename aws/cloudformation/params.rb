@@ -44,17 +44,26 @@ class ParamsProc
     ## Find any deps.
     @params.each do |k,v|
       Log.debug(format('%s - %s', k,v ))
-      next if(v.class != Hash || !v.has_key?( 'type' ))
-      begin
-        v = self.send( v['type'], v )
-      rescue NoMethodError => e
-        Log.fatal(format('Unknown method error: %s - %s', v['type'], e))
-        pp e.backtrace
-        exit
-      rescue => e
-        Log.fatal(format('Unknown error: %s', e ))
-        pp e.backtrace
-        exit
+
+      if(v.class == Hash && v.has_key?( 'type' ))
+        begin
+          v = self.send( v['type'], v )
+        rescue NoMethodError => e
+          Log.fatal(format('Unknown method error: %s - %s', v['type'], e))
+          pp e.backtrace
+          exit
+        rescue => e
+          Log.fatal(format('Unknown error: %s', e ))
+          pp e.backtrace
+          exit
+        end
+
+      else
+        if(v.match(/^ENV:.*/))
+          (env, var) = v.split(/:/)
+          @params[k] = { 'value' => ENV[var] }
+        end
+
       end
     end
   end

@@ -89,7 +89,8 @@ namespace :cf do
     stack_tpl = JSON::parse(File.read( fs_tpl_file ))
 
     params = []
-    params.push({ parameter_key: "StackVersion", parameter_value: stack_version })
+    params.push({ parameter_key: "StackVersion", parameter_value: stack_version.gsub(/\./, '-') })
+    #params.push({ parameter_key: "StackVersionName", parameter_value: stack_version })
 
     yaml['params'] ||= []
 
@@ -107,6 +108,7 @@ namespace :cf do
     end
 
     #pp params
+    #exit
 
     stack_name = format('%s-%s', args[:stack_name], stack_version.gsub( /\./, '-' ))
 
