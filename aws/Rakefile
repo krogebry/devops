@@ -6,8 +6,8 @@ require 'logger'
 require 'aws-sdk'
 require 'fileutils'
 
+require './kms/tasks.rb'
 require './cloudtrail/tasks.rb'
-
 require './cloudformation/tasks.rb'
 
 Log = Logger.new(STDOUT)

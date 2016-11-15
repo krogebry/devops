@@ -14,6 +14,11 @@
       "Description": "Role profile ARN"
     },
 
+    "InfStackVersion": {
+      "Type": "String",
+      "Description": "Role profile ARN"
+    },
+
     "InstanceType": {
       "Type": "String",
       "Description": "Size of instance"
@@ -162,6 +167,7 @@
           "config": {
             "packages": {
               "yum": {
+                "jq": [],
                 "sysstat": []
               }
             },
@@ -240,8 +246,9 @@
           "chef-server-ctl org-create devops 'DevOps Central' --association_user bkroger --filename /etc/chef/devops-validator.pem \n",
 
           "pip install --upgrade awscli \n",
-          "aws s3 cp /etc/chef/bkroger.pem s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/ --region ",{ "Ref": "AWS::Region" }, " \n",
-          "aws s3 cp /etc/chef/devops-validator.pem s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/ --region ", { "Ref": "AWS::Region" }, " \n",
+          "KMS_KEY_ID=`aws --region ",{ "Ref": "AWS::Region" }, " kms list-aliases | jq '.Aliases[] | select(.AliasName == \"alias/devopskey_",{ "Ref": "InfStackVersion" },"\")|.AliasArn'|sed 's/\"//g'`\n",
+          "aws s3 cp --sse-kms-key-id ${KMS_KEY_ID} --sse 'aws:kms' /etc/chef/bkroger.pem s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/ --region ",{ "Ref": "AWS::Region" }, " \n",
+          "aws s3 cp --sse-kms-key-id ${KMS_KEY_ID} --sse 'aws:kms' /etc/chef/devops-validator.pem s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/ --region ", { "Ref": "AWS::Region" }, " \n",
 
           "/opt/aws/bin/cfn-signal -e $? ",
           " --stack ", { "Ref": "AWS::StackName" },

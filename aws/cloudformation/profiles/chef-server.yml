@@ -5,6 +5,8 @@ owner: "Bryan Kroger (bkroger@thoughtworks.com)"
 template: "chef-server"
 description: "ChefServer service."
 params:
+  InfStackVersion: "ENV:INF_VERSION"
+
   S3BucketName:
     type: "s3_bucket"
     tags:
