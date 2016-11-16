@@ -4,6 +4,7 @@ owner: "Bryan Kroger (bkroger@thoughtworks.com)"
 template: "vault"
 description: "Vault service."
 params:
+  InfStackVersion: "ENV:INF_VERSION"
   ChefEnvName: "management"
   ChefServerURL:
     type: "elb_dns"
@@ -15,10 +16,10 @@ params:
     tags:
       Name: "dev-central"
       Version: "ENV:INF_VERSION"
-  MgtCidr: 
-    type: "vpc_cidr"
-    tags:
-      Name: "main"
+  MgtCidr: "54.147.185.114/32"
+    #type: "vpc_cidr"
+    #tags:
+      #Name: "main"
   ImageId: 
     type: "ami"
     tags:

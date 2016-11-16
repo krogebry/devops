@@ -72,7 +72,7 @@
         	}, {
           	"Sid": "Allow use of the key",
           	"Effect": "Allow",
-          	//"Principal": { "Ref": "KMSUseRole" },
+          	"Principal": "*",
           	"Action": [
             	"kms:Encrypt",
             	"kms:Decrypt",
