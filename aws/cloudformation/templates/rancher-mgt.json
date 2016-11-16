@@ -84,13 +84,22 @@
     "RolePolicies": {
       "Type": "AWS::IAM::Policy",
       "Properties": {
-        "PolicyName": "root",
+        "PolicyName": "s3BucketAccess",
         "PolicyDocument": {
           "Version" : "2012-10-17",
           "Statement": [{
-            "Effect": "Allow",
-            "Action": "*",
-            "Resource": "*"
+      			"Effect": "Allow",
+      			"Action": [
+        			"s3:Get*",
+        			"s3:List*"
+      			],
+      			"Resource": { "Fn::Join": [ "", [ "arn:aws:s3:::", { "Ref": "S3BucketName" }, "/*" ]]}
+					},{
+      			"Effect": "Allow",
+      			"Action": [
+              "kms:ListAliases"
+      			],
+      			"Resource": "*"
           }]
         },
         "Roles": [{ "Ref": "InstanceRole" }]
