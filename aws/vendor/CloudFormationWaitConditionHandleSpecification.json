@@ -1,0 +1,9 @@
+{
+  "ResourceSpecificationVersion": "1.0.0",
+  "ResourceType": {
+    "AWS::CloudFormation::WaitConditionHandle": {
+      "Documentation": "http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-waitconditionhandle.html",
+      "Properties": {}
+    }
+  }
+}
