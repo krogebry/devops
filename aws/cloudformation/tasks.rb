@@ -11,11 +11,13 @@ require './cloudformation/params.rb'
 namespace :cf do
 
   desc 'Create the chef config.'
-  task :mk_chef_config, :chef_version, :inf_version, :region_name do |t,args|
-    inf_version = args[:inf_version]
-    chef_version = args[:chef_version]
+  #task :mk_chef_config, :chef_version, :inf_version, :region_name do |t,args|
+  task :mk_chef_config do |t,args|
+    region = ENV['AWS_REGION']
+    inf_version = ENV['INF_VERSION']
+    chef_version = ENV['CHEF_VERSION']
 
-    p = ParamsProc.new({ 'region' => args[:region_name] })
+    p = ParamsProc.new({ 'region' => region })
     (elbs, elb_tags) = p.get_elbs_with_tags()
 
     v = { 'tags' => {
@@ -40,7 +42,7 @@ namespace :cf do
     end
 
     creds = Aws::SharedCredentials.new()
-    s3_client = Aws::S3::Client.new(region: args[:region_name], credentials: creds)
+    s3_client = Aws::S3::Client.new(region: region, credentials: creds)
 
     r = s3_client.get_object(bucket: format('dev-central-%s', inf_version), key: 'chef-server/devops/bkroger.pem')
     File.open(format('%s/.chef/keys/bkroger-%s.pem', ENV['HOME'], chef_version), 'w') do |f|
