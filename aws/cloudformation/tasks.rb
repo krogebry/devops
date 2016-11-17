@@ -3,6 +3,7 @@
 ##
 require 'yaml'
 require 'erubis'
+require 'deep_merge'
 require 'digest/sha1'
 require 'securerandom'
 
@@ -71,17 +72,15 @@ namespace :cf do
     end
 
     yaml = YAML::load(File::read( fs_profile_file ))
-
-    #s3_client = Aws::S3::Client.new(region: region, credentials: creds)
-    #ec2_client = Aws::EC2::Client.new(region: region, credentials: creds)
-    #sns_client = Aws::SNS::Client.new(region: region, credentials: creds)
+    #pp yaml
+    #exit
 
     if(yaml.has_key?( 'params' ))
       p = ParamsProc.new(yaml.merge({ 'region' => region }))
       yaml['params'] = p.compile() 
     end
 
-    ## template
+    ## Template
     fs_tpl_file = File.join( 'cloudformation', 'templates', format( '%s.json', yaml['template']))
     if(!File.exists?( fs_tpl_file ))
       Log.fatal(format('Unable to find template JSON file: %s', fs_tpl_file))
@@ -89,6 +88,53 @@ namespace :cf do
     end
 
     stack_tpl = JSON::parse(File.read( fs_tpl_file ))
+
+    ## Layer in the modules
+    if(yaml.has_key?( 'modules' ))
+      yaml['modules'].each do |m|
+        fs_module_file = File.join( 'cloudformation', 'templates', 'modules', format( '%s.json' % m ))
+        next unless File.exists? fs_module_file
+        Log.debug(format('Loading module: %s', fs_module_file))
+        mod_json = JSON::parse(File.read( fs_module_file ))
+
+        ## Merge params.
+        stack_tpl["Parameters"] = stack_tpl['Parameters'].deep_merge!( mod_json['Parameters'] )
+
+        ## Config sets
+        ## Find all LC stanzas
+        next unless mod_json.has_key?( 'ConfigSets' )
+        lcs = stack_tpl['Resources'].select{|r_name, r_info| r_info["Type"] == "AWS::AutoScaling::LaunchConfiguration" }
+        lcs.each do |lc_name, lc_info|
+          stack_tpl['Resources'][lc_name]['Metadata']['AWS::CloudFormation::Init'].merge!(mod_json['ConfigSets'])
+
+          ## Check for user data
+          new_user_data = []
+          stack_tpl['Resources'][lc_name]['Properties']['UserData']['Fn::Base64']['Fn::Join'][1].each do |r|
+            if(r.class == Hash)
+              if(r.keys[0] == "DevOpsMod")
+                Log.debug(format( 'Injecting user data for mod' ))
+                mod_json["UserData"].each do |udr|
+                  new_user_data.push(udr)
+                end
+              end
+            else
+              new_user_data.push(r)
+            end
+
+          end
+          stack_tpl['Resources'][lc_name]['Properties']['UserData']['Fn::Base64']['Fn::Join'][1] = new_user_data
+
+        end
+
+      end
+    end
+
+    File.open("/tmp/stack.json", "w" ) do |f|
+      f.puts(stack_tpl.to_json)
+    end
+
+    #pp stack_tpl
+    #exit
 
     params = []
     params.push({ parameter_key: "StackVersion", parameter_value: stack_version.gsub(/\./, '-') })

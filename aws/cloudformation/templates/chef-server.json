@@ -3,27 +3,6 @@
   "Description": "",
 
   "Parameters": { 
-    "VpcId": {
-      "Type": "AWS::EC2::VPC::Id",
-      "Description": "VpcId of your existing Virtual Private Cloud (VPC)",
-      "ConstraintDescription": "Must be the VPC Id of an existing Virtual Private Cloud."
-    },
-    
-    "StackVersion": {
-      "Type": "String",
-      "Description": "Role profile ARN"
-    },
-
-    "InfStackVersion": {
-      "Type": "String",
-      "Description": "Role profile ARN"
-    },
-
-    "InstanceType": {
-      "Type": "String",
-      "Description": "Size of instance"
-    },
-
     "DevCentralSNSTopicARN": {
       "Type": "String",
       "Description": "ARN for the DC SNS topic."
@@ -33,40 +12,6 @@
       "Type": "String",
       "NoEcho": "true",
       "Description": "Password for the admin user"
-    },
-
-    "S3BucketName": {
-      "Type": "String",
-      "Description": "Role profile ARN"
-    },
-
-    "MgtCidr": {
-      "Type": "String",
-      "Description": "Role profile ARN"
-    },
-
-    "Subnets": {
-      "Type": "List<AWS::EC2::Subnet::Id>",
-      "Description": "The list of SubnetIds in your Virtual Private Cloud (VPC)",
-      "ConstraintDescription": "must be a list of an existing subnets in the selected Virtual Private Cloud."
-    },
-
-    "Zones": {
-      "Type": "List<String>",
-      "Description": "The list of AvailabilityZones for your Virtual Private Cloud (VPC)",
-      "ConstraintDescription": "must be a list if valid EC2 availability zones for the selected Virtual Private Cloud"
-    },
-
-    "KeyName": {
-      "Type": "AWS::EC2::KeyPair::KeyName",
-      "Description": "The EC2 Key Pair to allow SSH access to the instances",
-      "ConstraintDescription": "must be the name of an existing EC2 KeyPair."
-    },
-
-    "ImageId": {
-      "Type": "AWS::EC2::Image::Id",
-      "Description": "The EC2 Image Id",
-      "ConstraintDescription": "must be the name of an existing AMI."
     }
   },
 
@@ -164,66 +109,12 @@
       "Metadata": {
         "Comment": "Bootstrap a new ChefServer instance.",
         "AWS::CloudFormation::Init": {
-          "config": {
-            "packages": {
-              "yum": {
-                "jq": [],
-                "sysstat": []
-              }
-            },
-
-            "files": {
-
-              "/etc/chef/client.rb": {
-                "mode": "000644",
-                "owner": "root",
-                "group": "root",
-                "content": { "Fn::Join": ["\n", [
-                  "chef_server_url: \"https://chef\"",
-                  "log_level :info"
-                ]]}
-              },
-
-              "/etc/chef/dna.json": {
-                "mode": "000644",
-                "owner": "root",
-                "group": "root",
-                "content": { "Fn::Join": ["\n", [
-                  "{ \"run_list\": [ \"role[gocd-server]\" ] }"
-                ]]}
-              },
-
-              "/etc/cfn/cfn-hup.conf": {
-                "mode": "000400",
-                "owner": "root",
-                "group": "root",
-                "content": { "Fn::Join": ["", [
-                  "[main]\n",
-                  "stack=", { "Ref": "AWS::StackId" }, "\n",
-                  "region=", { "Ref": "AWS::Region" }, "\n"
-                ]]}
-              },
-
-              "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
-                "content": { "Fn::Join": ["", [
-                  "[cfn-auto-reloader-hook]\n",
-                  "triggers=post.update\n",
-                  "path=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init\n",
-                  "action=/opt/aws/bin/cfn-init -v ",
-                  " --stack ", { "Ref": "AWS::StackName" },
-                  " --resource ChefServerLC ",
-                  " --region ", { "Ref": "AWS::Region" }, "\n",
-                  "runas=root\n"
-                ]]}
-              }
-            },
-
-            "services": {
-              "sysvinit": {
-                "cfn-hup": { "enabled": "true", "ensureRunning": "true",
-                              "files": ["/etc/cfn/cfn-hup.conf", "/etc/cfn/hooks.d/cfn-auto-reloader.conf"]}
-              }
-            }
+          "configSets": {
+            "base_install": [
+              "cfn",
+              "cw_logs",
+              "cw_collectd"
+            ]
           }
         }
       },
@@ -237,6 +128,7 @@
           "/opt/aws/bin/cfn-init -v ",
           " --stack ", { "Ref": "AWS::StackName" },
           " --resource ChefServerLC ",
+          " --configsets base_install ",
           " --region ", { "Ref": "AWS::Region" }, "\n",
 
           "wget https://packages.chef.io/stable/el/7/chef-server-core-12.10.0-1.el7.x86_64.rpm \n",
@@ -259,6 +151,7 @@
         "SecurityGroups": [{ "Ref": "InstanceSG" }],
 
         "IamInstanceProfile": { "Ref": "RootInstanceProfile" },
+        "InstanceMonitoring": "false",
         "AssociatePublicIpAddress": "true"
       }
     },

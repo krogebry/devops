@@ -1,0 +1,87 @@
+{
+  "Parameters": { 
+
+    "ChefServerURL": {
+      "Type": "String",
+      "Description": "URL for the chef server."
+    },
+
+    "ChefEnvName": {
+      "Type": "String",
+      "Description": "Name for the chef environment."
+    }
+  },
+
+  "ConfigSets": {
+    "chef_base": {
+      "packages": {
+       "yum": {
+         "jq": [],
+         "sysstat": []
+       }
+     },
+
+     "files": {
+       "/etc/chef/client.rb": {
+         "mode": "000600",
+         "owner": "root",
+         "group": "root",
+         "content": { "Fn::Join": ["", [
+           "chef_server_url \"https://",{ "Ref": "ChefServerURL" }, "/organizations/devops/\" \n",
+           "validation_client_name \"devops-validator\" \n",
+           "ssl_verify_mode :verify_none \n",
+           "log_location \"/var/log/chef/client.log\" \n",
+           "log_level :info \n"
+         ]]}
+       },
+
+       "/etc/chef/dna.json": {
+         "mode": "000644",
+         "owner": "root",
+         "group": "root",
+         "content": { "Fn::Join": ["\n", [
+           "{ \"run_list\": [ \"role[vault]\" ] }"
+           ]]}
+       },
+
+       "/etc/cfn/cfn-hup.conf": {
+         "mode": "000400",
+         "owner": "root",
+         "group": "root",
+         "content": { "Fn::Join": ["", [
+           "[main]\n",
+           "stack=", { "Ref": "AWS::StackId" }, "\n",
+           "region=", { "Ref": "AWS::Region" }, "\n"
+         ]]}
+       },
+
+       "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
+         "content": { "Fn::Join": ["", [
+           "[cfn-auto-reloader-hook]\n",
+           "triggers=post.update\n",
+           "path=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init\n",
+           "action=/opt/aws/bin/cfn-init -v ",
+           " --stack ", { "Ref": "AWS::StackName" },
+           " --resource VaultLC ",
+           " --region ", { "Ref": "AWS::Region" }, "\n",
+           "runas=root\n"
+         ]]}
+       }
+     },
+
+     "services": {
+       "sysvinit": {
+         "cfn-hup": { "enabled": "true", "ensureRunning": "true",
+         "files": ["/etc/cfn/cfn-hup.conf", "/etc/cfn/hooks.d/cfn-auto-reloader.conf"]}
+       }
+     }
+    }
+  },
+
+  "UserData": [
+    "mkdir -p /var/log/chef \n",
+    "KMS_KEY_ID=`aws --region ",{ "Ref": "AWS::Region" }, " kms list-aliases | jq '.Aliases[] | select(.AliasName == \"alias/devopskey_",{ "Ref": "InfStackVersion" },"\")|.AliasArn'|sed 's/\"//g'`\n",
+    "aws s3 cp --sse-kms-key-id ${KMS_KEY_ID} --sse 'aws:kms' s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/devops-validator.pem /etc/chef/validation.pem \n",
+    "chef-client -j /etc/chef/dna.json -E ",{ "Ref": "ChefEnvName" },"\n"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "Parameters": { 
+
+    "MgtCidr": {
+      "Type": "String",
+      "Description": "Role profile ARN"
+    },
+
+    "Subnets": {
+      "Type": "List<AWS::EC2::Subnet::Id>",
+      "Description": "The list of SubnetIds in your Virtual Private Cloud (VPC)",
+      "ConstraintDescription": "must be a list of an existing subnets in the selected Virtual Private Cloud."
+    },
+
+    "Zones": {
+      "Type": "List<String>",
+      "Description": "The list of AvailabilityZones for your Virtual Private Cloud (VPC)",
+      "ConstraintDescription": "must be a list if valid EC2 availability zones for the selected Virtual Private Cloud"
+    },
+
+    "VpcId": {
+      "Type": "AWS::EC2::VPC::Id",
+      "Description": "VpcId of your existing Virtual Private Cloud (VPC)",
+      "ConstraintDescription": "Must be the VPC Id of an existing Virtual Private Cloud."
+    }
+
+  }
+}

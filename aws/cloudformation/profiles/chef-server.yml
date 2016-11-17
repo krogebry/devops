@@ -4,6 +4,12 @@ owner: "Bryan Kroger (bkroger@thoughtworks.com)"
 #region: "us-east-1"
 template: "chef-server"
 description: "ChefServer service."
+modules:
+  - "cfn"
+  - "vpc"
+  - "base"
+  - "cw_logs"
+  - "cw_collectd"
 params:
   InfStackVersion: "ENV:INF_VERSION"
 
@@ -18,12 +24,12 @@ params:
     tags:
       Name: "main"
 
-  InstanceType: "c4.large"
+  InstanceType: "t2.micro"
   ImageId:
     type: "ami"
     tags:
       Name: "devops"
-      Version: "0.1.0"
+      Version: "0.1.1"
 
   DevCentralSNSTopicARN:
     type: "sns_topic_arn"
