@@ -53,11 +53,11 @@ namespace :cf do
 
   desc "Flush cache"
   task :flush_cache do |t,args|
-    `rm -rf /tmp/cache/*`
+    ParamsProc::flush()
   end
 
-  desc 'Launch a stack based on a profile PROFILE_NAME STACK_NAME STACK_VERSION'
-  task :launch, :profile_name, :stack_name, :stack_version do |t,args|
+  desc 'Launch a stack based on a profile PROFILE_NAME STACK_VERSION STACK_NAME'
+  task :launch, :profile_name, :stack_version, :stack_name do |t,args|
     profile_name = args[:profile_name]
     region = ENV['AWS_REGION'] || 'us-east-1'
     stack_version = args[:stack_version]
@@ -99,6 +99,11 @@ namespace :cf do
 
         ## Merge params.
         stack_tpl["Parameters"] = stack_tpl['Parameters'].deep_merge!( mod_json['Parameters'] )
+
+        ## Check for Resources.
+        if(mod_json.has_key?( 'Resources' ))
+          stack_tpl['Resources'] = stack_tpl['Resources'].deep_merge( mod_json['Resources'] )
+        end
 
         ## Config sets
         ## Find all LC stanzas
@@ -158,7 +163,7 @@ namespace :cf do
     #pp params
     #exit
 
-    stack_name = format('%s-%s', args[:stack_name], stack_version.gsub( /\./, '-' ))
+    stack_name = format('%s-%s', (args[:stack_name] == nil ? yaml['name'] : args[:stack_name]), stack_version.gsub( /\./, '-' ))
 
     begin
       creds = Aws::SharedCredentials.new()

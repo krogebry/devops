@@ -8,21 +8,25 @@
     
     "InfStackVersion": {
       "Type": "String",
+      "Default": "0.1.0",
       "Description": "Infrastructure stack version."
     },
 
     "StackVersion": {
       "Type": "String",
+      "Default": "0.1.0",
       "Description": "Stack version."
     },
     
     "InfStackVersion": {
       "Type": "String",
+      "Default": "0.1.0",
       "Description": "Role profile ARN"
     },
     
     "S3BucketName": {
       "Type": "String",
+      "Default": "0.1.0",
       "Description": "Name of the DevOps bucket."
     },
 

@@ -9,14 +9,15 @@ modules:
   - "chef-client"
   - "cw_logs"
   - "cw_collectd"
+  - "iam_kms_client"
 params:
   InfStackVersion: "ENV:INF_VERSION"
-  #ChefEnvName: "management"
-  #ChefServerURL:
-    #type: "elb_dns"
-    #tags:
-      #Role: "Internal"
-      #Version: "ENV:CHEF_VERSION"
+  ChefEnvName: "management"
+  ChefServerURL:
+    type: "elb_dns"
+    tags:
+      Role: "Internal"
+      Version: "ENV:CHEF_VERSION"
   S3BucketName:
     type: "s3_bucket"
     tags:

@@ -74,7 +74,6 @@
         "MinSize": "1",
         "MaxSize": "3",
         "DesiredCapacity": "1",
-
         "AvailabilityZones": { "Ref": "Zones" },
         "VPCZoneIdentifier": { "Ref": "Subnets" },
         "LoadBalancerNames": [{ "Ref": "InternalELB" },{ "Ref": "ExternalELB"}],
@@ -251,8 +250,23 @@
         "PolicyDocument": {
           "Version" : "2012-10-17",
           "Statement": [{
+            "Sid": "s3Perms",
             "Effect": "Allow",
-            "Action": "*",
+            "Action": [
+              "s3:List*",
+              "s3:Get*"
+            ],
+            "Resource": "*"
+          },{
+            "Sid": "KMSAccess",
+            "Effect": "Allow",
+            "Action": [
+              "kms:Encrypt",
+              "kms:Decrypt",
+              "kms:ReEncrypt*",
+              "kms:GenerateDataKey*",
+              "kms:DescribeKey"
+            ],
             "Resource": "*"
           }]
         },

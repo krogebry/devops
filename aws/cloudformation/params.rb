@@ -5,11 +5,32 @@
 class ParamsProc
   @config
   @params
-  @cf_client
   @s3_client
   @ec2_client
   @elb_client
   @sns_client
+
+  FS_CACHE_DIR = File::join( '/', 'tmp', 'devops', 'cache' )
+
+  def initialize( yaml )
+    creds = Aws::SharedCredentials.new()
+    @s3_client = Aws::S3::Client.new(region: yaml['region'], credentials: creds)
+    @ec2_client = Aws::EC2::Client.new(region: yaml['region'], credentials: creds)
+    @elb_client = Aws::ElasticLoadBalancing::Client.new(region: yaml['region'], credentials: creds)
+    @sns_client = Aws::SNS::Client.new(region: yaml['region'], credentials: creds)
+    @config = yaml
+    @params = yaml['params']
+
+    init_cache
+  end
+
+  def self.flush()
+    system(format('rm -rf %s/*', FS_CACHE_DIR))
+  end
+
+  def init_cache()
+    FileUtils::mkdir_p FS_CACHE_DIR
+  end
 
   def get_filters( a )
     ro = []
@@ -27,17 +48,6 @@ class ParamsProc
       })
     end
     ro
-  end
-
-  def initialize( yaml )
-    creds = Aws::SharedCredentials.new()
-    #@cf_client = Aws::CloudFormation::Client.new(region: yaml['region'], credentials: creds)
-    @s3_client = Aws::S3::Client.new(region: yaml['region'], credentials: creds)
-    @ec2_client = Aws::EC2::Client.new(region: yaml['region'], credentials: creds)
-    @elb_client = Aws::ElasticLoadBalancing::Client.new(region: yaml['region'], credentials: creds)
-    @sns_client = Aws::SNS::Client.new(region: yaml['region'], credentials: creds)
-    @config = yaml
-    @params = yaml['params']
   end
 
   def compile()
@@ -164,8 +174,11 @@ class ParamsProc
   end
 
   def vpc( v )
-    vpcs = @ec2_client.describe_vpcs({ filters: get_filters( v['tags'] )})
-    v['value'] = vpcs.vpcs.first['vpc_id']
+    cache_key = format('vpcs-%s-%s', @config['region'], ENV['AWS_PROFILE'])
+    vpcs = cached_json( cache_key ) do 
+      @ec2_client.describe_vpcs({ filters: get_filters( v['tags'] )}).data.to_h.to_json
+    end
+    v['value'] = vpcs['vpcs'].first['vpc_id']
     v
   end
 
@@ -214,13 +227,17 @@ class ParamsProc
     v
   end
 
+  def find_subnet( tag )
+    cache_key = format('subnets-%s-%s-%s', @config['region'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( tag.to_s ))
+    cached_json( cache_key ) do
+      @ec2_client.describe_subnets({ filters: get_filters( tag )}).data.to_h.to_json
+    end
+  end
+
   def zones( v )
     zones = []
     v['tags'].each do |tag|
-      cache_key = format('subnets-%s-%s-%s', @config['region'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( tag.to_s ))
-      subnet = cached_json( cache_key ) do
-        @ec2_client.describe_subnets({ filters: get_filters( tag )}).data.to_h.to_json
-      end
+      subnet = find_subnet( tag )
       zones.push( subnet['subnets'].first['availability_zone'] )
     end
     v['value'] = zones.join(',')
@@ -230,10 +247,7 @@ class ParamsProc
   def subnets( v )
     subnets = []
     v['tags'].each do |tag|
-      cache_key = format('subnets-%s-%s-%s', @config['region'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( tag.to_s ))
-      subnet = cached_json( cache_key ) do
-        @ec2_client.describe_subnets({ filters: get_filters( tag )})
-      end
+      subnet = find_subnet( tag )
       subnets.push( subnet['subnets'].first['subnet_id'] )
     end
     v['value'] = subnets.join(',')
