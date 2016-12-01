@@ -14,7 +14,7 @@ namespace :cf do
   desc 'Create the chef config.'
   #task :mk_chef_config, :chef_version, :inf_version, :region_name do |t,args|
   task :mk_chef_config do |t,args|
-    region = ENV['AWS_REGION']
+    region = ENV['AWS_DEFAULT_REGION']
     inf_version = ENV['INF_VERSION']
     chef_version = ENV['CHEF_VERSION']
 
@@ -59,7 +59,7 @@ namespace :cf do
   desc 'Launch a stack based on a profile PROFILE_NAME STACK_VERSION STACK_NAME'
   task :launch, :profile_name, :stack_version, :stack_name do |t,args|
     profile_name = args[:profile_name]
-    region = ENV['AWS_REGION'] || 'us-east-1'
+    region = ENV['AWS_DEFAULT_REGION'] || 'us-east-1'
     stack_version = args[:stack_version]
 
     ## Check to make sure the profile name exists.

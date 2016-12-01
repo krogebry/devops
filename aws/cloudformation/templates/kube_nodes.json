@@ -1,0 +1,164 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "",
+
+  "Parameters": { },
+
+  "Resources": {
+
+    "InstanceSG": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "Tags": [{
+          "Key": "Application",
+          "Value": "KubeNodes"
+        }],
+        "VpcId": { "Ref": "VpcId" },
+        "GroupDescription": "Enable HTTP access and SSH access",
+        "SecurityGroupIngress": [{
+          "CidrIp": { "Ref": "MgtCidr" },
+          "ToPort": "443",
+          "FromPort": "443",
+          "IpProtocol": "tcp"
+        }, {
+          "CidrIp": { "Ref": "MgtCidr" },
+          "ToPort": "22",
+          "FromPort": "22",
+          "IpProtocol": "tcp"
+        }]
+      }
+    },
+
+    "KubeNodesASG": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "MinSize": "1",
+        "MaxSize": "3",
+        "DesiredCapacity": "1",
+        "AvailabilityZones": { "Ref": "Zones" },
+        "VPCZoneIdentifier": { "Ref": "Subnets" },
+        "LaunchConfigurationName": { "Ref": "KubeNodesLC" }
+        //"NotificationConfigurations": [{
+          //"TopicARN" : { "Ref" : "DevCentralSNSTopicARN" },
+          //"NotificationTypes" : [
+            //"autoscaling:EC2_INSTANCE_LAUNCH",
+            //"autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+            //"autoscaling:EC2_INSTANCE_TERMINATE",
+            //"autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
+          //]
+        //}]
+      },
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Timeout": "PT30M"
+        }
+      },
+      "UpdatePolicy": {
+        "AutoScalingRollingUpdate": {
+          "PauseTime": "PT30M",
+          "MaxBatchSize": "1",
+          "WaitOnResourceSignals": "true",
+          "MinInstancesInService": "1"
+        }
+      }
+    },
+
+    "KubeNodesLC": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata": {
+        "Comment": "Bootstrap a new KubeNodes instance.",
+        "AWS::CloudFormation::Init": {
+          "configSets": {
+            "base_install": [
+              "cfn",
+              "cw_logs",
+              "cw_collectd"
+            ]
+          }
+        }
+      },
+
+      "Properties": {
+        "KeyName": { "Ref": "KeyName" },
+        "ImageId": { "Ref": "ImageId" },
+        "UserData": { "Fn::Base64": { "Fn::Join": ["", [
+          "#!/bin/bash -xe\n",
+
+          "/opt/aws/bin/cfn-init -v ",
+          " --stack ", { "Ref": "AWS::StackName" },
+          " --resource KubeNodesLC ",
+          " --configsets base_install ",
+          " --region ", { "Ref": "AWS::Region" }, "\n",
+
+          "/opt/aws/bin/cfn-signal -e $? ",
+          " --stack ", { "Ref": "AWS::StackName" },
+          " --resource KubeNodesASG ",
+          " --region ", { "Ref": "AWS::Region" }, "\n"
+        ]]}},
+        "InstanceType": { "Ref": "InstanceType" },
+        "SecurityGroups": [{ "Ref": "InstanceSG" }],
+
+        "IamInstanceProfile": { "Ref": "RootInstanceProfile" },
+        "InstanceMonitoring": "false",
+        "AssociatePublicIpAddress": "false"
+      }
+    },
+
+		"RootRole": {
+    	"Type": "AWS::IAM::Role",
+      "Properties": {
+      	"AssumeRolePolicyDocument": {
+        	"Version" : "2012-10-17",
+          "Statement": [ {
+          	"Effect": "Allow",
+            "Principal": { "Service": [ "ec2.amazonaws.com" ] },
+            "Action": [ "sts:AssumeRole" ]
+          } ]
+        },
+        "Path": "/"
+      }
+    },
+
+    "RolePolicies": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "root",
+        "PolicyDocument": {
+          "Version" : "2012-10-17",
+          "Statement": [{
+            "Sid": "s3Perms",
+            "Effect": "Allow",
+            "Action": [
+              "s3:List*",
+              "s3:Get*"
+            ],
+            "Resource": "*"
+          },{
+            "Sid": "KMSAccess",
+            "Effect": "Allow",
+            "Action": [
+              "kms:Encrypt",
+              "kms:Decrypt",
+              "kms:ReEncrypt*",
+              "kms:GenerateDataKey*",
+              "kms:DescribeKey"
+            ],
+            "Resource": "*"
+          }]
+        },
+        "Roles": [{ "Ref": "RootRole" }]
+      }
+    },
+
+    "RootInstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [{ "Ref": "RootRole" }]
+      }
+    }
+
+  },
+
+  "Outputs": { }
+}

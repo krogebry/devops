@@ -1,19 +1,29 @@
 ---
-name: "Infrastructure"
+name: "KubeNodes"
 owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+template: "kube_nodes"
+description: "Kube Nodes."
 modules:
-  - "base"
+  - "cfn"
   - "vpc"
-  #- "chef-client"
+  - "base"
   - "cw_logs"
   - "cw_collectd"
-  #- "iam_kms_client"
-template: "inf"
-description: "Infrastructure things."
 params:
-  MgtCidr: "24.111.13.66/32"
-  InstanceType: "t2.micro"
+  InfStackVersion: "ENV:INF_VERSION"
 
+  #S3BucketName:
+    #type: "s3_bucket"
+    #tags:
+      #Name: "dev-central"
+      #Version: "ENV:INF_VERSION"
+
+  MgtCidr:
+    type: "vpc_cidr"
+    tags:
+      Name: "main"
+
+  InstanceType: "t2.micro"
   ImageId: "ami-775e4f16"
 
   #ImageId:
@@ -22,14 +32,17 @@ params:
       #Name: "devops"
       #Version: "0.1.1"
 
-  #KeyName: "devops-0"
+  #DevCentralSNSTopicARN:
+    #type: "sns_topic_arn"
+    #tags:
+      #Name: "DevCentralSNSTopic"
+
   KeyName: "NMODEVKEY"
 
   VpcId:
     type: "vpc"
     tags:
-      #Name: "main"
-      Name: "NMO-Management-VPC-01"
+      Name: "main"
 
   Zones:
     type: "zones"
