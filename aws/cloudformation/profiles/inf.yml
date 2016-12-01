@@ -1,6 +1,36 @@
 ---
 name: "Infrastructure"
 owner: "Bryan Kroger (bkroger@thoughtworks.com)"
-#region: "us-east-1"
+modules:
+  - "base"
+  - "vpc"
+  #- "chef-client"
+  - "cw_logs"
+  - "cw_collectd"
+  #- "iam_kms_client"
 template: "inf"
 description: "Infrastructure things."
+params:
+  MgtCidr: "24.111.13.66/32"
+  InstanceType: "t2.micro"
+  ImageId:
+    type: "ami"
+    tags:
+      Name: "devops"
+      Version: "0.1.1"
+  KeyName: "devops-0"
+  VpcId:
+    type: "vpc"
+    tags:
+      Name: "main"
+
+  Zones:
+    type: "zones"
+    tags:
+      - Name: "private"
+      - Name: "public"
+  Subnets:
+    type: "subnets"
+    tags:
+      - Name: "private"
+      - Name: "public"

@@ -3,6 +3,13 @@ name: "Vault"
 owner: "Bryan Kroger (bkroger@thoughtworks.com)"
 template: "vault"
 description: "Vault service."
+modules:
+  - "base"
+  - "vpc"
+  - "chef-client"
+  - "cw_logs"
+  - "cw_collectd"
+  - "iam_kms_client"
 params:
   InfStackVersion: "ENV:INF_VERSION"
   ChefEnvName: "management"
@@ -16,15 +23,16 @@ params:
     tags:
       Name: "dev-central"
       Version: "ENV:INF_VERSION"
-  MgtCidr: "54.147.185.114/32"
-    #type: "vpc_cidr"
-    #tags:
-      #Name: "main"
+  #MgtCidr: "54.147.185.114/32"
+  MgtCidr: 
+    type: "vpc_cidr"
+    tags:
+      Name: "main"
   ImageId: 
     type: "ami"
     tags:
       Name: "devops"
-      Version: "0.1.0"
+      Version: "0.1.1"
   KeyName: "krogebry-0"
   VpcId: 
     type: "vpc"

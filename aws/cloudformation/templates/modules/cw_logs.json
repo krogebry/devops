@@ -1,0 +1,49 @@
+{
+  "Parameters": { },
+    "ConfigSets": {
+
+     "cw_logs": {
+       "packages": {
+         "yum": {
+           "unzip": [],
+           "perl-DateTime": [],
+           "perl-Sys-Syslog": [],
+           "perl-libwww-perl": []
+         }
+       },
+       "sources": {
+         "/usr/local": "http://aws-cloudwatch.s3.amazonaws.com/downloads/CloudWatchMonitoringScripts-1.2.1.zip"
+       },
+       "files": {
+         "/etc/cron.hourly/cloudwatch-monitoring": {
+           "content": [
+             "*/5 * * * * /usr/local/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --from-cron"
+           ],
+           "mode": "000700",
+           "owner": "root",
+           "group": "root"
+         },
+         "/usr/local/awslogs-agent-setup.py": {
+           "source": "https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py",
+           "mode": "000700",
+           "owner": "root",
+           "group": "root"
+         }
+       },
+       "commands": {
+         "01_run_awslogs_agent_setup.py": {
+           "command": {
+             "Fn::Sub": [
+               "python /usr/local/awslogs-agent-setup.py -n -r ${Region} -c https://s3.amazonaws.com/quickstart-reference/hashicorp/vault/latest/scripts/awslogs-config-file", { 
+                 "Region": { "Ref": "AWS::Region" }
+               }
+             ]
+           }
+         },
+         "02_make_mon_put_instance_data_exececutable": {
+           "command": "chmod +x /usr/local/aws-scripts-mon/mon-put-instance-data.pl"
+         }
+       }
+     }
+   }
+}
