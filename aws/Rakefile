@@ -4,12 +4,75 @@
 require 'pp'
 require 'logger'
 require 'aws-sdk'
+require 'net/http'
 require 'fileutils'
+
+require '../libs/cache.rb'
+require '../libs/logger.rb'
 
 require './kms/tasks.rb'
 require './lambda/tasks.rb'
 require './cloudtrail/tasks.rb'
 require './cloudformation/tasks.rb'
 
-Log = Logger.new(STDOUT)
+Log = DevOps::Logger.new(STDOUT)
+
+desc "Update Bastion IP."
+task :update_bastion do |t,args|
+  public_ip = Net::HTTP.get URI "https://api.ipify.org"
+  #public_ip = "71.32.37.234"
+  Log.debug(format('RemoteIP: %s', public_ip))
+
+  @cache = DevOps::Cache.new
+
+  filter = [{
+    name: 'tag:Role',
+    values: [ 'Bastion' ]
+  },{
+    name: 'tag:Version',
+    values: [ENV['INF_VERSION'].gsub( /\./, '-' )]
+  }]
+
+  creds = Aws::SharedCredentials.new()
+  ec2_client = Aws::EC2::Client.new(region: ENV['AWS_REGION'], credentials: creds)
+
+  cache_key = format('security_groups_%s_%s_%s', ENV['AWS_REGION'], ENV['AWS_PROFILE'], ENV['INF_VERSION'])
+  groups = @cache.cached_json( cache_key ) do
+    ec2_client.describe_security_groups({
+      filters: filter
+    }).data.to_h.to_json
+  end
+
+  if(groups['security_groups'].size == 0)
+    Log.fatal(format('Unable to find SG'))
+    exit
+  end
+
+  sg = groups['security_groups'].first
+
+  ec2_client.authorize_security_group_ingress({
+    group_id: sg['group_id'],
+    ip_permissions: [{
+      ip_protocol: 'tcp',
+      from_port: 22,
+      to_port: 22,
+      ip_ranges: [{
+        cidr_ip: format('%s/32', public_ip)
+      }]
+    }]
+  })
+
+  #groups['security_groups'][0]['ip_permissions'].each do |perm|
+    #if perm['from_port'] == 22 
+      #perm['ip_ranges'] = [{"cidr_ip"=>"24.111.13.66/32"}],
+      #perm['ip_ranges'] = [{ cidr_ip: format('%s/32', public_ip)}]
+    #end
+  #end
+
+end
+
+desc "Flush Cache."
+task :flush_cache do |t,args|
+  DevOps::Cache.flush
+end
 

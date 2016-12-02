@@ -133,8 +133,11 @@
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
         "Tags": [{
-          "Key": "Application",
-          "Value": "ChefServer"
+          "Key": "Role",
+          "Value": "Bastion"
+        },{
+          "Key": "Version",
+          "Value": { "Ref": "StackVersion" }
         }],
         "VpcId": { "Ref": "VpcId" },
         "GroupDescription": "Enable HTTP access and SSH access",
