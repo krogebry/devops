@@ -1,0 +1,46 @@
+{
+  "Parameters": { 
+    "InstanceType": {
+      "Type": "String",
+      "Default": "t2.micro",
+      "Description": "Type of instance."
+    },
+    
+    "InfStackVersion": {
+      "Type": "String",
+      "Default": "0.1.0",
+      "Description": "Infrastructure stack version."
+    },
+
+    "StackVersion": {
+      "Type": "String",
+      "Default": "0.1.0",
+      "Description": "Stack version."
+    },
+    
+    "InfStackVersion": {
+      "Type": "String",
+      "Default": "0.1.0",
+      "Description": "Role profile ARN"
+    },
+    
+    "S3BucketName": {
+      "Type": "String",
+      "Default": "0.1.0",
+      "Description": "Name of the DevOps bucket."
+    },
+
+    "KeyName": {
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "Description": "The EC2 Key Pair to allow SSH access to the instances",
+      "ConstraintDescription": "must be the name of an existing EC2 KeyPair."
+    },
+
+    "ImageId": {
+      "Type": "AWS::EC2::Image::Id",
+      "Description": "The EC2 Image Id",
+      "ConstraintDescription": "must be the name of an existing AMI."
+    }
+
+  }
+}
