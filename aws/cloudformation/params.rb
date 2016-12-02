@@ -3,6 +3,7 @@
 ##
 
 class ParamsProc
+  @cache
   @config
   @params
   @s3_client
@@ -10,27 +11,32 @@ class ParamsProc
   @elb_client
   @sns_client
 
-  FS_CACHE_DIR = File::join( '/', 'tmp', 'devops', 'cache' )
+  #FS_CACHE_DIR = File::join( '/', 'tmp', 'devops', 'cache' )
 
   def initialize( yaml )
     creds = Aws::SharedCredentials.new()
-    @s3_client = Aws::S3::Client.new(region: yaml['region'], credentials: creds)
-    @ec2_client = Aws::EC2::Client.new(region: yaml['region'], credentials: creds)
-    @elb_client = Aws::ElasticLoadBalancing::Client.new(region: yaml['region'], credentials: creds)
-    @sns_client = Aws::SNS::Client.new(region: yaml['region'], credentials: creds)
+
+    #yaml['region'] = (yaml.has_key?( 'region' ) ? yaml['region'] : ENV['AWS_REGION'])
+    region = ENV['AWS_REGION']
+    Log.debug(format('Region: %s', region))
+
+    @s3_client = Aws::S3::Client.new(region: region, credentials: creds)
+    @ec2_client = Aws::EC2::Client.new(region: region, credentials: creds)
+    @elb_client = Aws::ElasticLoadBalancing::Client.new(region: region, credentials: creds)
+    @sns_client = Aws::SNS::Client.new(region: region, credentials: creds)
     @config = yaml
     @params = yaml['params']
 
-    init_cache
+    @cache = DevOps::Cache.new
   end
 
-  def self.flush()
-    system(format('rm -rf %s/*', FS_CACHE_DIR))
-  end
+  #def self.flush()
+    #system(format('rm -rf %s/*', FS_CACHE_DIR))
+  #end
 
-  def init_cache()
-    FileUtils::mkdir_p FS_CACHE_DIR
-  end
+  #def init_cache()
+    #FileUtils::mkdir_p FS_CACHE_DIR
+  #end
 
   def get_filters( a )
     ro = []
@@ -78,25 +84,27 @@ class ParamsProc
     end
   end
 
-  def cached_json( key )
-    data = []
-    fs_cache_file = File.join( '/', 'tmp', 'cache', key )
-    FileUtils.mkdir_p(File.dirname( fs_cache_file )) unless File.exists?(File.dirname( fs_cache_file ))
-    if(File.exists?( fs_cache_file ))
-      data = File.read( fs_cache_file )
-    else
-      Log.debug('Getting from source')
-      data = yield
-      File.open( fs_cache_file, 'w' ) do |f|
-        f.puts data
-      end
-    end
-    return JSON::parse( data )
+  def ached_json( key )
+    @cache.cached_json( key )
+
+    #data = []
+    #fs_cache_file = File.join( '/', 'tmp', 'cache', key )
+    #FileUtils.mkdir_p(File.dirname( fs_cache_file )) unless File.exists?(File.dirname( fs_cache_file ))
+    #if(File.exists?( fs_cache_file ))
+      #data = File.read( fs_cache_file )
+    #else
+      #Log.debug('Getting from source')
+      #data = yield
+      #File.open( fs_cache_file, 'w' ) do |f|
+        #f.puts data
+      #end
+    #end
+    #return JSON::parse( data )
   end
 
   def vpc_cidr( v )
     cache_key = format('vpcs-%s-%s', @config['region'], ENV['AWS_PROFILE'])
-    vpcs = cached_json( cache_key ) do 
+    vpcs = @cache.cached_json( cache_key ) do 
       @ec2_client.describe_vpcs({ filters: get_filters( v['tags'] )}).data.to_h.to_json
     end
 
@@ -111,7 +119,7 @@ class ParamsProc
   def ami( v )
     cache_key = format('images-%s-%s-%s', @config['region'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( v['tags'].to_s ))
     Log.debug(cache_key)
-    objects = cached_json( cache_key ) do 
+    objects = @cache.cached_json( cache_key ) do 
       @ec2_client.describe_images({ filters: get_filters( v['tags'] )}).data.to_h.to_json
     end
 
@@ -126,14 +134,14 @@ class ParamsProc
 
   def get_elbs()
     cache_key = format('elb-%s-%s', @config['region'], ENV['AWS_PROFILE'])
-    cached_json( cache_key ) do
+    @cache.cached_json( cache_key ) do
       @elb_client.describe_load_balancers().data.to_h.to_json
     end
   end
 
   def get_elb_tags( elb_names )
     cache_key = format('elb-%s-%s-tags', @config['region'], ENV['AWS_PROFILE'])
-    cached_json( cache_key ) do
+    @cache.cached_json( cache_key ) do
       @elb_client.describe_tags({ load_balancer_names: elb_names }).data.to_h.to_json
     end
   end
@@ -175,7 +183,7 @@ class ParamsProc
 
   def vpc( v )
     cache_key = format('vpcs-%s-%s', @config['region'], ENV['AWS_PROFILE'])
-    vpcs = cached_json( cache_key ) do 
+    vpcs = @cache.cached_json( cache_key ) do 
       @ec2_client.describe_vpcs({ filters: get_filters( v['tags'] )}).data.to_h.to_json
     end
     v['value'] = vpcs['vpcs'].first['vpc_id']
@@ -195,7 +203,7 @@ class ParamsProc
 
     cache_key = format('s3_buckets-%s-%s', @config['region'], ENV['AWS_PROFILE'])
 
-    buckets = cached_json( cache_key ) do
+    buckets = @cache.cached_json( cache_key ) do
       @s3_client.list_buckets().data.to_h.to_json
     end
     bucket = buckets['buckets'].select{|b| b['name'] == bucket_name }.first
@@ -212,7 +220,7 @@ class ParamsProc
 
   def sns_topic_arn( v )
     cache_key = format('sns_topics-%s-%s', @config['region'], ENV['AWS_PROFILE'])
-    sns_topics = cached_json( cache_key ) do
+    sns_topics = @cache.cached_json( cache_key ) do
       @sns_client.list_topics().data.to_h.to_json
     end
     Log.debug(format('Looking for: %s', v['tags']['Name']))
@@ -229,7 +237,7 @@ class ParamsProc
 
   def find_subnet( tag )
     cache_key = format('subnets-%s-%s-%s', @config['region'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( tag.to_s ))
-    cached_json( cache_key ) do
+    @cache.cached_json( cache_key ) do
       @ec2_client.describe_subnets({ filters: get_filters( tag )}).data.to_h.to_json
     end
   end
