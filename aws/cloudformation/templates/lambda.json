@@ -23,23 +23,42 @@
           "PolicyName": "root",
           "PolicyDocument": {
             "Version": "2012-10-17",
-            "Statement": [{ "Effect": "Allow", "Action": ["logs:*"], "Resource": "arn:aws:logs:*:*:*" }]
+            "Statement": [{ 
+              "Effect": "Allow", 
+              "Action": [
+                "logs:*"
+              ], 
+              "Resource": "arn:aws:logs:*:*:*" 
+            },{
+              "Effect": "Allow", 
+              "Action": [
+                "ec2:Describe*"
+              ], 
+              "Resource": "arn:aws:config:*:*:*" 
+            },{
+              "Effect": "Allow", 
+              "Action": [
+                "config:PutEvaluations"
+              ], 
+              "Resource": "*"
+            }]
           }
         }]
       }
 		},
 
-		"AMIIDLookup": {
+		"PolicyCheckPort": {
   		"Type": "AWS::Lambda::Function",
   		"Properties": {
     		"Handler": "index.handler",
     		"Role": { "Fn::GetAtt" : ["LambdaExecutionRole", "Arn"] },
     		"Code": {
-      		"S3Key": "amilookup.zip",
-      		"S3Bucket": "lambda-functions"
+      		"S3Key": "policy-check-port.zip",
+      		"S3Bucket": "nm-lambda-functions-2016-12-02"
     		},
     		"Runtime": "nodejs4.3",
-    		"Timeout": "25"
+    		"Timeout": "25",
+        "FunctionName": "policy-check-port"
   		}
 		}
 

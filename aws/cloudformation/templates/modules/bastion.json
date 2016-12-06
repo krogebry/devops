@@ -1,0 +1,143 @@
+{
+  "Parameters": { 
+  },
+
+  "Resources": {
+
+    "BastionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version" : "2012-10-17",
+          "Statement": [ {
+            "Effect": "Allow",
+            "Principal": { "Service": [ "ec2.amazonaws.com" ] },
+            "Action": [ "sts:AssumeRole" ]
+          } ]
+        },
+        "Path": "/"
+      }
+    },
+
+    "RolePolicies": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "root",
+        "PolicyDocument": {
+          "Version" : "2012-10-17",
+          "Statement": [{
+            "Sid": "s3Perms",
+            "Effect": "Deny",
+            "Action": "*",
+            "Resource": "*"
+          }]
+        },
+        "Roles": [{ "Ref": "BastionRole" }]
+      }
+    },
+
+    "BastionInstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [{ "Ref": "BastionRole" }]
+      }
+    },
+
+    "BastionASG": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "MinSize": "1",
+        "MaxSize": "3",
+        "DesiredCapacity": "1",
+        "AvailabilityZones": { "Ref": "Zones" },
+        "VPCZoneIdentifier": { "Ref": "Subnets" },
+        //"LoadBalancerNames": [{ "Ref": "InternalELB" },{ "Ref": "ExternalELB"}],
+        "LaunchConfigurationName": { "Ref": "BastionLC" },
+        "NotificationConfigurations": [{
+          "TopicARN" : { "Ref" : "DevCentralSNSTopic" },
+          "NotificationTypes" : [
+            "autoscaling:EC2_INSTANCE_LAUNCH",
+            "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+            "autoscaling:EC2_INSTANCE_TERMINATE",
+            "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
+          ]
+        }]
+      },
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Timeout": "PT30M"
+        }
+      },
+      "UpdatePolicy": {
+        "AutoScalingRollingUpdate": {
+          "PauseTime": "PT30M",
+          "MaxBatchSize": "1",
+          "WaitOnResourceSignals": "true",
+          "MinInstancesInService": "1"
+        }
+      }
+    },
+
+    "BastionLC": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata": {
+        "Comment": "Bootstrap a new Bastion instance.",
+        "AWS::CloudFormation::Init": {
+          "configSets": {
+            "base_install": [
+              "cfn",
+              "cw_logs",
+              "cw_collectd"
+            ]
+          }
+        }
+      },
+
+      "Properties": {
+        "KeyName": { "Ref": "KeyName" },
+        "ImageId": { "Ref": "ImageId" },
+        "UserData": { "Fn::Base64": { "Fn::Join": ["", [
+          "#!/bin/bash -xe\n",
+          "/opt/aws/bin/cfn-init -v ",
+          " --stack ", { "Ref": "AWS::StackName" },
+          " --resource BastionLC ",
+          " --configsets base_install ",
+          " --region ", { "Ref": "AWS::Region" }, "\n",
+
+          "/opt/aws/bin/cfn-signal -e $? ",
+          " --stack ", { "Ref": "AWS::StackName" },
+          " --resource BastionASG ",
+          " --region ", { "Ref": "AWS::Region" }, "\n"
+        ]]}},
+        "InstanceType": { "Ref": "InstanceType" },
+        "SecurityGroups": [{ "Ref": "InstanceSG" }],
+
+        "IamInstanceProfile": { "Ref": "BastionInstanceProfile" },
+        "InstanceMonitoring": "false",
+        "AssociatePublicIpAddress": "true"
+      }
+    },
+
+    "InstanceSG": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "Tags": [{
+          "Key": "Role",
+          "Value": "Bastion"
+        },{
+          "Key": "Version",
+          "Value": { "Ref": "StackVersion" }
+        }],
+        "VpcId": { "Ref": "VpcId" },
+        "GroupDescription": "Enable HTTP access and SSH access",
+        "SecurityGroupIngress": [{
+          "CidrIp": { "Ref": "MgtCidr" },
+          "ToPort": "22",
+          "FromPort": "22",
+          "IpProtocol": "tcp"
+        }]
+      }
+    }
+	}
+}

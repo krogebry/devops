@@ -1,0 +1,26 @@
+{
+  "Parameters": { },
+    "ConfigSets": {
+
+     "cw_collectd": {
+       "packages": {
+         "yum": {
+           "collectd": []
+         }
+       },
+       "files": {
+         "/usr/local/collectd-setup.py": {
+           "mode": "000700",
+           "owner": "root",
+           "group": "root",
+           "source": "https://raw.githubusercontent.com/awslabs/collectd-cloudwatch/master/src/setup.py"
+         }
+       },
+       "commands": {
+         "01_run_collect_setup.py": {
+           "command": "/usr/local/collectd-setup.py"
+         }
+       }
+     }
+   }
+}
