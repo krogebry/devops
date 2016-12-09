@@ -1,0 +1,67 @@
+---
+name: "ECSCluster"
+owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+template: "ecs"
+description: "ECS thing."
+modules:
+  #- "cfn"
+  - "vpc"
+  - "base"
+  #- "cw_logs"
+  #- "cw_collectd"
+params:
+  InfStackVersion: "ENV:INF_VERSION"
+
+  #S3BucketName:
+    #type: "s3_bucket"
+    #tags:
+      #Name: "dev-central"
+      #Version: "ENV:INF_VERSION"
+
+  MgtCidr:
+    type: "vpc_cidr"
+    tags:
+      #Name: "NMO-Management-VPC-01"
+      #Name: "NMO-Development-VPC-01"
+      Name: "main"
+
+  InstanceType: "m4.large"
+
+  ImageId:
+    type: "ami"
+    tags:
+      Name: "devops"
+      Version: "0.1.4"
+
+  #DevCentralSNSTopicARN:
+    #type: "sns_topic_arn"
+    #tags:
+      #Name: "DevCentralSNSTopic"
+
+  KeyName: "NMODEVKEY"
+
+  #Password:
+    #type: "password"
+    #tags: null
+
+  VpcId:
+    type: "vpc"
+    tags:
+      #Name: "NMO-Development-VPC-01"
+      Name: "main"
+      #Name: "NMO-Development-VPC-01"
+
+  Zones:
+    type: "zones"
+    tags:
+      #- Name: "Subnet-Infrastructure Management AZ1"
+      #- Name: "Subnet-Infrastructure Management AZ2"
+      - Name: "primary"
+      - Name: "secondary"
+  Subnets:
+    type: "subnets"
+    tags:
+      #- Name: "Subnet-Infrastructure Management AZ1"
+      #- Name: "Subnet-Infrastructure Management AZ2"
+      - Name: "primary"
+      - Name: "secondary"

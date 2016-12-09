@@ -109,11 +109,7 @@
         "Comment": "Bootstrap a new ChefServer instance.",
         "AWS::CloudFormation::Init": {
           "configSets": {
-            "base_install": [
-              "cfn",
-              "cw_logs",
-              "cw_collectd"
-            ]
+            "base_install": [ "cfn", "cw_logs" ]
           }
         }
       },
@@ -123,6 +119,8 @@
         "ImageId": { "Ref": "ImageId" },
         "UserData": { "Fn::Base64": { "Fn::Join": ["", [
           "#!/bin/bash -xe\n",
+
+          "echo \"127.0.0.1 `hostname`\" >> /etc/hosts \n",
 
           "/opt/aws/bin/cfn-init -v ",
           " --stack ", { "Ref": "AWS::StackName" },
@@ -151,7 +149,7 @@
 
         "IamInstanceProfile": { "Ref": "RootInstanceProfile" },
         "InstanceMonitoring": "false",
-        "AssociatePublicIpAddress": "true"
+        "AssociatePublicIpAddress": "false"
       }
     },
 
@@ -253,8 +251,9 @@
             "Sid": "s3Perms",
             "Effect": "Allow",
             "Action": [
-              "s3:List*",
-              "s3:Get*"
+              "s3:Get*",
+              "s3:Put*",
+              "s3:List*"
             ],
             "Resource": "*"
           },{
@@ -264,6 +263,7 @@
               "kms:Encrypt",
               "kms:Decrypt",
               "kms:ReEncrypt*",
+              "kms:ListAliases",
               "kms:GenerateDataKey*",
               "kms:DescribeKey"
             ],

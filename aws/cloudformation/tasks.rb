@@ -12,9 +12,8 @@ require './cloudformation/params.rb'
 namespace :cf do
 
   desc 'Create the chef config.'
-  #task :mk_chef_config, :chef_version, :inf_version, :region_name do |t,args|
   task :mk_chef_config do |t,args|
-    region = ENV['AWS_REGION']
+    region = ENV['AWS_DEFAULT_REGION']
     inf_version = ENV['INF_VERSION']
     chef_version = ENV['CHEF_VERSION']
 
@@ -51,15 +50,10 @@ namespace :cf do
     end
   end
 
-  desc "Flush cache"
-  task :flush_cache do |t,args|
-    ParamsProc::flush()
-  end
-
   desc 'Launch a stack based on a profile PROFILE_NAME STACK_VERSION STACK_NAME'
   task :launch, :profile_name, :stack_version, :stack_name do |t,args|
     profile_name = args[:profile_name]
-    region = ENV['AWS_REGION'] || 'us-east-1'
+    region = ENV['AWS_DEFAULT_REGION'] || 'us-east-1'
     stack_version = args[:stack_version]
 
     ## Check to make sure the profile name exists.
@@ -72,8 +66,6 @@ namespace :cf do
     end
 
     yaml = YAML::load(File::read( fs_profile_file ))
-    #pp yaml
-    #exit
 
     if(yaml.has_key?( 'params' ))
       p = ParamsProc.new(yaml.merge({ 'region' => region }))
@@ -98,7 +90,7 @@ namespace :cf do
         mod_json = JSON::parse(File.read( fs_module_file ))
 
         ## Merge params.
-        stack_tpl["Parameters"] = stack_tpl['Parameters'].deep_merge!( mod_json['Parameters'] )
+        stack_tpl["Parameters"] = stack_tpl['Parameters'].deep_merge( mod_json['Parameters'] )
 
         ## Check for Resources.
         if(mod_json.has_key?( 'Resources' ))
@@ -121,6 +113,8 @@ namespace :cf do
                 mod_json["UserData"].each do |udr|
                   new_user_data.push(udr)
                 end
+              else
+                new_user_data.push(r)
               end
             else
               new_user_data.push(r)
@@ -160,21 +154,33 @@ namespace :cf do
       })
     end
 
-    #pp params
-    #exit
-
     stack_name = format('%s-%s', (args[:stack_name] == nil ? yaml['name'] : args[:stack_name]), stack_version.gsub( /\./, '-' ))
 
-    begin
-      creds = Aws::SharedCredentials.new()
-      cf_client = Aws::CloudFormation::Client.new(region: region, credentials: creds)
+    cache = DevOps::Cache.new()
+    creds = Aws::SharedCredentials.new()
+    cf_client = Aws::CloudFormation::Client.new(region: region, credentials: creds)
 
-      cf_client.describe_stacks({ stack_name: stack_name })
-      ## Stack exists, update it.
-      Log.debug('Stack already exists')
+    cache_key = format('cf_stacks-%s-%s', ENV['AWS_PROFILE'], ENV['AWS_DEFAULT_REGION'])
+    stacks = cache.cached_json( cache_key ) do
+      cf_client.describe_stacks().data.to_h.to_json
+    end
+    stack_exists = stacks['stacks'].select{|s| s['stack_name'] == stack_name}.compact.size == 0 ? false : true
+    Log.debug(format('Stack exists(%s): %s', stack_name, stack_exists))
 
-    rescue Aws::CloudFormation::Errors::ValidationError => e
-      Log.debug('Creating stack')
+    if stack_exists
+      cf_client.update_stack({
+        stack_name: stack_name,
+        template_body: stack_tpl.to_json,
+        parameters: params,
+        capabilities: ["CAPABILITY_IAM"],
+        tags: [{
+          key: 'Owner',
+          value: 'bkroger@thoughtworks.com'
+        }]
+      })
+
+    else
+      Log.debug(format('Creating stack'))
 
       ## Stack does not exist, create it.
       cf_client.create_stack({
