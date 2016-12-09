@@ -1,0 +1,68 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "",
+
+  "Parameters": { 
+    "StackVersion": {
+      "Type": "String",
+      "Description": "Role profile ARN"
+    }
+  },
+
+	"Resources": {
+
+  	"LambdaExecutionRole": {
+    	"Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{ "Effect": "Allow", "Principal": {"Service": ["lambda.amazonaws.com"]}, "Action": ["sts:AssumeRole"] }]
+        },
+        "Path": "/",
+        "Policies": [{
+          "PolicyName": "root",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [{ 
+              "Effect": "Allow", 
+              "Action": [
+                "logs:*"
+              ], 
+              "Resource": "arn:aws:logs:*:*:*" 
+            },{
+              "Effect": "Allow", 
+              "Action": [
+                "ec2:Describe*"
+              ], 
+              "Resource": "arn:aws:config:*:*:*" 
+            },{
+              "Effect": "Allow", 
+              "Action": [
+                "config:PutEvaluations"
+              ], 
+              "Resource": "*"
+            }]
+          }
+        }]
+      }
+		},
+
+		"PolicyCheckPort": {
+  		"Type": "AWS::Lambda::Function",
+  		"Properties": {
+    		"Handler": "index.handler",
+    		"Role": { "Fn::GetAtt" : ["LambdaExecutionRole", "Arn"] },
+    		"Code": {
+      		"S3Key": "policy-check-port.zip",
+      		"S3Bucket": "nm-lambda-functions-2016-12-02"
+    		},
+    		"Runtime": "nodejs4.3",
+    		"Timeout": "25",
+        "FunctionName": "policy-check-port"
+  		}
+		}
+
+	},
+
+  "Outputs": { }
+}

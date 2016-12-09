@@ -11,32 +11,18 @@ class ParamsProc
   @elb_client
   @sns_client
 
-  #FS_CACHE_DIR = File::join( '/', 'tmp', 'devops', 'cache' )
-
   def initialize( yaml )
     creds = Aws::SharedCredentials.new()
 
-    #yaml['region'] = (yaml.has_key?( 'region' ) ? yaml['region'] : ENV['AWS_REGION'])
-    region = ENV['AWS_REGION']
-    Log.debug(format('Region: %s', region))
-
-    @s3_client = Aws::S3::Client.new(region: region, credentials: creds)
-    @ec2_client = Aws::EC2::Client.new(region: region, credentials: creds)
-    @elb_client = Aws::ElasticLoadBalancing::Client.new(region: region, credentials: creds)
-    @sns_client = Aws::SNS::Client.new(region: region, credentials: creds)
+    @s3_client = Aws::S3::Client.new(credentials: creds)
+    @ec2_client = Aws::EC2::Client.new(credentials: creds)
+    @elb_client = Aws::ElasticLoadBalancing::Client.new(credentials: creds)
+    @sns_client = Aws::SNS::Client.new(credentials: creds)
     @config = yaml
     @params = yaml['params']
 
     @cache = DevOps::Cache.new
   end
-
-  #def self.flush()
-    #system(format('rm -rf %s/*', FS_CACHE_DIR))
-  #end
-
-  #def init_cache()
-    #FileUtils::mkdir_p FS_CACHE_DIR
-  #end
 
   def get_filters( a )
     ro = []
@@ -182,10 +168,14 @@ class ParamsProc
   end
 
   def vpc( v )
-    cache_key = format('vpcs-%s-%s', @config['region'], ENV['AWS_PROFILE'])
+    #cache_key = format('vpcs-%s-%s', @config['region'], ENV['AWS_PROFILE'])
+    cache_key = format('vpcs-%s-%s-%s', @config['region'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( v['tag'].to_s ))
     vpcs = @cache.cached_json( cache_key ) do 
       @ec2_client.describe_vpcs({ filters: get_filters( v['tags'] )}).data.to_h.to_json
     end
+
+    raise Exception.new('Unable to find VPC!') if vpcs['vpcs'].size == 0
+
     v['value'] = vpcs['vpcs'].first['vpc_id']
     v
   end
