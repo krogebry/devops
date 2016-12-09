@@ -11,11 +11,16 @@
       "Default": "1",
       "Description": "Maximum number of instances that can be launched in your ECS cluster."
     },
+    "MinSize": {
+      "Type": "Number",
+      "Default": "1",
+      "Description": "Minimum number of instances that can be launched in your ECS cluster."
+    },
 
     "InstanceType": {
       "Description": "The EC2 instance type",
       "Type": "String",
-      "Default": "t2.micro",
+      "Default": "m4.large",
       //"AllowedValues": [ "t2.micro" ],
       "ConstraintDescription": "You can specify only t2.mirco."
     }
@@ -23,12 +28,9 @@
 
   "Mappings": {
     "AWSRegionToAMI": {
-      "us-east-1": {
-        "AMIID": "ami-1924770e"
-      },
-			"us-west-2": {
-        "AMIID": "ami-56ed4936"
-			}
+      "us-east-1": { "AMIID": "ami-1924770e" },
+      "us-east-2": { "AMIID": "ami-446f3521" },
+			"us-west-2": { "AMIID": "ami-56ed4936" }
     }
   },
 
@@ -51,29 +53,30 @@
             "SourceVolume": "my-vol"
           }],
           "PortMappings": [{
-            "HostPort": 80,
-            "ContainerPort": 80
+            "HostPort": 8081,
+            "ContainerPort": 81
           }]
+
         }, {
           "Cpu": "10",
           "Name": "wt-api",
           "Image": "krogebry/wt-api:latest",
           "Memory": 300,
           "Essential": "true",
-          //"LogConfiguration": {
-            //"LogDriver": "awslogs",
-            //"Options": {
-              //"awslogs-group": "krogebry-wt-api",
-              //"awslogs-region": { "Ref": "AWS::Region" },
-              //"awslogs-stream-prefix": "awslogs-example"
-            //}
-          //},
+          "LogConfiguration": {
+            "LogDriver": "awslogs",
+            "Options": {
+              "awslogs-group": "krogebry-test",
+              "awslogs-region": { "Ref": "AWS::Region" },
+              "awslogs-stream-prefix": "awslogs-example"
+            }
+          },
           "MountPoints": [{
             "ContainerPath": "/usr/local/apache2/htdocs",
             "SourceVolume": "my-vol"
           }],
           "PortMappings": [{
-            "HostPort": 81,
+            "HostPort": 80,
             "ContainerPort": 8080
           }]
 
@@ -93,6 +96,7 @@
           "VolumesFrom": [{
             "SourceContainer": "simple-app"
           }]
+
         }],
 
         "Volumes": [{
@@ -107,12 +111,12 @@
         "Subnets": { "Ref": "Subnets" },
         "CrossZone": "true",
         "Listeners": [{
-          "LoadBalancerPort": "80",
+          "Protocol": "HTTP",
           "InstancePort": "80",
-          "Protocol": "HTTP"
+          "LoadBalancerPort": "80"
         }],
         "HealthCheck": {
-          "Target": "HTTP:80/",
+          "Target": "HTTP:80/healthz",
           "HealthyThreshold": "2",
           "UnhealthyThreshold": "10",
           "Interval": "30",
@@ -122,10 +126,59 @@
       }
     },
 
+    "EcsALB": {
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "Properties": {
+        "Subnets": { "Ref": "Subnets" },
+        "SecurityGroups": [{ "Ref": "PublicHTTP" }],
+        "Tags": [{
+          "Key": "StackName",
+          "Value": { "Ref": "AWS::StackName" }
+        }]
+      }
+    },
+
+    "EcsTargetGroup" : {
+      "Type" : "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "Properties" : {
+        "Name": { "Ref": "AWS::StackName" },
+        "Port": 80,
+        "VpcId": {"Ref" : "VpcId"},
+        "Matcher" : { "HttpCode" : "200" },
+        "Protocol": "HTTP",
+        "HealthCheckProtocol": "HTTP",
+        "HealthCheckTimeoutSeconds": 10,
+        "HealthCheckIntervalSeconds": 30,
+        "HealthyThresholdCount": 4,
+        //"TargetGroupAttributes": [{
+          //"Key": "deregistration_delay.timeout_seconds",
+          //"Value": "20"
+        //}],
+        "UnhealthyThresholdCount": 3,
+        "Tags" : [{ 
+					"Key" : "StackName", 
+					"Value" : { "Ref": "AWS::StackName" }
+				}]
+      }
+    },
+
+    "ALBListener" : {
+      "Type" : "AWS::ElasticLoadBalancingV2::Listener",
+      "Properties" : {
+        "Port" : "80",
+        "Protocol" : "HTTP",
+        "DefaultActions" : [{
+          "Type" : "forward",
+          "TargetGroupArn" : { "Ref" : "EcsTargetGroup" }
+        }],
+        "LoadBalancerArn" : { "Ref" : "EcsALB" }
+      }
+    },
+
     "ECSAutoScalingGroup": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
-        "MinSize": "1",
+        "MinSize": { "Ref": "MinSize" },
         "MaxSize": { "Ref": "MaxSize" },
         "DesiredCapacity": { "Ref": "DesiredCapacity" },
         "AvailabilityZones": { "Ref": "Zones" },
@@ -200,38 +253,58 @@
         "InstanceMonitoring": "false",
         "AssociatePublicIpAddress": "true",
         "UserData": {
-          "Fn::Base64": { "Fn::Sub": "#!/bin/bash -xe\nyum install -y aws-cfn-bootstrap\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ContainerInstances --region ${AWS::Region}\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroup --region ${AWS::Region}\n"}
+          "Fn::Base64": { "Fn::Sub": "#!/bin/bash -xe\nyum install -y aws-cfn-bootstrap\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ContainerInstances --region ${AWS::Region}\nsleep 0\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroup --region ${AWS::Region}\n"}
         }
       }
     },
 
-    "service": {
-      "Type": "AWS::ECS::Service",
-      "DependsOn": [
-        "ECSAutoScalingGroup"
-      ],
-      "Properties": {
-        "Cluster": {
-          "Ref": "ECSCluster"
+"ECSServiceRole":{
+      "Type":"AWS::IAM::Role",
+      "Properties":{
+        "AssumeRolePolicyDocument":{
+          "Statement":[
+            {
+							"Sid": "ecsallow",
+              "Effect":"Allow",
+              "Principal":{
+                "Service":[
+                  "ecs.amazonaws.com"
+                ]
+              },
+              "Action":[
+                "sts:AssumeRole"
+              ]
+            }
+          ]
         },
-        "DesiredCount": "1",
-        "LoadBalancers": [{
-          "ContainerName": "simple-app",
-          "ContainerPort": "80",
-          "LoadBalancerName": {
-            "Ref": "EcsElasticLoadBalancer"
+        "Path":"/",
+        "Policies":[
+          {
+            "PolicyName":"ecs-service",
+            "PolicyDocument":{
+              "Statement":[
+                {
+                  "Effect":"Allow",
+                  "Action":[
+                    "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                    "elasticloadbalancing:DeregisterTargets",
+                    "elasticloadbalancing:Describe*",
+                    "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                    "elasticloadbalancing:RegisterTargets",
+                    "ec2:Describe*",
+                    "ec2:AuthorizeSecurityGroupIngress"
+                  ],
+                  "Resource":"*"
+                }
+              ]
+            }
           }
-        }],
-        "Role": {
-          "Ref": "ECSServiceRole"
-        },
-        "TaskDefinition": {
-          "Ref": "taskdefinition"
-        }
+        ]
       }
-    },
+	},
 
-    "ECSServiceRole": {
+
+    "EC2SServiceRole": {
       "Type": "AWS::IAM::Role",
       "Properties": {
         "AssumeRolePolicyDocument": {
@@ -239,7 +312,9 @@
             "Effect": "Allow",
             "Principal": {
               "Service": [
-                "ecs.amazonaws.com"
+                "ecs.amazonaws.com",
+                "application-autoscaling.amazonaws.com",
+                "ec2.amazonaws.com"
               ]
             },
             "Action": [
@@ -254,11 +329,11 @@
             "Statement": [{
               "Effect": "Allow",
               "Action": [
-                "elasticloadbalancing:Describe*",
-                "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-                "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-                "ec2:Describe*",
-                "ec2:AuthorizeSecurityGroupIngress"
+                "*"
+                //"elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                //"elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                //"ec2:Describe*",
+                //"ec2:AuthorizeSecurityGroupIngress"
               ],
               "Resource": "*"
             }]
@@ -285,7 +360,7 @@
         },
         "Path": "/",
         "Policies": [{
-          "PolicyName": "ecs-service",
+          "PolicyName": "ecs-instance-service",
           "PolicyDocument": {
             "Statement": [{
               "Effect": "Allow",
@@ -310,9 +385,7 @@
       "Type": "AWS::IAM::InstanceProfile",
       "Properties": {
         "Path": "/",
-        "Roles": [{
-          "Ref": "EC2Role"
-        }]
+        "Roles": [{ "Ref": "EC2Role" }]
       }
     },
 
@@ -326,6 +399,11 @@
           "FromPort": 80,
           "ToPort": 80,
           "IpProtocol": "tcp"
+			  },{
+          "CidrIp": "0.0.0.0/0",
+					"FromPort":"31000",
+					"ToPort":"61000",
+          "IpProtocol": "tcp"
         },{
           "CidrIp": "172.0.0.0/8",
           "FromPort": 22,
@@ -333,25 +411,32 @@
           "IpProtocol": "tcp"
         }]
       }
+    },
+
+    "service": {
+      "Type": "AWS::ECS::Service",
+      "DependsOn": [ "ALBListener", "ECSAutoScalingGroup", "ECSServiceRole", "EcsTargetGroup", "EC2Role", "taskdefinition" ],
+      "Properties": {
+        "Cluster": { "Ref": "ECSCluster" },
+        "DesiredCount": "1",
+        "LoadBalancers": [{
+          "ContainerName": "wt-api",
+          "ContainerPort": "8080",
+          "LoadBalancerName": { "Ref": "EcsElasticLoadBalancer" }
+          //"LoadBalancerName": { "Ref": "EcsALB" }
+          //"LoadBalancerName": { "Fn::GetAtt": [ "EcsALB", "LoadBalancerName" ]}
+          //"TargetGroupArn" : { "Fn::GetAtt" : [ "EcsALB", "LoadBalancerTargetGroupArn" ]}
+          //"TargetGroupArn" : { "Ref": "EcsALB" }
+        }],
+        "Role": { "Ref": "ECSServiceRole" },
+        //"Role": "krogebry-test",
+        //"Role": { "Fn::GetAtt": [ "ECSServiceRole", "Arn" ]},
+        "TaskDefinition": { "Ref": "taskdefinition" }
+        //"TaskDefinition": { "Fn::GetAtt": [ "taskdefinition",  }
+      }
     }
 
   },
 
-  "Outputs": {
-    "ecsservice": {
-      "Value": {
-        "Ref": "service"
-      }
-    },
-    "ecscluster": {
-      "Value": {
-        "Ref": "ECSCluster"
-      }
-    },
-    "taskdef": {
-      "Value": {
-        "Ref": "taskdefinition"
-      }
-    }
-  }
+  "Outputs": { }
 }

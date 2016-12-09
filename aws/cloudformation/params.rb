@@ -168,7 +168,8 @@ class ParamsProc
   end
 
   def vpc( v )
-    cache_key = format('vpcs-%s-%s', @config['region'], ENV['AWS_PROFILE'])
+    #cache_key = format('vpcs-%s-%s', @config['region'], ENV['AWS_PROFILE'])
+    cache_key = format('vpcs-%s-%s-%s', @config['region'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( v['tag'].to_s ))
     vpcs = @cache.cached_json( cache_key ) do 
       @ec2_client.describe_vpcs({ filters: get_filters( v['tags'] )}).data.to_h.to_json
     end

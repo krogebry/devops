@@ -154,21 +154,33 @@ namespace :cf do
       })
     end
 
-    #pp params
-    #exit
-
     stack_name = format('%s-%s', (args[:stack_name] == nil ? yaml['name'] : args[:stack_name]), stack_version.gsub( /\./, '-' ))
 
-    begin
-      creds = Aws::SharedCredentials.new()
-      cf_client = Aws::CloudFormation::Client.new(region: region, credentials: creds)
+    cache = DevOps::Cache.new()
+    creds = Aws::SharedCredentials.new()
+    cf_client = Aws::CloudFormation::Client.new(region: region, credentials: creds)
 
-      cf_client.describe_stacks({ stack_name: stack_name })
-      ## Stack exists, update it.
-      Log.debug('Stack already exists')
+    cache_key = format('cf_stacks-%s-%s', ENV['AWS_PROFILE'], ENV['AWS_DEFAULT_REGION'])
+    stacks = cache.cached_json( cache_key ) do
+      cf_client.describe_stacks().data.to_h.to_json
+    end
+    stack_exists = stacks['stacks'].select{|s| s['stack_name'] == stack_name}.compact.size == 0 ? false : true
+    Log.debug(format('Stack exists(%s): %s', stack_name, stack_exists))
 
-    rescue Aws::CloudFormation::Errors::ValidationError => e
-      Log.debug('Creating stack')
+    if stack_exists
+      cf_client.update_stack({
+        stack_name: stack_name,
+        template_body: stack_tpl.to_json,
+        parameters: params,
+        capabilities: ["CAPABILITY_IAM"],
+        tags: [{
+          key: 'Owner',
+          value: 'bkroger@thoughtworks.com'
+        }]
+      })
+
+    else
+      Log.debug(format('Creating stack'))
 
       ## Stack does not exist, create it.
       cf_client.create_stack({

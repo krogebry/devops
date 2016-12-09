@@ -22,7 +22,8 @@ params:
     type: "vpc_cidr"
     tags:
       #Name: "NMO-Management-VPC-01"
-      Name: "NMO-Development-VPC-01"
+      #Name: "NMO-Development-VPC-01"
+      Name: "main"
 
   InstanceType: "m4.large"
 
@@ -46,16 +47,21 @@ params:
   VpcId:
     type: "vpc"
     tags:
-      Name: "NMO-Development-VPC-01"
+      #Name: "NMO-Development-VPC-01"
+      Name: "main"
       #Name: "NMO-Development-VPC-01"
 
   Zones:
     type: "zones"
     tags:
-      - Name: "Subnet-Infrastructure Management AZ1"
+      #- Name: "Subnet-Infrastructure Management AZ1"
       #- Name: "Subnet-Infrastructure Management AZ2"
+      - Name: "primary"
+      - Name: "secondary"
   Subnets:
     type: "subnets"
     tags:
-      - Name: "Subnet-Infrastructure Management AZ1"
+      #- Name: "Subnet-Infrastructure Management AZ1"
       #- Name: "Subnet-Infrastructure Management AZ2"
+      - Name: "primary"
+      - Name: "secondary"
