@@ -20,9 +20,12 @@ module DevOps
       system(format('rm -rf %s/*', FS_CACHE_DIR))
     end
 
+    def get_j( key )
+      self.cached_json( key )
+    end
+
   	def cached_json( key )
     	data = []
-    	#fs_cache_file = File.join( '/', 'tmp', 'cache', key )
     	fs_cache_file = File.join( FS_CACHE_DIR, key )
     	FileUtils.mkdir_p(File.dirname( fs_cache_file )) unless File.exists?(File.dirname( fs_cache_file ))
     	if(File.exists?( fs_cache_file ))

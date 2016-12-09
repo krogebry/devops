@@ -30,14 +30,6 @@ class ParamsProc
     @cache = DevOps::Cache.new
   end
 
-  #def self.flush()
-    #system(format('rm -rf %s/*', FS_CACHE_DIR))
-  #end
-
-  #def init_cache()
-    #FileUtils::mkdir_p FS_CACHE_DIR
-  #end
-
   def get_filters( a )
     ro = []
     a.each do |k,v|
@@ -82,24 +74,6 @@ class ParamsProc
 
       end
     end
-  end
-
-  def ached_json( key )
-    @cache.cached_json( key )
-
-    #data = []
-    #fs_cache_file = File.join( '/', 'tmp', 'cache', key )
-    #FileUtils.mkdir_p(File.dirname( fs_cache_file )) unless File.exists?(File.dirname( fs_cache_file ))
-    #if(File.exists?( fs_cache_file ))
-      #data = File.read( fs_cache_file )
-    #else
-      #Log.debug('Getting from source')
-      #data = yield
-      #File.open( fs_cache_file, 'w' ) do |f|
-        #f.puts data
-      #end
-    #end
-    #return JSON::parse( data )
   end
 
   def vpc_cidr( v )

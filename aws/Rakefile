@@ -10,11 +10,13 @@ require 'fileutils'
 require '../libs/cache.rb'
 require '../libs/logger.rb'
 
+require './tasks/recon.rb'
 require './kms/tasks.rb'
 require './cloudtrail/tasks.rb'
 require './cloudformation/tasks.rb'
 
 Log = DevOps::Logger.new(STDOUT)
+Cache = DevOps::Cache.new
 
 desc "Update Bastion IP."
 task :update_bastion do |t,args|
