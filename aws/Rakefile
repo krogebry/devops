@@ -2,12 +2,17 @@
 # Rakefile
 ##
 require 'pp'
+require 'redis'
+require 'mongo'
+require "zlib"
 require 'logger'
 require 'aws-sdk'
 require 'net/http'
 require 'fileutils'
+#require 'elasticsearch'
 
 require '../libs/cache.rb'
+require '../libs/utils.rb'
 require '../libs/logger.rb'
 
 require './tasks/recon.rb'
@@ -16,8 +21,22 @@ require './lambda/tasks.rb'
 require './cloudtrail/tasks.rb'
 require './cloudformation/tasks.rb'
 
+#client = Elasticsearch::Client.new log: true
+#client.cluster.health
+#client.index index: 'my-index', type: 'my-document', id: 1, body: { title: 'Test' }
+#client.indices.refresh index: 'my-index'
+#client.search index: 'my-index', body: { query: { match: { title: 'test' } } }
+
 Log = DevOps::Logger.new(STDOUT)
 Cache = DevOps::Cache.new
+
+#begin
+  #DBConn = Mongo::Client.new([ '127.0.0.1:27017' ], :database => format('aws-', ENV['AWS_PROFILE']))
+  #RedisConn = Redis.new(:host => "127.0.0.1", :port => 6380, :db => 15)
+#rescue => e
+  #Log.fatal(format('Unable to connect to data source: %s', e))
+  #exit
+#end
 
 desc "Update Bastion IP."
 task :update_bastion do |t,args|
@@ -63,14 +82,6 @@ task :update_bastion do |t,args|
       }]
     }]
   })
-
-  #groups['security_groups'][0]['ip_permissions'].each do |perm|
-    #if perm['from_port'] == 22 
-      #perm['ip_ranges'] = [{"cidr_ip"=>"24.111.13.66/32"}],
-      #perm['ip_ranges'] = [{ cidr_ip: format('%s/32', public_ip)}]
-    #end
-  #end
-
 end
 
 desc "Flush Cache."

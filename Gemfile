@@ -1,4 +1,5 @@
 source 'https://rubygems.org'
 
-#gem 'rest-open-uri'
-
+gem 'mongo'
+gem 'redis', '~>3.2'
+#gem 'elasticsearch'

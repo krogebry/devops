@@ -1,13 +1,30 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    rest-open-uri (1.0.0)
+    bson (4.2.0)
+    elasticsearch (5.0.0)
+      elasticsearch-api (= 5.0.0)
+      elasticsearch-transport (= 5.0.0)
+    elasticsearch-api (5.0.0)
+      multi_json
+    elasticsearch-transport (5.0.0)
+      faraday
+      multi_json
+    faraday (0.10.0)
+      multipart-post (>= 1.2, < 3)
+    mongo (2.4.0)
+      bson (~> 4.2.0)
+    multi_json (1.12.1)
+    multipart-post (2.0.0)
+    redis (3.3.2)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  rest-open-uri
+  elasticsearch
+  mongo
+  redis (~> 3.2)
 
 BUNDLED WITH
-   1.12.3
+   1.13.6
