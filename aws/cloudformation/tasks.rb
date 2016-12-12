@@ -200,6 +200,3 @@ namespace :cf do
 
   end ## launch
 end
-
-
-

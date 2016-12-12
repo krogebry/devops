@@ -9,4 +9,3 @@ namespace :blah do
   end
 end
 
-require 'tasks/burn_buddy'

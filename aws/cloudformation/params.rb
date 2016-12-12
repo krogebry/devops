@@ -71,7 +71,7 @@ class ParamsProc
   end
 
   def vpc_cidr( v )
-    cache_key = format('vpcs-%s-%s', @config['region'], ENV['AWS_PROFILE'])
+    cache_key = format('vpcs-%s-%s', ENV['AWS_DEFAULT_REGION'], ENV['AWS_PROFILE'])
     vpcs = @cache.cached_json( cache_key ) do 
       @ec2_client.describe_vpcs({ filters: get_filters( v['tags'] )}).data.to_h.to_json
     end
@@ -85,7 +85,7 @@ class ParamsProc
   end
 
   def ami( v )
-    cache_key = format('images-%s-%s-%s', @config['region'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( v['tags'].to_s ))
+    cache_key = format('images-%s-%s-%s', ENV['AWS_DEFAULT_REGION'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( v['tags'].to_s ))
     Log.debug(cache_key)
     objects = @cache.cached_json( cache_key ) do 
       @ec2_client.describe_images({ filters: get_filters( v['tags'] )}).data.to_h.to_json
@@ -101,14 +101,14 @@ class ParamsProc
   end
 
   def get_elbs()
-    cache_key = format('elb-%s-%s', @config['region'], ENV['AWS_PROFILE'])
+    cache_key = format('elb-%s-%s', ENV['AWS_DEFAULT_REGION'], ENV['AWS_PROFILE'])
     @cache.cached_json( cache_key ) do
       @elb_client.describe_load_balancers().data.to_h.to_json
     end
   end
 
   def get_elb_tags( elb_names )
-    cache_key = format('elb-%s-%s-tags', @config['region'], ENV['AWS_PROFILE'])
+    cache_key = format('elb-%s-%s-tags', ENV['AWS_DEFAULT_REGION'], ENV['AWS_PROFILE'])
     @cache.cached_json( cache_key ) do
       @elb_client.describe_tags({ load_balancer_names: elb_names }).data.to_h.to_json
     end
@@ -150,8 +150,7 @@ class ParamsProc
   end
 
   def vpc( v )
-    #cache_key = format('vpcs-%s-%s', @config['region'], ENV['AWS_PROFILE'])
-    cache_key = format('vpcs-%s-%s-%s', @config['region'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( v['tag'].to_s ))
+    cache_key = format('vpcs-%s-%s-%s', ENV['AWS_DEFAULT_REGION'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( v['tag'].to_s ))
     vpcs = @cache.cached_json( cache_key ) do 
       @ec2_client.describe_vpcs({ filters: get_filters( v['tags'] )}).data.to_h.to_json
     end
@@ -173,8 +172,7 @@ class ParamsProc
     bucket_name = format("%s-%s", filters.select{|f| f[:name] == 'tag:Name' }.first[:values][0], filters.select{|f| f[:name] == 'tag:Version' }.first[:values][0])
     Log.debug(format('Bucket: %s', bucket_name))
 
-    cache_key = format('s3_buckets-%s-%s', @config['region'], ENV['AWS_PROFILE'])
-
+    cache_key = format('s3_buckets-%s-%s', ENV['AWS_DEFAULT_REGION'], ENV['AWS_PROFILE'])
     buckets = @cache.cached_json( cache_key ) do
       @s3_client.list_buckets().data.to_h.to_json
     end
@@ -191,7 +189,7 @@ class ParamsProc
   end
 
   def sns_topic_arn( v )
-    cache_key = format('sns_topics-%s-%s', @config['region'], ENV['AWS_PROFILE'])
+    cache_key = format('sns_topics-%s-%s', ENV['AWS_DEFAULT_REGION'], ENV['AWS_PROFILE'])
     sns_topics = @cache.cached_json( cache_key ) do
       @sns_client.list_topics().data.to_h.to_json
     end
@@ -208,7 +206,7 @@ class ParamsProc
   end
 
   def find_subnet( tag )
-    cache_key = format('subnets-%s-%s-%s', @config['region'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( tag.to_s ))
+    cache_key = format('subnets-%s-%s-%s', ENV['AWS_DEFAULT_REGION'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( tag.to_s ))
     @cache.cached_json( cache_key ) do
       @ec2_client.describe_subnets({ filters: get_filters( tag )}).data.to_h.to_json
     end

@@ -1,5 +1,5 @@
 ## 
-# Rakefile
+# Starting point for DevOps'y things related to AWS things.
 ##
 require 'pp'
 require 'redis'
@@ -9,7 +9,6 @@ require 'logger'
 require 'aws-sdk'
 require 'net/http'
 require 'fileutils'
-#require 'elasticsearch'
 
 require '../libs/cache.rb'
 require '../libs/utils.rb'
@@ -21,30 +20,16 @@ require './lambda/tasks.rb'
 require './cloudtrail/tasks.rb'
 require './cloudformation/tasks.rb'
 
-#client = Elasticsearch::Client.new log: true
-#client.cluster.health
-#client.index index: 'my-index', type: 'my-document', id: 1, body: { title: 'Test' }
-#client.indices.refresh index: 'my-index'
-#client.search index: 'my-index', body: { query: { match: { title: 'test' } } }
-
 Log = DevOps::Logger.new(STDOUT)
 Cache = DevOps::Cache.new
 
-#begin
-  #DBConn = Mongo::Client.new([ '127.0.0.1:27017' ], :database => format('aws-', ENV['AWS_PROFILE']))
-  #RedisConn = Redis.new(:host => "127.0.0.1", :port => 6380, :db => 15)
-#rescue => e
-  #Log.fatal(format('Unable to connect to data source: %s', e))
-  #exit
-#end
-
-desc "Update Bastion IP."
+desc 'Update Bastion IP.'
 task :update_bastion do |t,args|
-  public_ip = Net::HTTP.get URI "https://api.ipify.org"
-  #public_ip = "71.32.37.234"
+  
+  public_ip = Cache.get('public_ip') do
+    Net::HTTP.get URI "https://api.ipify.org"
+  end
   Log.debug(format('RemoteIP: %s', public_ip))
-
-  @cache = DevOps::Cache.new
 
   filter = [{
     name: 'tag:Role',

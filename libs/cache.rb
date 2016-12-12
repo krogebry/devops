@@ -20,9 +20,21 @@ module DevOps
       system(format('rm -rf %s/*', FS_CACHE_DIR))
     end
 
-    def get_j( key )
-      self.cached_json( key )
-    end
+    def get( key )
+      data = []
+    	fs_cache_file = File.join( FS_CACHE_DIR, key )
+    	FileUtils.mkdir_p(File.dirname( fs_cache_file )) unless File.exists?(File.dirname( fs_cache_file ))
+    	if(File.exists?( fs_cache_file ))
+      	data = File.read( fs_cache_file )
+    	else
+      	Log.debug('Getting from source')
+      	data = yield
+      	File.open( fs_cache_file, 'w' ) do |f|
+        	f.puts data
+      	end
+    	end
+    	return data
+  	end
 
     def cached_json( key )
       data = []
