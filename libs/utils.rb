@@ -7,6 +7,7 @@ module DevOps
 
     ## TODO: do config stuff.
     def self.getDBConn
+      Mongo::Logger.logger.level = ::Logger::FATAL
       Mongo::Client.new([ '127.0.0.1:27017' ], :database => format('aws-%s', ENV['AWS_PROFILE']))
     end
 

@@ -33,3 +33,5 @@ engineers.
 This project is broken down in a serious of articles and sample code describing a particular topic.
 
 Learn at your own pace, participate and play!
+
+sysctl -w vm.max_map_count=262144

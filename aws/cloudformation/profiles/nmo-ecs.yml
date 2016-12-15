@@ -23,7 +23,7 @@ params:
     tags:
       #Name: "NMO-Management-VPC-01"
       #Name: "NMO-Development-VPC-01"
-      Name: "main"
+      Name: "NMO-Development-VPC-01"
 
   InstanceType: "m4.large"
 
@@ -31,7 +31,7 @@ params:
     type: "ami"
     tags:
       Name: "devops"
-      Version: "0.1.4"
+      Version: "0.2.0"
 
   #DevCentralSNSTopicARN:
     #type: "sns_topic_arn"
@@ -47,8 +47,8 @@ params:
   VpcId:
     type: "vpc"
     tags:
-      #Name: "NMO-Development-VPC-01"
-      Name: "main"
+      Name: "NMO-Development-VPC-01"
+      #Name: "main"
       #Name: "NMO-Development-VPC-01"
 
   Zones:
@@ -56,12 +56,18 @@ params:
     tags:
       #- Name: "Subnet-Infrastructure Management AZ1"
       #- Name: "Subnet-Infrastructure Management AZ2"
-      - Name: "primary"
-      - Name: "secondary"
+      #- Name: "primary"
+      #- Name: "secondary"
+      - Name: "NMO Development Applications AZ-2A"
+      - Name: "NMO Development Applications AZ-2B"
+      - Name: "NMO Development Applications AZ-2C"
   Subnets:
     type: "subnets"
     tags:
       #- Name: "Subnet-Infrastructure Management AZ1"
       #- Name: "Subnet-Infrastructure Management AZ2"
-      - Name: "primary"
-      - Name: "secondary"
+      #- Name: "primary"
+      #- Name: "secondary"
+      - Name: "NMO Development Applications AZ-2A"
+      - Name: "NMO Development Applications AZ-2B"
+      - Name: "NMO Development Applications AZ-2C"

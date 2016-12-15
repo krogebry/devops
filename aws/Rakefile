@@ -16,6 +16,7 @@ require '../libs/logger.rb'
 
 require './tasks/recon.rb'
 require './kms/tasks.rb'
+require './ecs/tasks.rb'
 require './lambda/tasks.rb'
 require './cloudtrail/tasks.rb'
 require './cloudformation/tasks.rb'

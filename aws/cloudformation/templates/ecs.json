@@ -105,26 +105,6 @@
       }
     },
 
-    "EcsElasticLoadBalancer": {
-      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
-      "Properties": {
-        "Subnets": { "Ref": "Subnets" },
-        "CrossZone": "true",
-        "Listeners": [{
-          "Protocol": "HTTP",
-          "InstancePort": "80",
-          "LoadBalancerPort": "80"
-        }],
-        "HealthCheck": {
-          "Target": "HTTP:80/healthz",
-          "HealthyThreshold": "2",
-          "UnhealthyThreshold": "10",
-          "Interval": "30",
-          "Timeout": "5"
-        },
-        "SecurityGroups": [{ "Ref": "PublicHTTP" }]
-      }
-    },
 
     "EcsALB": {
       "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
@@ -258,53 +238,7 @@
       }
     },
 
-"ECSServiceRole":{
-      "Type":"AWS::IAM::Role",
-      "Properties":{
-        "AssumeRolePolicyDocument":{
-          "Statement":[
-            {
-							"Sid": "ecsallow",
-              "Effect":"Allow",
-              "Principal":{
-                "Service":[
-                  "ecs.amazonaws.com"
-                ]
-              },
-              "Action":[
-                "sts:AssumeRole"
-              ]
-            }
-          ]
-        },
-        "Path":"/",
-        "Policies":[
-          {
-            "PolicyName":"ecs-service",
-            "PolicyDocument":{
-              "Statement":[
-                {
-                  "Effect":"Allow",
-                  "Action":[
-                    "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-                    "elasticloadbalancing:DeregisterTargets",
-                    "elasticloadbalancing:Describe*",
-                    "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-                    "elasticloadbalancing:RegisterTargets",
-                    "ec2:Describe*",
-                    "ec2:AuthorizeSecurityGroupIngress"
-                  ],
-                  "Resource":"*"
-                }
-              ]
-            }
-          }
-        ]
-      }
-	},
-
-
-    "EC2SServiceRole": {
+    "ECSServiceRole": {
       "Type": "AWS::IAM::Role",
       "Properties": {
         "AssumeRolePolicyDocument": {
@@ -312,9 +246,7 @@
             "Effect": "Allow",
             "Principal": {
               "Service": [
-                "ecs.amazonaws.com",
-                "application-autoscaling.amazonaws.com",
-                "ec2.amazonaws.com"
+                "ecs.amazonaws.com"
               ]
             },
             "Action": [
@@ -329,11 +261,13 @@
             "Statement": [{
               "Effect": "Allow",
               "Action": [
-                "*"
-                //"elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-                //"elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-                //"ec2:Describe*",
-                //"ec2:AuthorizeSecurityGroupIngress"
+                "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                "ec2:Describe*",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "elasticloadbalancing:DeregisterTargets",
+                "elasticloadbalancing:Describe*",
+                "elasticloadbalancing:RegisterInstancesWithLoadBalancer"
               ],
               "Resource": "*"
             }]
@@ -422,17 +356,10 @@
         "LoadBalancers": [{
           "ContainerName": "wt-api",
           "ContainerPort": "8080",
-          "LoadBalancerName": { "Ref": "EcsElasticLoadBalancer" }
-          //"LoadBalancerName": { "Ref": "EcsALB" }
-          //"LoadBalancerName": { "Fn::GetAtt": [ "EcsALB", "LoadBalancerName" ]}
-          //"TargetGroupArn" : { "Fn::GetAtt" : [ "EcsALB", "LoadBalancerTargetGroupArn" ]}
-          //"TargetGroupArn" : { "Ref": "EcsALB" }
+          "TargetGroupArn" : { "Ref": "EcsTargetGroup" }
         }],
         "Role": { "Ref": "ECSServiceRole" },
-        //"Role": "krogebry-test",
-        //"Role": { "Fn::GetAtt": [ "ECSServiceRole", "Arn" ]},
         "TaskDefinition": { "Ref": "taskdefinition" }
-        //"TaskDefinition": { "Fn::GetAtt": [ "taskdefinition",  }
       }
     }
 
