@@ -42,7 +42,7 @@ namespace :cf do
     end
 
     creds = Aws::SharedCredentials.new()
-    s3_client = Aws::S3::Client.new(region: region, credentials: creds)
+    s3_client = Aws::S3::Client.new(credentials: creds)
 
     r = s3_client.get_object(bucket: format('dev-central-%s', inf_version), key: 'chef-server/devops/bkroger.pem')
     File.open(format('%s/.chef/keys/bkroger-%s.pem', ENV['HOME'], chef_version), 'w') do |f|

@@ -17,11 +17,16 @@
       "Description": "Minimum number of instances that can be launched in your ECS cluster."
     },
 
+    "ELBSubnets": {
+      "Type": "List<AWS::EC2::Subnet::Id>",
+      "Description": "The list of SubnetIds in your Virtual Private Cloud (VPC)",
+      "ConstraintDescription": "must be a list of an existing subnets in the selected Virtual Private Cloud."
+    },
+
     "InstanceType": {
       "Description": "The EC2 instance type",
       "Type": "String",
       "Default": "m4.large",
-      //"AllowedValues": [ "t2.micro" ],
       "ConstraintDescription": "You can specify only t2.mirco."
     }
   },
@@ -43,78 +48,41 @@
       "Type": "AWS::ECS::TaskDefinition",
       "Properties": {
         "ContainerDefinitions": [{
-          "Name": "simple-app",
-          "Cpu": "10",
-          "Essential": "true",
-          "Image": "httpd:2.4",
-          "Memory": 300,
-          "MountPoints": [{
-            "ContainerPath": "/usr/local/apache2/htdocs",
-            "SourceVolume": "my-vol"
-          }],
-          "PortMappings": [{
-            "HostPort": 8081,
-            "ContainerPort": 81
-          }]
-
-        }, {
           "Cpu": "10",
           "Name": "wt-api",
+          //"Image": "168860074409.dkr.ecr.us-west-2.amazonaws.com/wt-api:latest",
           "Image": "krogebry/wt-api:latest",
           "Memory": 300,
           "Essential": "true",
           "LogConfiguration": {
             "LogDriver": "awslogs",
             "Options": {
-              "awslogs-group": "krogebry-test",
+              "awslogs-group": {"Fn::Join": ["", ["wt-api-", { "Ref": "AWS::StackName" }]]},
               "awslogs-region": { "Ref": "AWS::Region" },
-              "awslogs-stream-prefix": "awslogs-example"
+              "awslogs-stream-prefix": "wt-api"
             }
           },
-          "MountPoints": [{
-            "ContainerPath": "/usr/local/apache2/htdocs",
-            "SourceVolume": "my-vol"
-          }],
           "PortMappings": [{
-            "HostPort": 80,
+            "HostPort": 0,
             "ContainerPort": 8080
           }]
-
-        }, {
-          "Name": "busybox",
-          "Cpu": 10,
-          "Command": [
-            "/bin/sh -c \"while true; do echo '<html> <head> <title>Amazon ECS Sample App</title> <style>body {margin-top: 40px; background-color: #333;} </style> </head><body> <div style=color:white;text-align:center> <h1>Amazon ECS Sample App</h1> <h2>Congratulations!</h2> <p>Your application is now running on a container in Amazon ECS.</p>' > top; /bin/date > date ; echo '</div></body></html>' > bottom; cat top date bottom > /usr/local/apache2/htdocs/index.html ; sleep 1; done\""
-          ],
-          "EntryPoint": [
-            "sh",
-            "-c"
-          ],
-          "Essential": false,
-          "Image": "busybox",
-          "Memory": 200,
-          "VolumesFrom": [{
-            "SourceContainer": "simple-app"
-          }]
-
-        }],
-
-        "Volumes": [{
-          "Name": "my-vol"
         }]
       }
     },
 
+    "LogGroup": {
+      "Type" : "AWS::Logs::LogGroup",
+      "Properties" : {
+        "LogGroupName": {"Fn::Join": ["", ["wt-api-", { "Ref": "AWS::StackName" }]]},
+        "RetentionInDays": 7
+      }
+    },
 
     "EcsALB": {
       "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
       "Properties": {
-        "Subnets": { "Ref": "Subnets" },
-        "SecurityGroups": [{ "Ref": "PublicHTTP" }],
-        "Tags": [{
-          "Key": "StackName",
-          "Value": { "Ref": "AWS::StackName" }
-        }]
+        "Subnets": { "Ref": "ELBSubnets" },
+        "SecurityGroups": [{ "Ref": "PublicHTTP" }]
       }
     },
 
@@ -130,15 +98,11 @@
         "HealthCheckTimeoutSeconds": 10,
         "HealthCheckIntervalSeconds": 30,
         "HealthyThresholdCount": 4,
-        //"TargetGroupAttributes": [{
-          //"Key": "deregistration_delay.timeout_seconds",
-          //"Value": "20"
-        //}],
-        "UnhealthyThresholdCount": 3,
-        "Tags" : [{ 
-					"Key" : "StackName", 
-					"Value" : { "Ref": "AWS::StackName" }
-				}]
+        "UnhealthyThresholdCount": 3
+        //"Tags" : [{ 
+					//"Key" : "StackName", 
+					//"Value" : { "Ref": "AWS::StackName" }
+				//}]
       }
     },
 
@@ -157,6 +121,11 @@
 
     "ECSAutoScalingGroup": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
+      //"Tags": [{
+        //"Key" : "StackName",
+        //"Value" : { "Ref": "AWS::StackName" },
+        //"PropagateAtLaunch" : true
+      //}], 
       "Properties": {
         "MinSize": { "Ref": "MinSize" },
         "MaxSize": { "Ref": "MaxSize" },
@@ -231,7 +200,7 @@
         "KeyName": { "Ref": "KeyName" },
         "SecurityGroups": [{ "Ref": "PublicHTTP" }],
         "InstanceMonitoring": "false",
-        "AssociatePublicIpAddress": "true",
+        "AssociatePublicIpAddress": "false",
         "UserData": {
           "Fn::Base64": { "Fn::Sub": "#!/bin/bash -xe\nyum install -y aws-cfn-bootstrap\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ContainerInstances --region ${AWS::Region}\nsleep 0\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroup --region ${AWS::Region}\n"}
         }
@@ -265,9 +234,15 @@
                 "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
                 "ec2:Describe*",
                 "ec2:AuthorizeSecurityGroupIngress",
+                "elasticloadbalancing:*",
                 "elasticloadbalancing:DeregisterTargets",
                 "elasticloadbalancing:Describe*",
-                "elasticloadbalancing:RegisterInstancesWithLoadBalancer"
+                "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:GetAuthorizationToken"
+                //"ecr:*"
               ],
               "Resource": "*"
             }]
@@ -306,7 +281,12 @@
                 "ecs:StartTelemetrySession",
                 "ecs:Submit*",
                 "logs:CreateLogStream",
-                "logs:PutLogEvents"
+                "logs:PutLogEvents",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:GetAuthorizationToken"
+                //"ecr:*"
               ],
               "Resource": "*"
             }]

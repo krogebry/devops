@@ -21,8 +21,6 @@ params:
   MgtCidr:
     type: "vpc_cidr"
     tags:
-      #Name: "NMO-Management-VPC-01"
-      #Name: "NMO-Development-VPC-01"
       Name: "NMO-Development-VPC-01"
 
   InstanceType: "m4.large"
@@ -48,26 +46,24 @@ params:
     type: "vpc"
     tags:
       Name: "NMO-Development-VPC-01"
-      #Name: "main"
-      #Name: "NMO-Development-VPC-01"
 
   Zones:
     type: "zones"
     tags:
-      #- Name: "Subnet-Infrastructure Management AZ1"
-      #- Name: "Subnet-Infrastructure Management AZ2"
-      #- Name: "primary"
-      #- Name: "secondary"
       - Name: "NMO Development Applications AZ-2A"
       - Name: "NMO Development Applications AZ-2B"
       - Name: "NMO Development Applications AZ-2C"
+
   Subnets:
     type: "subnets"
     tags:
-      #- Name: "Subnet-Infrastructure Management AZ1"
-      #- Name: "Subnet-Infrastructure Management AZ2"
-      #- Name: "primary"
-      #- Name: "secondary"
       - Name: "NMO Development Applications AZ-2A"
       - Name: "NMO Development Applications AZ-2B"
       - Name: "NMO Development Applications AZ-2C"
+
+  ELBSubnets:
+    type: "subnets"
+    tags:
+      - Name: "Public Subnet AZ1"
+      - Name: "Public Subnet AZ2"
+      - Name: "Public DMZ AZ 2C"

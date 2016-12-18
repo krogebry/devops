@@ -20,8 +20,10 @@ dc_up:
 
 deps:
 	# go get github.com/go-sql-driver/mysql
+	go get github.com/go-sql-driver/mysql
 	# go get github.com/Sirupsen/logrus
-	go get -u github.com/aws/aws-sdk-go
+	go get github.com/aws/aws-sdk-go
+	go get github.com/aws/aws-sdk-go/service/dynamodb
 
 	#go get github.com/aws/aws-sdk-go/aws
 	#go get github.com/aws/aws-sdk-go/aws/session
