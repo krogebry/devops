@@ -1,5 +1,20 @@
+##
+# Setup NMO development enviornment.
+# VBoxManage hostonlyif create
+##
+
+$script = <<SCRIPT
+wget https://packages.chef.io/files/stable/chef/12.17.44/debian/8/chef_12.17.44-1_amd64.deb
+sudo dpkg -i chef_12.17.44-1_amd64.deb
+SCRIPT
 
 Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/xenial64"
-end
+  config.vm.synced_folder "/Users/krogebry/dev/secure_vm", "/home/krogebry/dev"
 
+  config.vm.provider "virtualbox" do |vb|
+    config.vm.network "private_network", :ip => '192.168.56.102', :name => 'vboxnet0', :adapter => 2
+  end
+
+  config.vm.provision "shell", inline: $script
+end
