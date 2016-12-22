@@ -6,7 +6,8 @@ module DevOps
 	class Cache
     CACHE_TYPE_FILE = :file
 
-    FS_CACHE_DIR = File::join( '/', 'tmp', 'devops', 'cache' )
+    #FS_CACHE_DIR = File::join( '/', 'tmp', 'devops', 'cache' )
+    FS_CACHE_DIR = File::join( '/', 'mnt', 'data', 'tmp', 'devops', 'cache' )
 
     def initialize( cache_type=CACHE_TYPE_FILE )
       init_cache

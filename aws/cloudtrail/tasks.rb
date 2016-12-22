@@ -2,24 +2,54 @@
 # Rakefile for cloudtrail things.
 ##
 
+require './cloudtrail/resque.rb'
+require 'resque'
+require 'resque/tasks'
+
+#Resque.redis = "redis:6379"
+Resque.redis = "127.0.0.1:6379"
+
 namespace :ct do
+
+  desc "Report"
+  task :report do |t,args|
+    action = "DescribeLoadBalancers"
+  end
+
+  desc "Tail the current events."
+  task :tail do |t,args|
+    require 'time'
+
+    user_map = {
+      'nmjl147' => 'jlittle'
+    }
+
+    db = DevOps::Utils::getDBConn()
+    rows = db[:ct_logs_results].find({}).sort({ eventTime: -1 }).limit( 100 )
+    rows.each do |r|
+      #pp r
+      t = Time.parse( r['eventTime'] )
+			dhms = [60,60,24].reduce([(Time.new.to_f - t.localtime.to_f)]) { |m,o| m.unshift(m.shift.divmod(o)).flatten }
+      username = user_map.has_key?( r['userIdentity']['userName'] ) ? user_map[r['userIdentity']['userName']] : r['userIdentity']['userName']
+      puts format("%s (-%id:%ih:%im)\t%s\t%s\t%s", t, dhms[0], dhms[1], dhms[2], username, r['eventSource'], r['eventName'] )
+    end
+  end
+
+  desc "Index db"
+  task :index do |t,args|
+    db = DevOps::Utils::getDBConn()
+    db[:ct_logs_results].indexes.create_one({ eventTime: 1 })
+    db[:ct_logs_results].indexes.create_one({ requestId: 1 })
+  end
 
   desc 'Return a list of CloudTrail targets.'
   task :list, :force_update do |t,args|
-    t = Time.new()
-    Log.debug('Processing stuff')
-    Dir::glob(File.join(fs_tmp, "*.json")).each do |f|
-      json = JSON::parse(File.read( f ))
-      json['Records'].each do |r|
-        ts = Time.parse(r['eventTime'])
-        Log.debug(format('%s - %s - %s - %s', r['eventName'], r['userIdentity']['arn'], r['eventTime'], ts.localtime))
-      end
-    end
   end
 
   desc 'Pull logs down from s3 into local storage'
   task :pull, :trail_name do |t,args|
     db = DevOps::Utils::getDBConn()
+    #Resque.redis = "redis:6379"
 
     trail_name = args[:trail_name]
 
@@ -46,68 +76,11 @@ namespace :ct do
 
       objects['contents'].each do |s3_obj|
         ## Check for existance of this key in local mongodb store
+
         r = db[:ct_logs].find( s3_obj )
         if r.count == 0
-          ## Go get the log file.
-          s3_obj['content'] = ""
-
-          Log.debug(format('Getting log file: %s', s3_obj['etag']))
-          cache_key = format('s3_object_%s-%s-%s', ENV['AWS_PROFILE'], trail_name, s3_obj['etag'])
-          gzip = Cache.get( cache_key ) do
-            ro = ""
-            s3_client.get_object({
-              key: s3_obj['key'],
-              bucket: trail_name
-            }) do |chunk|
-              ro << chunk
-            end
-            ro
-          end
-
-          gz = Zlib::GzipReader.new(StringIO.new(gzip)) 
-          json = JSON::parse(gz.read)
-
-          if(json.has_key?( 'Records' ))
-            json['Records'].each do |r|
-              if(r.has_key?( 'requestParameters' ) && r['requestParameters'] != nil)
-                if(r['requestParameters'].has_key?( 'advancedOptions' ))
-                  r['requestParameters'].delete('advancedOptions')
-                end
-              end
-
-              if(r.has_key?( 'domainStatus' ) && r['domainStatus'] != nil)
-                if(r['domainStatus'].has_key?( 'advancedOptions' ))
-                  r['domainStatus'].delete('advancedOptions')
-                end
-              end
-
-              if(r.has_key?( 'responseElements' ) && r['responseElements'] != nil)
-                if(r['responseElements'].has_key?( 'domainStatus' ) && r['responseElements']['domainStatus'] != nil)
-                  if(r['responseElements']['domainStatus'].has_key?( 'advancedOptions' ))
-                    r['responseElements']['domainStatus'].delete('advancedOptions')
-                  end
-                end
-              end
-
-              if(r.has_key?( 'responseElements' ) && r['responseElements'] != nil)
-                if(r['responseElements'].has_key?( 'domainConfig' ) && r['responseElements']['domainConfig'] != nil)
-                  if(r['responseElements']['domainConfig'].has_key?( 'advancedOptions' ))
-                    r['responseElements']['domainConfig'].delete('advancedOptions')
-                  end
-                end
-              end
-
-              db[:ct_logs_results].update_one({ 'requestID' => s3_obj['requestID'] }, s3_obj.merge( r ), { :upsert => true})
-            end
-          end
-
-          db[:ct_logs].insert_one( s3_obj )
-
-          s = 0.1 * rand( 10 )
-          sleep( s )
+          Resque.enqueue(DevOps::CloudTrailProc, s3_obj.to_json, trail_name)
         end
-        Log.debug(format('Progress: %i/%i', i, objects['contents'].size))
-        i+=1
       end
 
     end
