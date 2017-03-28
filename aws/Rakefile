@@ -17,7 +17,7 @@ require './cloudformation/tasks.rb'
 
 Log = DevOps::Logger.new(STDOUT)
 
-desc "Update Bastion IP."
+desc 'Update Bastion IP'
 task :update_bastion do |t,args|
   public_ip = Net::HTTP.get URI "https://api.ipify.org"
   #public_ip = "71.32.37.234"

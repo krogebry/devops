@@ -1,67 +1,114 @@
-## 
-# Rakefile for cloudtrail things.
-##
+## COUNT=1 QUEUE=files rake resque:workers
+require 'pp'
+require 'json'
+require 'zlib'
+require 'mongo'
+require 'resque'
+require 'resque/tasks'
+
+Mongo::Logger.logger.level = ::Logger::FATAL
+DB = Mongo::Client.new('mongodb://mongodb:27017', database: "cloudtrail")
+DB[:compressed_files].indexes.create_one({ filename: 1 }, { unique: true })
+DB[:records].indexes.create_one({ requestID: 1, eventID: 1 }, { unique: true })
+DB[:records].indexes.create_one({ eventTime: 1 })
+DB[:records].indexes.create_one({ eventName: 1 })
+DB[:records].indexes.create_one({ awsRegion: 1 })
+
+Resque.redis = 'redis:6379'
+
+class CTCompressedFile
+  @queue = :files
+
+  def self.perform(filename)
+    #Log.debug('Processing: %s' % filename)
+    gz_reader = Zlib::GzipReader.new(File.open(filename))
+    json = JSON::parse(gz_reader.read())
+    json['Records'].each do |record|
+      check = DB[:records].find({ requestID: record['requestID'], eventID: record['eventID'] })
+      if check.count() == 0
+        DB[:records].insert_one(record)
+      end
+    end
+    #Log.debug('Processed %i records' % json['Records'].size)
+    DB[:compressed_files].insert_one({ :filename => filename })
+  end
+end
+
 namespace :cloudtrail do
 
-  desc 'Do stuff'
-  task :list, :force_update do |t,args|
-    t = Time.new()
+  desc 'Slurp some files'
+  task :slurp do |t,args|
+    i = 0
+    queue_flush_i = 0
+    queue_max_entries = 100
 
-    fs_tmp = format('/tmp/cloud_trail/%s', t.strftime('%Y-%m-%d'))
-    FileUtils::mkdir_p(fs_tmp)
+    root_dir = File.join('/', 'mnt', 'SecureDisk')
+    #root_dir = "/mnt/SecureDisk/cloudtrail/us-west-2/2017/03/"
+    #root_dir = "/mnt/SecureDisk/cloudtrail/us-west-2/2017/02/"
+    files = []
 
-    force_update(t, fs_tmp) if args[:force_update] == "1" 
+    Log.debug("Gathering files")
+    Dir.glob(File.join(root_dir, "**/*.gz")).each do |filename|
+      check = DB[:compressed_files].find({ :filename => filename })
+      files.push(filename) if check.count() == 0
+    end
 
-    Log.debug('Processing stuff')
+    num_files = files.size
+    Log.debug("Found %i files" % num_files)
 
-    Dir::glob(File.join(fs_tmp, "*.json")).each do |f|
-      #Log.debug(f)
-      json = JSON::parse(File.read( f ))
-      #pp json
-      json['Records'].each do |r|
-        ts = Time.parse(r['eventTime'])
-        Log.debug(format('%s - %s - %s - %s', r['eventName'], r['userIdentity']['arn'], r['eventTime'], ts.localtime))
-      end
+    queue = []
+
+    files.each do |filename|
+      Resque.enqueue(CTCompressedFile, filename)
     end
   end
 
-end
+  desc "Report"
+  task :report, :rebuild do |t,args|
+    ts_start = Time.new.to_f()
+    rebuild = args[:rebuild] == "true" ? true : false
+    queries = {}
 
-def force_update(t, fs_tmp)
+    queries[:security_group_changes] = {
+        "awsRegion" => "us-west-2",
+        "$and" => [
+          { "userAgent" => { "$not" => { "$eq" => "cloudformation.amazonaws.com" }}},
+          { "userAgent" => { "$not" => { "$eq" => "aws-sdk-go/1.4.6 (go1.7.3; darwin; amd64)"}}},
+          { "userAgent" => { "$not" => { "$eq" => "aws-sdk-go/1.4.6 (go1.7.3; linux; amd64)"}}},
+          { "userAgent" => { "$not" => { "$eq" => "APN/1.0 HashiCorp/1.0 Terraform/0.8.1"}}}
+        ],
+        "eventName" => "AuthorizeSecurityGroupIngress",
+        "requestParameters.cidrIp" => "0.0.0.0/0"
+    }
 
-  account_id = ENV['AWS_ACCOUNT_ID']
-  region_name = ENV['AWS_REGION'] ||= 'us-east-1'
-  ENV['AWS_PROFILE'] ||= 'sysco-adlm'
+    queries[:delete_nat_gateway] = {
+                                    "awsRegion" => "us-west-2",
+                                    "userAgent" => { "$not" => { "$eq" => "cloudformation.amazonaws.com" }},
+                                    "eventName" => "DeleteNatGateway"
+                                }
 
-  creds = Aws::SharedCredentials.new()
-  bucket_name = 'test0-logs'
-  bucket_base_uri = format('test0/AWSLogs/%s/CloudTrail/%s/%i/%i/%s/', account_id, region_name, t.year, t.month, t.strftime( '%d'))
+    if rebuild
+      Log.debug("Rebuilding")
 
-  s3_client = Aws::S3::Client.new(region: region_name, credentials: creds, signature_version: 'v4')
-  objects = s3_client.list_objects_v2({
-    bucket: bucket_name,
-    prefix: bucket_base_uri
-  })
+      queries.each do |coll_name, query|
+        DB[coll_name].drop()
 
-  objects.contents.each do |o|
-      #pp File::basename( o.key )
-      basename = File::basename( o.key )
-      Log.debug(format('Processing log: %s', basename))
-      fs_tmp_file = format('%s/%s', fs_tmp, basename)
-      if(!File.exists?(fs_tmp_file) && !File.exists?(fs_tmp_file.gsub( /(\.gz)$/,'' )))
-        Log.debug('Getting file.')
-        File.open fs_tmp_file, 'w' do |f|
-          s3_client.get_object({
-            key: o.key,
-            bucket: bucket_name
-          }) do |chunk|
-            f.write chunk
-          end
-        end
-        Log.debug('File write complete.')
-        cmd_decompress = format('cd %s;gunzip %s', File::dirname(fs_tmp_file), fs_tmp_file)
-        Log.debug(format('CMD(decompress): %s', cmd_decompress))
-        system(cmd_decompress)
+        aggregate = DB[:records].aggregate([
+                                 {"$match" => query},
+                                 {"$out": coll_name.to_s}
+                             ])
+        aggregate.count()
       end
+    end
+
+    records = DB[:security_group_changes].find()
+
+    records.each do |record|
+      pp record
+    end
+
+    Log.debug('Found %i logs' % records.count())
+
+    Log.debug('Runtime: %.2f' % (Time.new.to_f - ts_start))
   end
 end

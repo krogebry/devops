@@ -1,0 +1,27 @@
+---
+version: '2'
+services:
+  mongodb:
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - /mnt/data/mongodb/cloudtrail:/data/db/
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+  resque:
+    image: ennexa/resque-web
+    links:
+      - redis:redisserver
+    ports:
+      - "5678:5678"
+    command: "-r redis://redisserver:6379"
+  resque-worker:
+    build: .
+    links:
+      - mongodb
+      - redis
+    volumes:
+      - /mnt/SecureDisk:/mnt/SecureDisk
