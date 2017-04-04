@@ -1,0 +1,234 @@
+{
+  "instance_id": "i-012b4b680669dc856",
+  "image_id": "ami-6f68cf0f",
+  "state": {
+    "code": 16,
+    "name": "running"
+  },
+  "private_dns_name": "ip-172-23-10-124.us-west-2.compute.internal",
+  "public_dns_name": "",
+  "state_transition_reason": "",
+  "key_name": "deployment",
+  "ami_launch_index": 1,
+  "product_codes": [],
+  "instance_type": "m4.2xlarge",
+  "launch_time": "2017-02-15 22:28:18 UTC",
+  "placement": {
+    "availability_zone": "us-west-2a",
+    "group_name": "",
+    "tenancy": "default"
+  },
+  "monitoring": {
+    "state": "disabled"
+  },
+  "subnet_id": "subnet-ba12a2cc",
+  "vpc_id": "vpc-815437e5",
+  "private_ip_address": "172.23.10.124",
+  "architecture": "x86_64",
+  "root_device_type": "ebs",
+  "root_device_name": "/dev/sda1",
+  "block_device_mappings": [
+    {
+      "device_name": "/dev/sda1",
+      "ebs": {
+        "volume_id": "vol-0c298f46de1577ffc",
+        "status": "attached",
+        "attach_time": "2017-02-15 22:28:18 UTC",
+        "delete_on_termination": true
+      }
+    }
+  ],
+  "virtualization_type": "hvm",
+  "client_token": "BtFYU1487197697279",
+  "tags": [
+    {
+      "key": "Owner",
+      "value": "QA"
+    },
+    {
+      "key": "Name",
+      "value": "nmo-elasticsearch-qa-01"
+    }
+  ],
+  "security_groups": [
+    {
+      "group_name": "Elasticsearch_SG",
+      "group_id": "sg-3eb19847"
+    }
+  ],
+  "source_dest_check": true,
+  "hypervisor": "xen",
+  "network_interfaces": [
+    {
+      "network_interface_id": "eni-8eba2ccc",
+      "subnet_id": "subnet-ba12a2cc",
+      "vpc_id": "vpc-815437e5",
+      "description": "Primary network interface",
+      "owner_id": "168860074409",
+      "status": "in-use",
+      "mac_address": "06:f9:e9:ff:97:b3",
+      "private_ip_address": "172.23.10.124",
+      "private_dns_name": "ip-172-23-10-124.us-west-2.compute.internal",
+      "source_dest_check": true,
+      "groups": [
+        {
+          "group_name": "Elasticsearch_SG",
+          "group_id": "sg-3eb19847"
+        }
+      ],
+      "attachment": {
+        "attachment_id": "eni-attach-0d6f0a6b",
+        "device_index": 0,
+        "status": "attached",
+        "attach_time": "2017-02-15 22:28:18 UTC",
+        "delete_on_termination": true
+      },
+      "private_ip_addresses": [
+        {
+          "private_ip_address": "172.23.10.124",
+          "private_dns_name": "ip-172-23-10-124.us-west-2.compute.internal",
+          "primary": true
+        }
+      ],
+      "ipv_6_addresses": []
+    }
+  ],
+  "ebs_optimized": true
+},
+
+{
+  "instance_id": "i-005dac566034b2abe",
+  "image_id": "ami-022b9262",
+  "state": {
+    "code": 16,
+    "name": "running"
+  },
+  "private_dns_name": "ip-172-23-13-148.us-west-2.compute.internal",
+  "public_dns_name": "ec2-54-71-202-220.us-west-2.compute.amazonaws.com",
+  "state_transition_reason": "",
+  "key_name": "NMODEVKEY",
+  "ami_launch_index": 0,
+  "product_codes": [],
+  "instance_type": "t2.micro",
+  "launch_time": "2017-03-31 16:22:42 UTC",
+  "placement": {
+    "availability_zone": "us-west-2b",
+    "group_name": "",
+    "tenancy": "default"
+  },
+  "monitoring": {
+    "state": "disabled"
+  },
+  "subnet_id": "subnet-0b21b86f",
+  "vpc_id": "vpc-815437e5",
+  "private_ip_address": "172.23.13.148",
+  "public_ip_address": "54.71.202.220",
+  "architecture": "x86_64",
+  "root_device_type": "ebs",
+  "root_device_name": "/dev/xvda",
+  "block_device_mappings": [
+    {
+      "device_name": "/dev/xvda",
+      "ebs": {
+        "volume_id": "vol-0539b8e72200ad708",
+        "status": "attached",
+        "attach_time": "2017-03-31 16:22:42 UTC",
+        "delete_on_termination": true
+      }
+    },
+    {
+      "device_name": "/dev/xvdcz",
+      "ebs": {
+        "volume_id": "vol-0e823752f12089f00",
+        "status": "attached",
+        "attach_time": "2017-03-31 16:22:42 UTC",
+        "delete_on_termination": true
+      }
+    },
+    {
+      "device_name": "/dev/sdk",
+      "ebs": {
+        "volume_id": "vol-0e98f64c38dc76196",
+        "status": "attached",
+        "attach_time": "2017-03-31 16:22:42 UTC",
+        "delete_on_termination": true
+      }
+    },
+    {
+      "device_name": "/dev/sdl",
+      "ebs": {
+        "volume_id": "vol-08d4417f821d754a2",
+        "status": "attached",
+        "attach_time": "2017-03-31 16:22:42 UTC",
+        "delete_on_termination": true
+      }
+    }
+  ],
+  "virtualization_type": "hvm",
+  "client_token": "",
+  "tags": [
+    {
+      "key": "created-by",
+      "value": "test-kitchen"
+    }
+  ],
+  "security_groups": [
+    {
+      "group_name": "jlittle-neiman-ip",
+      "group_id": "sg-61edfa18"
+    }
+  ],
+  "source_dest_check": true,
+  "hypervisor": "xen",
+  "network_interfaces": [
+    {
+      "network_interface_id": "eni-a042a5d2",
+      "subnet_id": "subnet-0b21b86f",
+      "vpc_id": "vpc-815437e5",
+      "description": "",
+      "owner_id": "168860074409",
+      "status": "in-use",
+      "mac_address": "02:ed:45:79:96:f1",
+      "private_ip_address": "172.23.13.148",
+      "private_dns_name": "ip-172-23-13-148.us-west-2.compute.internal",
+      "source_dest_check": true,
+      "groups": [
+        {
+          "group_name": "jlittle-neiman-ip",
+          "group_id": "sg-61edfa18"
+        }
+      ],
+      "attachment": {
+        "attachment_id": "eni-attach-826038e7",
+        "device_index": 0,
+        "status": "attached",
+        "attach_time": "2017-03-31 16:22:42 UTC",
+        "delete_on_termination": true
+      },
+      "association": {
+        "public_ip": "54.71.202.220",
+        "public_dns_name": "ec2-54-71-202-220.us-west-2.compute.amazonaws.com",
+        "ip_owner_id": "amazon"
+      },
+      "private_ip_addresses": [
+        {
+          "private_ip_address": "172.23.13.148",
+          "private_dns_name": "ip-172-23-13-148.us-west-2.compute.internal",
+          "primary": true,
+          "association": {
+            "public_ip": "54.71.202.220",
+            "public_dns_name": "ec2-54-71-202-220.us-west-2.compute.amazonaws.com",
+            "ip_owner_id": "amazon"
+          }
+        }
+      ],
+      "ipv_6_addresses": []
+    }
+  ],
+  "iam_instance_profile": {
+    "arn": "arn:aws:iam::168860074409:instance-profile/s3-provision-readonly",
+    "id": "AIPAIQIFYI67MLYVTCCMA"
+  },
+  "ebs_optimized": false,
+  "ena_support": true
+}

@@ -4,9 +4,6 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="PROVIDED" name="aws-sdk (v2.8.3, RVM: ruby-2.3.0) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="aws-sdk-core (v2.8.3, RVM: ruby-2.3.0) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="aws-sdk-resources (v2.8.3, RVM: ruby-2.3.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="aws-sigv4 (v1.0.0, RVM: ruby-2.3.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="bson (v1.12.5, RVM: ruby-2.3.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="bson_ext (v1.12.5, RVM: ruby-2.3.0) [gem]" level="application" />
@@ -15,5 +12,7 @@
     <orderEntry type="library" scope="PROVIDED" name="erubis (v2.7.0, RVM: ruby-2.3.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="jmespath (v1.3.1, RVM: ruby-2.3.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="mongo (v1.12.5, RVM: ruby-2.3.0) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="multi_json (v1.12.1, RVM: ruby-2.3.0) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="rack-protection (v1.5.3, RVM: ruby-2.3.0) [gem]" level="application" />
   </component>
 </module>

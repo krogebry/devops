@@ -6,6 +6,8 @@ require 'mongo'
 require 'resque'
 require 'resque/tasks'
 
+#require './cloudtrail/instance.rb'
+
 Mongo::Logger.logger.level = ::Logger::FATAL
 DB = Mongo::Client.new('mongodb://mongodb:27017', database: "cloudtrail")
 DB[:compressed_files].indexes.create_one({ filename: 1 }, { unique: true })
@@ -36,6 +38,60 @@ end
 
 namespace :cloudtrail do
 
+  desc 'audit'
+  task :audit do |t,args|
+    cache = DevOps::Cache.new()
+    creds = Aws::SharedCredentials.new()
+    ec2_client = Aws::EC2::Client.new(region: 'us-west-2', credentials: creds)
+
+    addresses_key = 'eip_addresses'
+    addresses = cache.cached_json(addresses_key) do
+      filters = [{
+                   name: "domain",
+                   values: ["vpc"]
+               }]
+      ec2_client.describe_addresses(filters: filters).data.to_h.to_json
+    end
+
+    #pp addresses
+
+    cache_key = 'ec2_instances'
+    #cache.del_key(cache_key)
+    instance_data = cache.cached_json(cache_key) do
+      ec2_client.describe_instances(filters:[{
+        name: 'instance-state-name',
+        values: ['running']
+      }]).data.to_h.to_json
+    end
+    #pp instances['reservations'][0].keys
+
+    #num_instances = 0
+
+    report = []
+
+    instance_data['reservations'].each do |r|
+      #num_instances += r['instances'].size
+      r['instances'].each do |instance|
+        #next if instance['instance_id'] != 'i-005dac566034b2abe'
+        #puts instance.to_json
+        i = EC2Instance.new(instance)
+        rating = i.rate
+        report.push({
+            :rating => rating,
+            :instance_id => instance['instance_id']
+        })
+      end
+    end
+
+    report.sort!{|a,b| a[:rating] <=> b[:rating]}
+    #pp report
+    report.each do |r|
+      Log.info('%s - %s' % [r[:rating], r[:instance_id]])
+    end
+
+    #Log.debug('NumInstance: %s' % num_instances)
+  end
+
   desc 'Slurp some files'
   task :slurp do |t,args|
     i = 0
@@ -60,6 +116,55 @@ namespace :cloudtrail do
 
     files.each do |filename|
       Resque.enqueue(CTCompressedFile, filename)
+    end
+  end
+
+  desc "Find run instance"
+  task :find_run_instance, :instance_id do |t,args|
+    ts_start = Time.new.to_f()
+    queries = {}
+
+    Log.debug("InstanceId: %s" % args[:instance_id])
+
+    queries['run_instance'] = {
+      "awsRegion" => "us-west-2",
+      #"RequestId" => "14e51b16-5aa7-4688-91c1-5078b8a68ae5",
+      "responseElements.instancesSet.items.instanceId" => args[:instance_id],
+      #"responseElements.instancesSet.items" => {
+        #"$elemMatch" => { "instanceId" => args[:instance_id] }
+      #},
+      "eventName" => "RunInstances"
+    }
+
+    pp queries
+
+    queries.each do |coll_name, query|
+      aggregate = DB[:records].aggregate([
+        {"$match" => query},
+        {"$out": coll_name.to_s}
+      ])
+      aggregate.count()
+    end
+  end
+
+  desc "Find stack delete"
+  task :find_stack_del, :stack_name do |t,args|
+    ts_start = Time.new.to_f()
+    rebuild = args[:rebuild] == "true" ? true : false
+    queries = {}
+    Log.debug("Stack: %s" % args[:stack_name])
+    queries['delete_stack_report'] = {
+      "awsRegion" => "us-west-2",
+      "requestParameters.stackName" => /.*#{args[:stack_name]}.*/,
+      "eventName" => "DeleteStack"
+    }
+    pp queries
+    queries.each do |coll_name, query|
+      aggregate = DB[:records].aggregate([
+        {"$match" => query},
+        {"$out": coll_name.to_s}
+      ])
+      aggregate.count()
     end
   end
 

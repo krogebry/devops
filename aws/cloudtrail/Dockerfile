@@ -7,7 +7,7 @@ WORKDIR /opt/
 
 RUN bundle install
 
-ENV "COUNT=30"
+ENV "COUNT=10"
 ENV "QUEUE=files"
 
 ENTRYPOINT [ "rake", "resque:workers" ]

@@ -2,11 +2,14 @@
 version: '2'
 services:
   mongodb:
-    image: mongo
+    build:
+      context: .
+      dockerfile: mongodb.Dockerfile
     ports:
       - "27017:27017"
     volumes:
-      - /mnt/data/mongodb/cloudtrail:/data/db/
+      # - /mnt/data/mongodb/cloudtrail:/data/db/
+      - /mnt/ct_data/mongodb:/data/db/
   redis:
     image: redis
     ports:
@@ -20,6 +23,8 @@ services:
     command: "-r redis://redisserver:6379"
   resque-worker:
     build: .
+    environment:
+      COUNT: 10
     links:
       - mongodb
       - redis
