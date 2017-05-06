@@ -1,11 +1,9 @@
-## COUNT=1 QUEUE=files rake resque:workers
 require 'pp'
 require 'json'
 require 'zlib'
 require 'mongo'
 require 'resque'
 require 'resque/tasks'
-
 #require './cloudtrail/instance.rb'
 
 Mongo::Logger.logger.level = ::Logger::FATAL
@@ -26,9 +24,15 @@ class CTCompressedFile
     gz_reader = Zlib::GzipReader.new(File.open(filename))
     json = JSON::parse(gz_reader.read())
     json['Records'].each do |record|
-      check = DB[:records].find({ requestID: record['requestID'], eventID: record['eventID'] })
-      if check.count() == 0
+      begin
         DB[:records].insert_one(record)
+
+      rescue BSON::String::IllegalKey => e
+        puts "IllegalKey: %s" % e
+
+      rescue Mongo::Error::OperationFailure => e
+        puts 'OperationFailure: %s' % e
+
       end
     end
     #Log.debug('Processed %i records' % json['Records'].size)
@@ -94,25 +98,20 @@ namespace :cloudtrail do
 
   desc 'Slurp some files'
   task :slurp do |t,args|
-    i = 0
-    queue_flush_i = 0
-    queue_max_entries = 100
-
     root_dir = File.join('/', 'mnt', 'SecureDisk')
-    #root_dir = "/mnt/SecureDisk/cloudtrail/us-west-2/2017/03/"
-    #root_dir = "/mnt/SecureDisk/cloudtrail/us-west-2/2017/02/"
     files = []
 
     Log.debug("Gathering files")
-    Dir.glob(File.join(root_dir, "**/*.gz")).each do |filename|
+    file_list = Dir.glob(File.join(root_dir, "**/*.gz"))
+    Log.debug('Found %i files' % file_list.size)
+
+    file_list.each do |filename|
       check = DB[:compressed_files].find({ :filename => filename })
       files.push(filename) if check.count() == 0
     end
 
     num_files = files.size
-    Log.debug("Found %i files" % num_files)
-
-    queue = []
+    Log.debug('Found %i files' % num_files)
 
     files.each do |filename|
       Resque.enqueue(CTCompressedFile, filename)

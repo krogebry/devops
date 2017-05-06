@@ -1,13 +1,13 @@
 FROM ruby:2.4
 
-COPY Gemfile /opt/
-COPY tasks.rb /opt/Rakefile
-
 WORKDIR /opt/
 
+COPY Gemfile /opt/
 RUN bundle install
 
 ENV "COUNT=10"
 ENV "QUEUE=files"
+
+COPY tasks.rb /opt/Rakefile
 
 ENTRYPOINT [ "rake", "resque:workers" ]

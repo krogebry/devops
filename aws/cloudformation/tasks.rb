@@ -11,6 +11,24 @@ require './cloudformation/params.rb'
 
 namespace :cf do
 
+  desc 'Status'
+  task :stats do |t,args|
+    cache = DevOps::Cache.new()
+
+    creds = Aws::SharedCredentials.new()
+    cft_client = Aws::CloudFormation::Client.new(region: ENV['AWS_DEFAULT_REGION'], credentials: creds)
+
+    cache_key = "DescribeStacks"
+    stacks = cache.cached_json(cache_key) do
+      cft_client.describe_stacks().data.to_h.to_json
+    end
+
+    stacks['stacks'].each do |stack|
+      pp stack
+    end
+
+  end
+
   desc 'Create the chef config.'
   task :mk_chef_config do |t, args|
     region = ENV['AWS_DEFAULT_REGION']
@@ -168,16 +186,16 @@ namespace :cf do
     Log.debug(format('Stack exists(%s): %s', stack_name, stack_exists))
 
     if stack_exists
-      cf_client.update_stack({
-                                 stack_name: stack_name,
-                                 template_body: stack_tpl.to_json,
-                                 parameters: params,
-                                 capabilities: ["CAPABILITY_IAM"],
-                                 tags: [{
-                                            key: 'Owner',
-                                            value: 'bkroger@thoughtworks.com'
-                                        }]
-                             })
+      cf_client.update_stack(
+        stack_name: stack_name,
+        template_body: stack_tpl.to_json,
+        parameters: params,
+        capabilities: ["CAPABILITY_IAM"],
+        tags: [
+          key: 'Owner',
+          value: 'bkroger@thoughtworks.com'
+        ]
+      )
 
     else
       Log.debug(format('Creating stack'))

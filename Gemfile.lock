@@ -22,6 +22,7 @@ GEM
     rack (1.6.5)
     rack-protection (1.5.3)
       rack
+    rake (11.2.2)
     redis (3.3.3)
     redis-namespace (1.5.3)
       redis (~> 3.0, >= 3.0.4)
@@ -48,6 +49,7 @@ DEPENDENCIES
   deep_merge
   erubis
   mongo
+  rake
   resque
 
 BUNDLED WITH

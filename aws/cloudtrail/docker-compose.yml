@@ -9,7 +9,8 @@ services:
       - "27017:27017"
     volumes:
       # - /mnt/data/mongodb/cloudtrail:/data/db/
-      - /mnt/ct_data/mongodb:/data/db/
+      #- /mnt/ct_data/mongodb:/data/db/
+      - /mnt/cloudtrail_data/mongodb:/data/db/
   redis:
     image: redis
     ports:
