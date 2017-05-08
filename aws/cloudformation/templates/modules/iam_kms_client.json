@@ -1,7 +1,5 @@
 {
   "Parameters": { },
-
-
   "Resources": {
 
     "InstanceRole": {

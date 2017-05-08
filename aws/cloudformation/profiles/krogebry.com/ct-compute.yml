@@ -1,0 +1,49 @@
+---
+name: "CTCompute"
+owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+template: "ct-compute"
+description: "CTCompute Service."
+modules:
+  - "base"
+  - "vpc"
+  - "cw_logs"
+  - "cw_collectd"
+  - "iam_kms_client"
+params:
+  #InfStackVersion: "ENV:INF_VERSION"
+  #ChefEnvName: "management"
+  #ChefServerURL:
+    #type: "elb_dns"
+    #tags:
+      #Role: "Internal"
+      #Version: "ENV:CHEF_VERSION"
+  #S3BucketName:
+    #type: "s3_bucket"
+    #tags:
+      #Name: "dev-central"
+      #Version: "ENV:INF_VERSION"
+  #MgtCidr: "54.147.185.114/32"
+  MgtCidr: 
+    type: "vpc_cidr"
+    tags:
+      Name: "main"
+  ImageId: 
+    type: "ami"
+    tags:
+      Name: "devops"
+      Version: "0.2.0"
+  KeyName: "ct-compute-0"
+  VpcId: 
+    type: "vpc"
+    tags:
+      Name: "main"
+  Zones:
+    type: "zones"
+    tags:
+      - Name: "private"
+      - Name: "public"
+  Subnets:
+    type: "subnets"
+    tags:
+      - Name: "private"
+      - Name: "public"

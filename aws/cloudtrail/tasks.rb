@@ -6,6 +6,7 @@ require 'resque'
 require 'resque/tasks'
 #require './cloudtrail/instance.rb'
 
+if(false)
 Mongo::Logger.logger.level = ::Logger::FATAL
 DB = Mongo::Client.new('mongodb://mongodb:27017', database: "cloudtrail")
 DB[:compressed_files].indexes.create_one({ filename: 1 }, { unique: true })
@@ -13,8 +14,9 @@ DB[:records].indexes.create_one({ requestID: 1, eventID: 1 }, { unique: true })
 DB[:records].indexes.create_one({ eventTime: 1 })
 DB[:records].indexes.create_one({ eventName: 1 })
 DB[:records].indexes.create_one({ awsRegion: 1 })
-
 Resque.redis = 'redis:6379'
+end
+
 
 class CTCompressedFile
   @queue = :files
