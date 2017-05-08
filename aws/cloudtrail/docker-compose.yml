@@ -10,7 +10,8 @@ services:
     volumes:
       # - /mnt/data/mongodb/cloudtrail:/data/db/
       #- /mnt/ct_data/mongodb:/data/db/
-      - /mnt/cloudtrail_data/mongodb:/data/db/
+      #- /mnt/cloudtrail_data/mongodb:/data/db/
+      - /mnt/mongodb/mongodb:/data/db/
   redis:
     image: redis
     ports:
@@ -30,4 +31,4 @@ services:
       - mongodb
       - redis
     volumes:
-      - /mnt/SecureDisk:/mnt/SecureDisk
+      - /mnt/data:/mnt/SecureDisk

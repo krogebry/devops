@@ -98,7 +98,7 @@ namespace :cloudtrail do
 
   desc 'Slurp some files'
   task :slurp do |t,args|
-    root_dir = File.join('/', 'mnt', 'SecureDisk')
+    root_dir = File.join('/', 'mnt', 'data')
     files = []
 
     Log.debug("Gathering files")
