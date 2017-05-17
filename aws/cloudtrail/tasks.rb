@@ -6,15 +6,17 @@ require 'resque'
 require 'resque/tasks'
 #require './cloudtrail/instance.rb'
 
-if(false)
+if(true)
 Mongo::Logger.logger.level = ::Logger::FATAL
-DB = Mongo::Client.new('mongodb://mongodb:27017', database: "cloudtrail")
+local_ip = `curl http://169.254.169.254/2016-09-02/meta-data/local-ipv4/`.chomp
+#local_ip = '172.30.3.126'
+DB = Mongo::Client.new("mongodb://%s:27017" % local_ip, database: "cloudtrail")
 DB[:compressed_files].indexes.create_one({ filename: 1 }, { unique: true })
 DB[:records].indexes.create_one({ requestID: 1, eventID: 1 }, { unique: true })
 DB[:records].indexes.create_one({ eventTime: 1 })
 DB[:records].indexes.create_one({ eventName: 1 })
 DB[:records].indexes.create_one({ awsRegion: 1 })
-Resque.redis = 'redis:6379'
+Resque.redis = '%s:6379' % local_ip
 end
 
 
@@ -120,25 +122,41 @@ namespace :cloudtrail do
     end
   end
 
-  desc "Find run instance"
-  task :find_run_instance, :instance_id do |t,args|
+  desc "Find elb"
+  task :find_elb, :elb_name do |t,args|
     ts_start = Time.new.to_f()
     queries = {}
+    Log.debug("ELBName: %s" % args[:elb_name])
 
-    Log.debug("InstanceId: %s" % args[:instance_id])
-
-    queries['run_instance'] = {
+    queries['mod_elb'] = {
       "awsRegion" => "us-west-2",
-      #"RequestId" => "14e51b16-5aa7-4688-91c1-5078b8a68ae5",
-      "responseElements.instancesSet.items.instanceId" => args[:instance_id],
-      #"responseElements.instancesSet.items" => {
-        #"$elemMatch" => { "instanceId" => args[:instance_id] }
-      #},
-      "eventName" => "RunInstances"
+      #"eventName" => "ModifyLoadBalancerAttributes",
+      "eventName" => "DeleteLoadBalancerListeners",
+      "requestParameters.loadBalancerName" => args[:elb_name]
     }
 
     pp queries
 
+    queries.each do |coll_name, query|
+      aggregate = DB[:records].aggregate([
+        {"$match" => query},
+        {"$out": coll_name.to_s}
+      ])
+      aggregate.count()
+    end
+  end
+
+  desc "Find run instance"
+  task :find_run_instance, :instance_id do |t,args|
+    ts_start = Time.new.to_f()
+    queries = {}
+    Log.debug("InstanceId: %s" % args[:instance_id])
+    queries['run_instance'] = {
+      "awsRegion" => "us-west-2",
+      "responseElements.instancesSet.items.instanceId" => args[:instance_id],
+      "eventName" => "RunInstances" 
+    }
+    pp queries
     queries.each do |coll_name, query|
       aggregate = DB[:records].aggregate([
         {"$match" => query},
