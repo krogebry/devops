@@ -1,0 +1,17 @@
+#!/bin/bash
+
+## Total sum of all allocated EBS blocks.
+#aws ec2 describe-volumes > /tmp/volumes.json
+#cat /tmp/volumes.json|jq '.Volumes[]'
+
+## Report total size of all ebs volumes
+echo "---Total used---"
+cat /tmp/volumes.json|jq '.Volumes|reduce .[].Size as $item (0; . + $item)'
+
+## Report breakdown of types.
+echo "---Types---"
+cat /tmp/volumes.json|jq -r '.Volumes| group_by(.VolumeType)| map({volume: .[0].VolumeType, count: length}) | sort_by(.count)[] | [.volume, .count|tostring] | join("\t")'
+
+## Report on size of volumes
+echo "---Size---"
+cat /tmp/volumes.json|jq -r '.Volumes| group_by(.Size)| map({size: .[0].Size, count: length}) | sort_by(.size)[] | [.size, .count|tostring] | join("\t")'

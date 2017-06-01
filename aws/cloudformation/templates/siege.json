@@ -2,7 +2,19 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "",
 
-  "Parameters": { },
+  "Parameters": { 
+    "SiegeNum": {
+      "Type": "String",
+      "Default": "25"
+    },
+    "SiegeURL": {
+      "Type": "String"
+    },
+    "SiegeInstances": {
+      "Type": "String",
+      "Default": "20"
+    }
+  },
 
   "Resources": {
 
@@ -11,7 +23,7 @@
       "Properties": {
         "Tags": [{
           "Key": "Application",
-          "Value": "CTCompute"
+          "Value": "Siege"
         }],
         "VpcId": { "Ref": "VpcId" },
         "GroupDescription": "Enable HTTP access and SSH access",
@@ -24,20 +36,15 @@
       }
     },
 
-    "CTCompute": {
+    "Siege": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
-        "MinSize": "1",
-        "MaxSize": "3",
-        "DesiredCapacity": "1",
+        "MinSize": "3",
+        "MaxSize": "10",
+        "DesiredCapacity": "3",
         "AvailabilityZones": { "Ref": "Zones" },
         "VPCZoneIdentifier": { "Ref": "Subnets" },
-        "LaunchConfigurationName": { "Ref": "CTComputeLC" }
-      },
-      "CreationPolicy": {
-        "ResourceSignal": {
-          "Timeout": "PT15M"
-        }
+        "LaunchConfigurationName": { "Ref": "SiegeLC" }
       },
       "UpdatePolicy": {
         "AutoScalingRollingUpdate": {
@@ -49,10 +56,10 @@
       }
     },
 
-    "CTComputeLC": {
+    "SiegeLC": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Metadata": {
-        "Comment": "Bootstrap a new CTCompute instance.",
+        "Comment": "Bootstrap a new Siege instance.",
         "AWS::CloudFormation::Init": {
           "configSets": {
             "base_install": [
@@ -69,16 +76,11 @@
         "ImageId": { "Ref": "ImageId" },
         "UserData": { "Fn::Base64": { "Fn::Join": ["", [
           "#!/bin/bash -xe\n",
-          "/opt/aws/bin/cfn-init -v ",
-          " --stack ", { "Ref": "AWS::StackName" },
-          " --configsets base_install ",
-          " --resource CTComputeLC ",
-          " --region ", { "Ref": "AWS::Region" }, "\n",
-
-          "/opt/aws/bin/cfn-signal -e $? ",
-          " --stack ", { "Ref": "AWS::StackName" },
-          " --resource CTCompute ",
-          " --region ", { "Ref": "AWS::Region" }, "\n"
+          "for i in $(seq 1 ", {"Ref": "SiegeInstances"} , ")\n",
+          "do \n",
+          " siege -c ", {"Ref": "SiegeNum"}, " ", {"Ref": "SiegeURL"}, " &\n",
+          " sleep $i \n",
+          "done \n"
         ]]}},
         "InstanceType": { "Ref": "InstanceType" },
         "SecurityGroups": [{ "Ref": "InstanceSG" }],

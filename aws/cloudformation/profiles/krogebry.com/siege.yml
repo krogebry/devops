@@ -1,7 +1,7 @@
 ---
 name: "CTCompute"
 owner: "Bryan Kroger (bkroger@thoughtworks.com)"
-template: "ct-compute"
+template: "siege"
 description: "CTCompute Service."
 modules:
   - "base"
@@ -27,12 +27,13 @@ params:
     type: "vpc_cidr"
     tags:
       Name: "main"
-  InstanceType: "m4.large"
+  InstanceType: "t2.small"
+  SiegeURL: "http://dev-int.nmgcloudapps.com/"
   ImageId: 
     type: "ami"
     tags:
-      Name: "ct-compute"
-      Version: "0.9.3"
+      Name: "siege"
+      Version: "0.2.0"
   KeyName: "ct-compute-0"
   VpcId: 
     type: "vpc"

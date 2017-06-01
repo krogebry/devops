@@ -17,7 +17,6 @@ DB[:records].indexes.create_one({ awsRegion: 1 })
 Resque.redis = 'redis:6379'
 end
 
-
 class CTCompressedFile
   @queue = :files
 
@@ -43,6 +42,109 @@ class CTCompressedFile
 end
 
 namespace :cloudtrail do
+
+  desc 'snap'
+  task :snap do |t,args|
+    cache = DevOps::Cache.new()
+    creds = Aws::SharedCredentials.new()
+    ec2_client = Aws::EC2::Client.new(region: 'us-east-1', credentials: creds)
+
+    #instances = ec2_client.describe_instances()
+    #pp instances
+
+    ## ssh-keygen -f "/home/krogebry/.ssh/known_hosts" -R cloud0.krogebry.com
+    ## update DNS for cloud0
+    ## run s3 sync
+    ## run dc
+    ## run slurp
+    ## wait for q's to clear
+    ## (optional) backup and store in s3
+    ## create AMI snap
+    ## delete stack
+
+    version = '0.9.3'
+    instance_id = 'i-00e02cf8836ed1aa9'
+
+    ## Create image
+    if(false)
+		resp = ec2_client.create_image({
+  		name: "ct-compute-%s" % version, 
+  		dry_run: false,
+  		no_reboot: false,
+  		instance_id: instance_id,
+  		block_device_mappings: [{
+      	virtual_name: "root",
+      	device_name: "/dev/xvda",
+      	ebs: {
+        	encrypted: false,
+        	volume_size: 8,
+        	volume_type: "gp2", 
+        	delete_on_termination: false
+      	}
+      },{
+      	virtual_name: "mongodb",
+      	device_name: "/dev/sdb",
+      	ebs: {
+        	iops: 5000,
+        	encrypted: true,
+        	volume_size: 100,
+        	volume_type: "io1", 
+        	delete_on_termination: false
+      	}
+    	},{
+      	virtual_name: "data",
+      	device_name: "/dev/sdc",
+      	ebs: {
+        	iops: 5000,
+        	encrypted: true,
+        	volume_size: 100,
+        	volume_type: "io1", 
+        	delete_on_termination: false
+      	}
+      }],
+		})
+    sleep 1
+    end
+		#pp resp
+
+    #ami_id = resp.image_id
+    ami_id = 'ami-b4cc99a2'
+
+    ## Tag image
+    i = Aws::EC2::Image.new(ami_id)
+
+    if(true)
+    sleep 1
+    i.create_tags({
+      tags: [{
+        key: "Name",
+        value: "ct-compute"
+      },{
+        key: "Version",
+        value: version
+      }]
+    })
+    end
+
+    ## Tag the blocks.
+    if(true)
+    i.block_device_mappings.each do |block|
+      snap = Aws::EC2::Snapshot.new(block.ebs.snapshot_id)
+      snap.create_tags({
+        tags: [{
+          key: "Name",
+          value: "ct-compute"
+        },{
+          key: "Version",
+          value: version
+        }]
+      })
+    end
+    end
+
+    #pp i.block_device_mappings
+    Log.debug("State: %s" % i.state)
+  end
 
   desc 'audit'
   task :audit do |t,args|
