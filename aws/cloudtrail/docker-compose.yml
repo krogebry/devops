@@ -10,7 +10,8 @@ services:
     volumes:
       # - /mnt/data/mongodb/cloudtrail:/data/db/
       #- /mnt/ct_data/mongodb:/data/db/
-      - /mnt/cloudtrail_data/mongodb:/data/db/
+      #- /mnt/cloudtrail_data/mongodb:/data/db/
+      - /mnt/mongodb/mongodb:/data/db/
   redis:
     image: redis
     ports:
@@ -25,9 +26,9 @@ services:
   resque-worker:
     build: .
     environment:
-      COUNT: 10
+      COUNT: 25
     links:
       - mongodb
       - redis
     volumes:
-      - /mnt/SecureDisk:/mnt/SecureDisk
+      - /mnt/data:/mnt/data
