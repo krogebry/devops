@@ -6,17 +6,18 @@ require 'resque'
 require 'resque/tasks'
 #require './cloudtrail/instance.rb'
 
-if(true)
+if(false)
 Mongo::Logger.logger.level = ::Logger::FATAL
-local_ip = `curl http://169.254.169.254/2016-09-02/meta-data/local-ipv4/`.chomp
+#local_ip = `curl http://169.254.169.254/2016-09-02/meta-data/local-ipv4/`.chomp
 #local_ip = '172.30.3.126'
+local_ip = 'localhost'
 DB = Mongo::Client.new("mongodb://%s:27017" % local_ip, database: "cloudtrail")
 DB[:compressed_files].indexes.create_one({ filename: 1 }, { unique: true })
 DB[:records].indexes.create_one({ requestID: 1, eventID: 1 }, { unique: true })
 DB[:records].indexes.create_one({ eventTime: 1 })
 DB[:records].indexes.create_one({ eventName: 1 })
 DB[:records].indexes.create_one({ awsRegion: 1 })
-Resque.redis = '%s:6379' % local_ip
+#Resque.redis = '%s:6379' % local_ip
 end
 
 class CTCompressedFile
@@ -221,6 +222,100 @@ namespace :cloudtrail do
 
     files.each do |filename|
       Resque.enqueue(CTCompressedFile, filename)
+    end
+  end
+
+  desc "Find human interactions on the AWS UI console"
+  task :find_human_console_interactions do
+    #ts_start = Time.new.to_f()
+
+    epoc_start = "2017-05-22T00:00:00Z"
+    epoc_end = "2017-05-23T00:00:00Z"
+
+    queries = {}
+
+    queries['human_consul_actions'] = {
+        "awsRegion" => "us-west-2",
+        "userAgent" => "signin.amazonaws.com",
+        "userIdentity.type" => "IAMUser",
+        "$and" => [
+            {"eventTime" => {"$gt" => epoc_start}},
+            {"eventTime" => {"$lt" => epoc_end}}
+        ],
+        "recipientAccountId" => "123"
+    }
+
+    pp queries
+
+    queries.each do |coll_name, query|
+      aggregate = DB[:records].aggregate([
+                                             {"$match" => query},
+                                             {"$out": coll_name.to_s}
+                                         ])
+      aggregate.count()
+    end
+  end
+
+  desc "Find interesting things"
+  task :find_interesting_things do
+    epoc_start = "2017-05-22T00:00:00Z"
+    epoc_end = "2017-05-23T00:00:00Z"
+
+    queries = {}
+
+    queries['interesting_delete_actions'] = {
+        "awsRegion" => "us-west-2",
+        "eventName" => {
+           "$in" => ['DeleteSnapshot', 'DeleteDBSnapshot', 'DeleteHealthCheck']
+        },
+        "recipientAccountId" => "123"
+    }
+
+    queries['interesting_iam_actions'] = {
+        "awsRegion" => "us-west-2",
+        "eventName" => {
+            "$in" => ['DeleteGroupPolicy', 'DisassociateIamInstanceProfile']
+        },
+        "recipientAccountId" => "123"
+    }
+
+    pp queries
+
+    queries.each do |coll_name, query|
+      aggregate = DB[:records].aggregate([
+                                             {"$match" => query},
+                                             {"$out": coll_name.to_s}
+                                         ])
+      aggregate.count()
+    end
+  end
+
+  desc "Breakdown human actions"
+  task :breakdown_human_actions do
+    queries = {}
+    queries['human_actions_by_event_type'] = {
+        '_id' => '$eventName',
+        'count' => { '$sum' => 1}
+    }
+    queries.each do |coll_name, query|
+      aggregate = DB[:human_consul_actions].aggregate([
+        {"$group" => query},
+        {"$out": coll_name.to_s}
+      ])
+      aggregate.count()
+    end
+  end
+
+  desc "Create event name map"
+  task :create_event_name_mapping do
+    queries = {}
+    queries['event_names'] = {'_id' => '$eventName'}
+    queries.each do |coll_name, query|
+      aggregate = DB[:records].aggregate([
+                                                          {"$group" => query},
+                                                          {"$out": coll_name.to_s}
+                                                      ])
+      aggregate.count()
     end
   end
 

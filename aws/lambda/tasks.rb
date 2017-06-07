@@ -88,7 +88,7 @@ namespace :lambda do
       }]
     }
 
-    role_arn = format('arn:aws:iam::168860074409:role/%s', args[:project_name])
+    role_arn = format('arn:aws:iam::123:role/%s', args[:project_name])
 
     policy = Aws::IAM::Policy.new( role_arn )
     policy.allow(:actions => ["s3:Get*","s3:List*"], :resources => '*')

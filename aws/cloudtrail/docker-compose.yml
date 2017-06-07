@@ -10,25 +10,25 @@ services:
     volumes:
       # - /mnt/data/mongodb/cloudtrail:/data/db/
       #- /mnt/ct_data/mongodb:/data/db/
-      #- /mnt/cloudtrail_data/mongodb:/data/db/
-      - /mnt/mongodb/mongodb:/data/db/
-  redis:
-    image: redis
-    ports:
-      - "6379:6379"
-  resque:
-    image: ennexa/resque-web
-    links:
-      - redis:redisserver
-    ports:
-      - "5678:5678"
-    command: "-r redis://redisserver:6379"
-  resque-worker:
-    build: .
-    environment:
-      COUNT: 25
-    links:
-      - mongodb
-      - redis
-    volumes:
-      - /mnt/data:/mnt/data
+      - /mnt/cloudtrail_data/mongodb:/data/db/
+      #- /mnt/mongodb/mongodb:/data/db/
+  #redis:
+    #image: redis
+    #ports:
+      #- "6379:6379"
+  #resque:
+    #image: ennexa/resque-web
+    #links:
+      #- redis:redisserver
+    #ports:
+      #- "5678:5678"
+    #command: "-r redis://redisserver:6379"
+  #resque-worker:
+    #build: .
+    #environment:
+      #COUNT: 25
+    #links:
+      #- mongodb
+      #- redis
+    #volumes:
+      #- /mnt/data:/mnt/data
