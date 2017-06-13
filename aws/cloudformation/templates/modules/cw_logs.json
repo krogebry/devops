@@ -16,34 +16,82 @@
        },
        "files": {
          "/etc/cron.hourly/cloudwatch-monitoring": {
-           "content": [
-             "*/5 * * * * /usr/local/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --from-cron"
-           ],
+           "content": "*/5 * * * * /usr/local/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --from-cron",
            "mode": "000700",
            "owner": "root",
            "group": "root"
          },
-         "/usr/local/awslogs-agent-setup.py": {
-           "source": "https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py",
+//         "/usr/local/awslogs-agent-setup.py": {
+//           "source": "https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py",
+//           "mode": "000700",
+//           "owner": "root",
+//           "group": "root"
+//         },
+
+         "/var/awslogs/etc/awslogs.conf": {
            "mode": "000700",
            "owner": "root",
-           "group": "root"
-         }
-       },
-       "commands": {
-         "01_run_awslogs_agent_setup.py": {
-           "command": {
-             "Fn::Sub": [
-               "python /usr/local/awslogs-agent-setup.py -n -r ${Region} -c https://s3.amazonaws.com/quickstart-reference/hashicorp/vault/latest/scripts/awslogs-config-file", { 
-                 "Region": { "Ref": "AWS::Region" }
-               }
-             ]
-           }
+           "group": "root",
+           "source": {"Fn::Join": ["\n", [
+             "[general]",
+             "state_file = /var/awslogs/state/agent-state"
+           ]]}
          },
-         "02_make_mon_put_instance_data_exececutable": {
-           "command": "chmod +x /usr/local/aws-scripts-mon/mon-put-instance-data.pl"
+
+         "/var/awslogs/etc/conf/messages.conf": {
+           "mode": "000700",
+           "owner": "root",
+           "group": "root",
+           "source": {"Fn::Join": ["\n", [
+             "[/var/log/syslog]",
+             "file = /var/log/messages",
+             "log_group_name = /var/log/messages",
+             "log_stream_name = {instance_id}",
+             "datetime_format = %b %d %H:%M:%S"
+           ]]}
+         },
+
+         "/var/awslogs/etc/conf/collectd.conf": {
+           "mode": "000700",
+           "owner": "root",
+           "group": "root",
+           "source": {"Fn::Join": ["\n", [
+             "[/var/log/collectd]",
+             "file = /var/log/collectd",
+             "log_group_name = /var/log/collectd",
+             "log_stream_name = {instance_id}",
+             "datetime_format = %b %d %H:%M:%S"
+           ]]}
+         },
+
+         "/var/awslogs/etc/conf/security.conf": {
+           "mode": "000700",
+           "owner": "root",
+           "group": "root",
+           "source": {"Fn::Join": ["\n", [
+             "[/var/log/security]",
+             "file = /var/log/security",
+             "log_group_name = /var/log/security",
+             "log_stream_name = {instance_id}",
+             "datetime_format = %b %d %H:%M:%S"
+           ]]}
          }
+
        }
+//       "commands": {
+//         "01_run_awslogs_agent_setup.py": {
+//           "command": {
+//             "Fn::Sub": [
+//               "python /usr/local/awslogs-agent-setup.py -n -r ${Region} -c https://s3.amazonaws.com/quickstart-reference/hashicorp/vault/latest/scripts/awslogs-config-file", {
+//                 "Region": { "Ref": "AWS::Region" }
+//               }
+//             ]
+//           }
+//         },
+//         "02_make_mon_put_instance_data_exececutable": {
+//           "command": "chmod +x /usr/local/aws-scripts-mon/mon-put-instance-data.pl"
+//         }
+//       }
      }
    }
 }

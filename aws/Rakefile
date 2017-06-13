@@ -62,15 +62,15 @@ task :update_bastion do
       ip_ranges: [{
         cidr_ip: format('%s/32', public_ip)
       }]
+    },{
+      ip_protocol: 'tcp',
+      from_port: 5678,
+      to_port: 5678,
+      ip_ranges: [{
+        cidr_ip: format('%s/32', public_ip)
+      }]
     }]
   )
-
-  #groups['security_groups'][0]['ip_permissions'].each do |perm|
-    #if perm['from_port'] == 22 
-      #perm['ip_ranges'] = [{"cidr_ip"=>"24.111.13.66/32"}],
-      #perm['ip_ranges'] = [{ cidr_ip: format('%s/32', public_ip)}]
-    #end
-  #end
 
 end
 

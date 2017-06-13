@@ -36,6 +36,15 @@ namespace :cloudtrail do
       all_compressed_files.push(row[:filename])
     end
 
+    Log.debug('Pulled %i records from the db' % all_compressed_files.size)
+
+    db.records.find({
+                        eventName: 'UpdateAutoScalingGroup',
+                        'requestParameters.autoScalingGroupName': 'PAFWPRD_ASG_172-27-4-192' }).count();
+
+    db.records.find({'userIdentity.principalId': 'AROAJYULCIJXCBONRIY7K:PAFWPRD-lambda-sched-event' }).count();
+
+
     file_list.each do |filename|
       #check = DB[:compressed_files].find({ :filename => filename })
       #files.push(filename) if check.count() == 0
