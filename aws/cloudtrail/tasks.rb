@@ -40,7 +40,7 @@ namespace :cloudtrail do
     # Log.debug('Pulled %i records from the db' % all_compressed_files.size)
 
     file_list.each do |filename|
-      check = DB[:compressed_files].find({ :filename => filename })
+      check = db.conn[:compressed_files].find({ :filename => filename })
       files.push(filename) if check.count() == 0
       # all_compressed_files.include?(filename) ? next : files.push(filename)
     end
