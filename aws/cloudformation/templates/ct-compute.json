@@ -12,6 +12,9 @@
         "Tags": [{
           "Key": "Application",
           "Value": "CTCompute"
+        },{
+          "Key": "Version",
+          "Value": { "Ref": "StackVersion" }
         }],
         "VpcId": { "Ref": "VpcId" },
         "GroupDescription": "Enable HTTP access and SSH access",
@@ -27,6 +30,11 @@
     "CTCompute": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
+        "Tags": [{
+          "Key" : "Version",
+          "Value" : { "Ref": "StackVersion" },
+          "PropagateAtLaunch" : true
+        }],
         "MinSize": "1",
         "MaxSize": "3",
         "DesiredCapacity": "1",
@@ -68,6 +76,7 @@
         "ImageId": { "Ref": "ImageId" },
         "UserData": { "Fn::Base64": { "Fn::Join": ["", [
           "#!/bin/bash -xe\n",
+          "yum update -y\n",
           "/opt/aws/bin/cfn-init -v ",
           " --stack ", { "Ref": "AWS::StackName" },
           " --configsets base_install ",

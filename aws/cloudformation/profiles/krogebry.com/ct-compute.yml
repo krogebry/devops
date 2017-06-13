@@ -32,7 +32,7 @@ params:
     type: "ami"
     tags:
       Name: "ct-compute"
-      Version: "0.9.4"
+      Version: "0.10.1"
   KeyName: "ct-compute-0"
   VpcId: 
     type: "vpc"

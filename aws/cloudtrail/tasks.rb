@@ -51,8 +51,8 @@ namespace :cloudtrail do
   end
 
   desc 'snap'
-  task :snap do |t,args|
-    cache = DevOps::Cache.new()
+  task :snap, :current_version, :new_version do |t,args|
+    # cache = DevOps::Cache.new()
     creds = Aws::SharedCredentials.new()
     ec2_client = Aws::EC2::Client.new(region: 'us-east-1', credentials: creds)
 
@@ -69,73 +69,97 @@ namespace :cloudtrail do
     ## create AMI snap
     ## delete stack
 
-    version = '0.9.4'
-    #instance_id = 'i-00e02cf8836ed1aa9'
+    # current_version = '0.9.5'
+    # new_version = '0.9.6'
 
-    ## Create image
-    if(false)
-		resp = ec2_client.create_image({
-  		name: "ct-compute-%s" % version, 
-  		dry_run: false,
-  		no_reboot: false,
-  		instance_id: instance_id,
-  		block_device_mappings: [{
-      	virtual_name: "root",
-      	device_name: "/dev/xvda",
-      	ebs: {
-        	encrypted: false,
-        	volume_size: 8,
-        	volume_type: "gp2", 
-        	delete_on_termination: false
-      	}
-      },{
-      	virtual_name: "mongodb",
-      	device_name: "/dev/sdb",
-      	ebs: {
-        	iops: 1000,
-        	encrypted: true,
-        	volume_size: 100,
-        	volume_type: "io1", 
-        	delete_on_termination: false
-      	}
-    	},{
-      	virtual_name: "data",
-      	device_name: "/dev/sdc",
-      	ebs: {
-        	iops: 1000,
-        	encrypted: true,
-        	volume_size: 100,
-        	volume_type: "io1", 
-        	delete_on_termination: false
-      	}
-      }],
-		})
-    sleep 1
+    current_version = args[:current_version]
+    new_version = args[:new_version]
+
+    filters = [{
+      name: 'tag:aws:cloudformation:logical-id',
+      values: ['CTCompute']
+    },{
+      name: 'tag:Version',
+      values: [current_version.gsub(/\./, '-')]
+    }]
+    res = ec2_client.describe_instances(filters: filters)
+    instance = res.reservations[0].instances[0]
+    instance_id = instance.instance_id
+
+    image_filters = [{
+      name: 'tag:Name',
+      values: ['ct-compute']
+    },{
+      name: 'tag:Version',
+      values: [new_version]
+    }]
+    res_images = ec2_client.describe_images(filters: image_filters)
+    #pp res_images.images
+
+    if res_images.images.empty?
+      ## Create image
+		  resp = ec2_client.create_image({
+  		  name: "ct-compute-%s" % new_version,
+  		  dry_run: false,
+  		  no_reboot: false,
+  		  instance_id: instance_id,
+  		  block_device_mappings: [{
+      	  virtual_name: "root",
+      	  device_name: "/dev/xvda",
+      	  ebs: {
+        	  encrypted: false,
+        	  volume_size: 8,
+        	  volume_type: "gp2",
+        	  delete_on_termination: true
+      	  }
+        },{
+      	  virtual_name: "mongodb",
+      	  device_name: "/dev/sdb",
+      	  ebs: {
+        	  iops: 1000,
+        	  encrypted: true,
+        	  volume_size: 100,
+        	  volume_type: "io1",
+        	  delete_on_termination: true
+      	  }
+    	  },{
+      	  virtual_name: "data",
+      	  device_name: "/dev/sdf",
+      	  ebs: {
+        	  iops: 1000,
+        	  encrypted: true,
+        	  volume_size: 100,
+        	  volume_type: "io1",
+        	  delete_on_termination: true
+      	  }
+        }],
+		  })
+      sleep 1
+      ami_id = resp.image_id
+    else
+      ami_id = res_images.images[0].image_id
     end
-		#pp resp
-
-    #ami_id = resp.image_id
-    ami_id = 'ami-d33b1ec5'
 
     ## Tag image
     i = Aws::EC2::Image.new(ami_id)
 
-    if(true)
-    sleep 1
     i.create_tags({
       tags: [{
         key: "Name",
         value: "ct-compute"
       },{
         key: "Version",
-        value: version
+        value: new_version
       }]
     })
-    end
+    Log.debug('Created tags for image')
+
+    Log.info('Waiting for snapshots')
+    sleep 5
 
     ## Tag the blocks.
-    if(true)
     i.block_device_mappings.each do |block|
+      next if block.ebs.snapshot_id.nil?
       snap = Aws::EC2::Snapshot.new(block.ebs.snapshot_id)
       snap.create_tags({
         tags: [{
@@ -143,13 +167,12 @@ namespace :cloudtrail do
           value: "ct-compute"
         },{
           key: "Version",
-          value: version
+          value: new_version
         }]
       })
     end
-    end
+    Log.debug('Tagged block devices')
 
-    #pp i.block_device_mappings
     Log.debug("State: %s" % i.state)
   end
 
@@ -301,23 +324,53 @@ namespace :cloudtrail do
     end
   end
 
+  desc "Find asg"
+  task :find_asg, :asg_name do |t,args|
+    queries = {}
+
+    hostname = 'localhost'
+    db = CloudTrailDB.new(hostname)
+
+    Log.debug("ASGName: %s" % args[:asg_name])
+
+    queries['mod_asg'] = {
+        "awsRegion" => "us-west-2",
+        "eventName" => "UpdateAutoScalingGroup",
+        #"eventName" => "DeleteLoadBalancerListeners",
+        "requestParameters.autoScalingGroupName" => args[:asg_name]
+    }
+
+    pp queries
+
+    queries.each do |coll_name, query|
+      aggregate = db.conn[:records].aggregate([
+        {"$match" => query},
+        {"$out": coll_name.to_s}
+      ])
+      aggregate.count()
+    end
+  end
+
   desc "Find elb"
   task :find_elb, :elb_name do |t,args|
-    ts_start = Time.new.to_f()
     queries = {}
+
+    hostname = 'localhost'
+    db = CloudTrailDB.new(hostname)
+
     Log.debug("ELBName: %s" % args[:elb_name])
 
     queries['mod_elb'] = {
       "awsRegion" => "us-west-2",
-      #"eventName" => "ModifyLoadBalancerAttributes",
-      "eventName" => "DeleteLoadBalancerListeners",
+      "eventName" => "ModifyLoadBalancerAttributes",
+      #"eventName" => "DeleteLoadBalancerListeners",
       "requestParameters.loadBalancerName" => args[:elb_name]
     }
 
     pp queries
 
     queries.each do |coll_name, query|
-      aggregate = DB[:records].aggregate([
+      aggregate = db.conn[:records].aggregate([
         {"$match" => query},
         {"$out": coll_name.to_s}
       ])

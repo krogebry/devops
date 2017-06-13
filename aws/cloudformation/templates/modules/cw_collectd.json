@@ -5,22 +5,118 @@
      "cw_collectd": {
        "packages": {
          "yum": {
-           "collectd": []
+           "collectd": [],
+           "collectd-python": []
          }
        },
+
+			 "services": {
+				"sysvinit": {
+        	"cfn-hup": {
+            "files": [
+            	"/etc/cfn/cfn-hup.conf",
+              "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+            ],
+          	"enabled": "true",
+            "ensureRunning": "true"
+       		}
+      	}
+			 },
+
        "files": {
-         "/usr/local/collectd-setup.py": {
-           "mode": "000700",
+         //"/usr/local/collectd-setup.py": {
+           //"mode": "000700",
+           //"owner": "root",
+           //"group": "root",
+           //"source": "https://raw.githubusercontent.com/awslabs/collectd-cloudwatch/master/src/setup.py"
+         //}
+
+         "/etc/collectd.conf": {
+           "mode": "000644",
            "owner": "root",
            "group": "root",
-           "source": "https://raw.githubusercontent.com/awslabs/collectd-cloudwatch/master/src/setup.py"
+           "content": { "Fn::Join": ["\n", [
+						"WriteQueueLimitHigh 1000000",
+						"WriteQueueLimitLow   800000",
+
+						"FQDNLookup   false",
+
+						"LoadPlugin logfile",
+						"LoadPlugin cpu",
+						"LoadPlugin df",
+						"LoadPlugin memory",
+						"LoadPlugin swap",
+
+						"<Plugin logfile>",
+							"LogLevel info",
+							"File \"/var/log/collectd.log\"",
+							"Timestamp true",
+							"PrintSeverity true",
+						"</Plugin>",
+
+						"<Plugin cpu>",
+  						"ReportByCpu false",
+  						"ReportByState false",
+  						"ValuesPercentage true",
+						"</Plugin>",
+
+						"<Plugin df>",
+							"ReportByDevice false",
+							"ReportInodes false",
+							"ValuesAbsolute false",
+							"ValuesPercentage true",
+						"</Plugin>",
+
+						"<Plugin memory>",
+							"ValuesAbsolute false",
+							"ValuesPercentage true",
+						"</Plugin>",
+
+						"<Plugin swap>",
+							"ReportByDevice false",
+							"ReportBytes false",
+							"ValuesAbsolute false",
+							"ValuesPercentage true",
+						"</Plugin>",
+
+						"Include \"/etc/collectd-cloudwatch.conf\""
+           ]]}
+         },
+
+         "/opt/collectd-plugins/cloudwatch/config/whitelist.conf": {
+           "mode": "000644",
+           "owner": "root",
+           "group": "root",
+           "content": { "Fn::Join": ["\n", [
+						"df-.*-percent_bytes-used",
+						"memory--percent-used",
+						"swap--percent-used",
+						"cpu--percent-active"
+           ]]}
+         },
+
+         "/etc/collectd-cloudwatch.conf": {
+           "mode": "000644",
+           "owner": "root",
+           "group": "root",
+           "content": { "Fn::Join": ["\n", [
+            "LoadPlugin python",
+            "<Plugin python>",
+            " ModulePath \"/opt/collectd-plugins/\"",
+            " LogTraces true",
+            " Interactive false",
+            " Import \"cloudwatch_writer\"",
+            "</Plugin>"
+           ]]}
          }
-       },
-       "commands": {
-         "01_run_collect_setup.py": {
-           "command": "/usr/local/collectd-setup.py"
-         }
+
        }
+
+       //"commands": {
+         //"01_run_collect_setup.py": {
+           //"command": "(echo \"1\"; echo \"1\"; echo \"1\"; echo \"1\"; echo \"1\"; echo \"1\"; echo \"1\"; echo \"3\"; cat) | /usr/local/collectd-setup.py"
+         //}
+       //}
      }
    }
 }
