@@ -31,18 +31,18 @@ namespace :cloudtrail do
     file_list = Dir.glob(File.join(DATA_DIR, '**/*.gz'))
     Log.debug('Found %i files' % file_list.size)
 
-    all_compressed_files = []
-    db.conn[:compressed_files].find.each do |row|
-      Log.debug('pushed %s' % row[:filename])
-      all_compressed_files.push(row[:filename])
-    end
+    # all_compressed_files = []
+    # db.conn[:compressed_files].find.each do |row|
+    #   Log.debug('pushed %s' % row[:filename])
+    #   all_compressed_files.push(row[:filename])
+    # end
 
-    Log.debug('Pulled %i records from the db' % all_compressed_files.size)
+    # Log.debug('Pulled %i records from the db' % all_compressed_files.size)
 
     file_list.each do |filename|
-      #check = DB[:compressed_files].find({ :filename => filename })
-      #files.push(filename) if check.count() == 0
-      all_compressed_files.include?(filename) ? next : files.push(filename)
+      check = DB[:compressed_files].find({ :filename => filename })
+      files.push(filename) if check.count() == 0
+      # all_compressed_files.include?(filename) ? next : files.push(filename)
     end
 
     num_files = files.size
