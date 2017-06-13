@@ -4,47 +4,51 @@ require 'zlib'
 require 'mongo'
 require 'resque'
 require 'resque/tasks'
-#require './cloudtrail/instance.rb'
 
-if(false)
-Mongo::Logger.logger.level = ::Logger::FATAL
-#local_ip = `curl http://169.254.169.254/2016-09-02/meta-data/local-ipv4/`.chomp
-#local_ip = '172.30.3.126'
-local_ip = 'localhost'
-DB = Mongo::Client.new("mongodb://%s:27017" % local_ip, database: "cloudtrail")
-DB[:compressed_files].indexes.create_one({ filename: 1 }, { unique: true })
-DB[:records].indexes.create_one({ requestID: 1, eventID: 1 }, { unique: true })
-DB[:records].indexes.create_one({ eventTime: 1 })
-DB[:records].indexes.create_one({ eventName: 1 })
-DB[:records].indexes.create_one({ awsRegion: 1 })
-#Resque.redis = '%s:6379' % local_ip
-end
+require './cloudtrail/instance.rb'
+require './cloudtrail/compressed_file.rb'
+require './cloudtrail/db.rb'
+require './cloudtrail/redis.rb'
 
-class CTCompressedFile
-  @queue = :files
+DATA_DIR = File.join('/', 'mnt', 'data')
 
-  def self.perform(filename)
-    #Log.debug('Processing: %s' % filename)
-    gz_reader = Zlib::GzipReader.new(File.open(filename))
-    json = JSON::parse(gz_reader.read())
-    json['Records'].each do |record|
-      begin
-        DB[:records].insert_one(record)
-
-      rescue BSON::String::IllegalKey => e
-        puts "IllegalKey: %s" % e
-
-      rescue Mongo::Error::OperationFailure => e
-        puts 'OperationFailure: %s' % e
-
-      end
-    end
-    #Log.debug('Processed %i records' % json['Records'].size)
-    DB[:compressed_files].insert_one({ :filename => filename })
-  end
+if ENV['REDIS_HOSTNAME']
+  Resque.redis = '%s:6379' % ENV['REDIS_HOSTNAME']
 end
 
 namespace :cloudtrail do
+
+  desc 'Slurp some files'
+  task :slurp, :hostname do |t,args|
+    files = []
+
+    hostname = args[:hostname].nil? ? 'localhost' : args[:hostname]
+
+    db = CloudTrailDB.new(hostname)
+    CloudTrailRedis.new(hostname)
+
+    Log.debug('Gathering files from: %s' % DATA_DIR)
+    file_list = Dir.glob(File.join(DATA_DIR, '**/*.gz'))
+    Log.debug('Found %i files' % file_list.size)
+
+    all_compressed_files = []
+    db.conn[:compressed_files].find.each do |row|
+      all_compressed_files.push(row[:filename])
+    end
+
+    file_list.each do |filename|
+      #check = DB[:compressed_files].find({ :filename => filename })
+      #files.push(filename) if check.count() == 0
+      all_compressed_files.include?(filename) ? next : files.push(filename)
+    end
+
+    num_files = files.size
+    Log.debug('Found %i files' % num_files)
+
+    files.each do |filename|
+      Resque.enqueue(CTCompressedFile, filename)
+    end
+  end
 
   desc 'snap'
   task :snap do |t,args|
@@ -65,8 +69,8 @@ namespace :cloudtrail do
     ## create AMI snap
     ## delete stack
 
-    version = '0.9.3'
-    instance_id = 'i-00e02cf8836ed1aa9'
+    version = '0.9.4'
+    #instance_id = 'i-00e02cf8836ed1aa9'
 
     ## Create image
     if(false)
@@ -88,7 +92,7 @@ namespace :cloudtrail do
       	virtual_name: "mongodb",
       	device_name: "/dev/sdb",
       	ebs: {
-        	iops: 5000,
+        	iops: 1000,
         	encrypted: true,
         	volume_size: 100,
         	volume_type: "io1", 
@@ -98,7 +102,7 @@ namespace :cloudtrail do
       	virtual_name: "data",
       	device_name: "/dev/sdc",
       	ebs: {
-        	iops: 5000,
+        	iops: 1000,
         	encrypted: true,
         	volume_size: 100,
         	volume_type: "io1", 
@@ -111,7 +115,7 @@ namespace :cloudtrail do
 		#pp resp
 
     #ami_id = resp.image_id
-    ami_id = 'ami-b4cc99a2'
+    ami_id = 'ami-d33b1ec5'
 
     ## Tag image
     i = Aws::EC2::Image.new(ami_id)
@@ -203,29 +207,7 @@ namespace :cloudtrail do
     #Log.debug('NumInstance: %s' % num_instances)
   end
 
-  desc 'Slurp some files'
-  task :slurp do |t,args|
-    root_dir = File.join('/', 'mnt', 'data')
-    files = []
-
-    Log.debug("Gathering files")
-    file_list = Dir.glob(File.join(root_dir, "**/*.gz"))
-    Log.debug('Found %i files' % file_list.size)
-
-    file_list.each do |filename|
-      check = DB[:compressed_files].find({ :filename => filename })
-      files.push(filename) if check.count() == 0
-    end
-
-    num_files = files.size
-    Log.debug('Found %i files' % num_files)
-
-    files.each do |filename|
-      Resque.enqueue(CTCompressedFile, filename)
-    end
-  end
-
-  desc "Find human interactions on the AWS UI console"
+  desc 'Find human interactions on the AWS UI console'
   task :find_human_console_interactions do
     #ts_start = Time.new.to_f()
 

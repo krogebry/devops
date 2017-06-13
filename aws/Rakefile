@@ -1,6 +1,3 @@
-## 
-# Rakefile
-##
 require 'pp'
 require 'logger'
 require 'aws-sdk'
@@ -18,39 +15,45 @@ require './cloudformation/tasks.rb'
 Log = DevOps::Logger.new(STDOUT)
 
 desc 'Update Bastion IP'
-task :update_bastion do |t,args|
+task :update_bastion do
   public_ip = Net::HTTP.get URI "https://api.ipify.org"
   #public_ip = "71.32.37.234"
   Log.debug(format('RemoteIP: %s', public_ip))
 
   @cache = DevOps::Cache.new
 
+  # filter = [{
+  #   name: 'tag:Role',
+  #   values: ['Bastion']
+  # }, {
+  #   name: 'tag:Version',
+  #   values: [ENV['INF_VERSION'].gsub( /\./, '-' )]
+  # }]
+
   filter = [{
-    name: 'tag:Role',
-    values: [ 'Bastion' ]
-  },{
-    name: 'tag:Version',
-    values: [ENV['INF_VERSION'].gsub( /\./, '-' )]
+    name: 'tag:Application',
+    values: ['CTCompute']
   }]
 
   creds = Aws::SharedCredentials.new()
-  ec2_client = Aws::EC2::Client.new(region: ENV['AWS_REGION'], credentials: creds)
+  ec2_client = Aws::EC2::Client.new(region: ENV['AWS_DEFAULT_REGION'], credentials: creds)
 
-  cache_key = format('security_groups_%s_%s_%s', ENV['AWS_REGION'], ENV['AWS_PROFILE'], ENV['INF_VERSION'])
+  cache_key = format('security_groups_%s_%s_%s', ENV['AWS_DEFAULT_REGION'],
+                     ENV['AWS_PROFILE'], ENV['INF_VERSION'])
   groups = @cache.cached_json( cache_key ) do
-    ec2_client.describe_security_groups({
+    ec2_client.describe_security_groups(
       filters: filter
-    }).data.to_h.to_json
+    ).data.to_h.to_json
   end
 
-  if(groups['security_groups'].size == 0)
+  if groups['security_groups'].empty?
     Log.fatal(format('Unable to find SG'))
     exit
   end
 
   sg = groups['security_groups'].first
 
-  ec2_client.authorize_security_group_ingress({
+  ec2_client.authorize_security_group_ingress(
     group_id: sg['group_id'],
     ip_permissions: [{
       ip_protocol: 'tcp',
@@ -60,7 +63,7 @@ task :update_bastion do |t,args|
         cidr_ip: format('%s/32', public_ip)
       }]
     }]
-  })
+  )
 
   #groups['security_groups'][0]['ip_permissions'].each do |perm|
     #if perm['from_port'] == 22 

@@ -1,0 +1,14 @@
+FROM ruby:2.4
+
+WORKDIR /opt/aws/
+
+COPY ./aws/ /opt/aws/
+COPY ./libs /opt/libs
+#COPY ./aws/Rakefile /opt/aws/Rakefile
+
+RUN cd /opt/aws/cloudtrail && bundle install
+
+ENV "COUNT=50"
+ENV "QUEUE=files"
+
+ENTRYPOINT [ "rake", "resque:workers" ]

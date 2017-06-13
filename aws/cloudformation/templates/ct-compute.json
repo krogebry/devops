@@ -56,7 +56,6 @@
         "AWS::CloudFormation::Init": {
           "configSets": {
             "base_install": [
-              "cfn",
               "cw_logs",
               "cw_collectd"
             ]

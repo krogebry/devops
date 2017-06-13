@@ -1,4 +1,7 @@
-
+# This is intented to act as a rating system for EC2 instnaces.
+#   The idea being that certain criteria determine the "danger" of an
+#   and instance based on age and other factors.
+# This would be similar to trusted advisor.
 
 class EC2Instance
   @data
