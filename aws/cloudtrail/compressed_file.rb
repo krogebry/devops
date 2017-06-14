@@ -1,10 +1,10 @@
 class CTCompressedFile
   @queue = :files
 
-  def self.perform(filename)
+  def self.perform(filename, hostname)
     gz_reader = Zlib::GzipReader.new(File.open(filename))
     json = JSON::parse(gz_reader.read())
-    db = CloudTrailDB.new('localhost')
+    db = CloudTrailDB.new(hostname)
     json['Records'].each do |record|
       begin
         db.conn[:records].insert_one(record)

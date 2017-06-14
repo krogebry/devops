@@ -49,7 +49,7 @@ namespace :cloudtrail do
     Log.debug('Found %i files' % num_files)
 
     files.each do |filename|
-      Resque.enqueue(CTCompressedFile, filename)
+      Resque.enqueue(CTCompressedFile, filename, hostname)
     end
   end
 
@@ -85,6 +85,7 @@ namespace :cloudtrail do
       name: 'tag:Version',
       values: [current_version.gsub(/\./, '-')]
     }]
+    pp filters
     res = ec2_client.describe_instances(filters: filters)
     instance = res.reservations[0].instances[0]
     instance_id = instance.instance_id
