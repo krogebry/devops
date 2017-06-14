@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="ac352220-3efc-40b0-bca8-efeda13d8644" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/aws/cloudtrail/tasks.rb" afterPath="$PROJECT_DIR$/aws/cloudtrail/tasks.rb" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/aws/cloudtrail/compressed_file.rb" afterPath="$PROJECT_DIR$/aws/cloudtrail/compressed_file.rb" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -28,11 +29,21 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="tasks.rb" pinned="false" current-in-tab="true">
+      <file leaf-file-name="tasks.rb" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/aws/cloudtrail/tasks.rb">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="462">
-              <caret line="41" column="17" lean-forward="false" selection-start-line="41" selection-start-column="17" selection-end-line="41" selection-end-column="17" />
+            <state relative-caret-position="162">
+              <caret line="21" column="10" lean-forward="false" selection-start-line="21" selection-start-column="10" selection-end-line="21" selection-end-column="10" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="compressed_file.rb" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/aws/cloudtrail/compressed_file.rb">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="210">
+              <caret line="14" column="21" lean-forward="true" selection-start-line="14" selection-start-column="21" selection-end-line="14" selection-end-column="21" />
               <folding />
             </state>
           </provider>
@@ -83,16 +94,6 @@
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="0">
               <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="compressed_file.rb" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/aws/cloudtrail/compressed_file.rb">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="300">
-              <caret line="20" column="3" lean-forward="false" selection-start-line="20" selection-start-column="3" selection-end-line="20" selection-end-column="3" />
               <folding />
             </state>
           </provider>
@@ -168,7 +169,6 @@
         <option value="$PROJECT_DIR$/aws/cloudformation/params.rb" />
         <option value="$PROJECT_DIR$/aws/cloudformation/tasks.rb" />
         <option value="$PROJECT_DIR$/ct_api/api.rb" />
-        <option value="$PROJECT_DIR$/aws/cloudtrail/compressed_file.rb" />
         <option value="$PROJECT_DIR$/aws/cloudtrail/instance.rb" />
         <option value="$PROJECT_DIR$/aws/cloudtrail/redis.rb" />
         <option value="$PROJECT_DIR$/aws/cloudtrail/db.rb" />
@@ -187,6 +187,7 @@
         <option value="$PROJECT_DIR$/aws/cloudformation/templates/modules/cw_logs.json" />
         <option value="$PROJECT_DIR$/aws/Rakefile" />
         <option value="$PROJECT_DIR$/aws/cloudtrail/tasks.rb" />
+        <option value="$PROJECT_DIR$/aws/cloudtrail/compressed_file.rb" />
       </list>
     </option>
   </component>
@@ -465,12 +466,12 @@
       <workItem from="1496756549859" duration="48000" />
       <workItem from="1496756641456" duration="7992000" />
       <workItem from="1497299540729" duration="1186000" />
-      <workItem from="1497323593776" duration="16857000" />
+      <workItem from="1497323593776" duration="18181000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="67611000" />
+    <option name="totallyTimeSpent" value="68935000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="6" />
@@ -848,14 +849,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/aws/cloudtrail/compressed_file.rb">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="20" column="3" lean-forward="false" selection-start-line="20" selection-start-column="3" selection-end-line="20" selection-end-column="3" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/dc-ct-compute.yml">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="480">
@@ -874,8 +867,16 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/aws/cloudtrail/tasks.rb">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="462">
-          <caret line="41" column="17" lean-forward="false" selection-start-line="41" selection-start-column="17" selection-end-line="41" selection-end-column="17" />
+        <state relative-caret-position="162">
+          <caret line="21" column="10" lean-forward="false" selection-start-line="21" selection-start-column="10" selection-end-line="21" selection-end-column="10" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/aws/cloudtrail/compressed_file.rb">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="210">
+          <caret line="14" column="21" lean-forward="true" selection-start-line="14" selection-start-column="21" selection-end-line="14" selection-end-column="21" />
           <folding />
         </state>
       </provider>

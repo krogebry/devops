@@ -4,9 +4,10 @@ class CTCompressedFile
   def self.perform(filename)
     gz_reader = Zlib::GzipReader.new(File.open(filename))
     json = JSON::parse(gz_reader.read())
+    db = CloudTrailDB.new('localhost')
     json['Records'].each do |record|
       begin
-        DB[:records].insert_one(record)
+        db.conn[:records].insert_one(record)
 
       rescue BSON::String::IllegalKey => e
         puts "IllegalKey: %s" % e
@@ -16,6 +17,6 @@ class CTCompressedFile
 
       end
     end
-    DB[:compressed_files].insert_one({ :filename => filename })
+    db.conn[:compressed_files].insert_one({ :filename => filename })
   end
 end
