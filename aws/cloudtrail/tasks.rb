@@ -78,15 +78,7 @@ namespace :cloudtrail do
     current_version = args[:current_version]
     new_version = args[:new_version]
 
-    filters = [{
-      name: 'tag:aws:cloudformation:logical-id',
-      values: ['CTCompute']
-    },{
-      name: 'tag:Version',
-      values: [current_version.gsub(/\./, '-')]
-    }]
-    pp filters
-    res = ec2_client.describe_instances(filters: filters)
+    endhighlight
     instance = res.reservations[0].instances[0]
     instance_id = instance.instance_id
 

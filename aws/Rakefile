@@ -34,6 +34,7 @@ task :update_bastion do
     name: 'tag:Application',
     values: ['CTCompute']
   }]
+  Log.debug(filter)
 
   creds = Aws::SharedCredentials.new()
   ec2_client = Aws::EC2::Client.new(region: ENV['AWS_DEFAULT_REGION'], credentials: creds)
