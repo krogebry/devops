@@ -30,6 +30,6 @@ There are many small things that we devops engineers do on a daily basis that mi
 seem like dark magic to developers, or even some of the older generation operational
 engineers.
 
-This project is broken down in a serious of articles and sample code describing a particular topic.
+This project is broken down in a series of articles and sample code describing a particular topic.
 
 Learn at your own pace, participate and play!
