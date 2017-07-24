@@ -17,7 +17,7 @@ title: Krogebry - DevOps
 email: bryan.kroger@gmail.com
 description: > 
   Exploring the DevOps/SRE space.
-baseurl: "" # the subpath of your site, e.g. /blog
+baseurl: "/devops" # the subpath of your site, e.g. /blog
 url: "" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: krogebry
 github_username:  krogebry
