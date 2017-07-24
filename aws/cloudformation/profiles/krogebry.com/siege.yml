@@ -28,7 +28,7 @@ params:
     tags:
       Name: "main"
   InstanceType: "t2.small"
-  SiegeURL: "http://dev-int.nmgcloudapps.com/"
+  SiegeURL: "http://site.krogebry.com/"
   ImageId: 
     type: "ami"
     tags:
