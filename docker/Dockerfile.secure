@@ -1,0 +1,5 @@
+FROM infrastructureascode/aws-cli
+
+CMD ["./in_s3_env", "api.rb"]
+
+

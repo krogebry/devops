@@ -1,0 +1,50 @@
+---
+name: "DocCluster"
+owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+template: "ecs"
+description: "Doc cluster page."
+modules:
+  - "base"
+  - "vpc"
+  # - "chef-client"
+  # - "cw_logs"
+  # - "cw_collectd"
+  # - "iam_kms_client"
+params:
+  #InfStackVersion: "ENV:INF_VERSION"
+  #ChefEnvName: "management"
+  #ChefServerURL:
+    #type: "elb_dns"
+    #tags:
+      #Role: "Internal"
+      #Version: "ENV:CHEF_VERSION"
+  #S3BucketName:
+    #type: "s3_bucket"
+    #tags:
+      #Name: "dev-central"
+      #Version: "ENV:INF_VERSION"
+  #MgtCidr: "54.147.185.114/32"
+  MgtCidr: 
+    type: "vpc_cidr"
+    tags:
+      Name: "doc-main"
+  #ImageId: 
+    #type: "ami"
+    #tags:
+      #Name: "devops"
+      #Version: "0.1.1"
+  KeyName: "krogebry-0"
+  VpcId: 
+    type: "vpc"
+    tags:
+      Name: "doc-main"
+  Zones:
+    type: "zones"
+    tags:
+      - Name: "Public subnet"
+      - Name: "Private subnet"
+  Subnets:
+    type: "subnets"
+    tags:
+      - Name: "Public subnet"
+      - Name: "Private subnet"
