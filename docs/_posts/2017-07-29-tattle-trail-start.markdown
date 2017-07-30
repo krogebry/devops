@@ -5,6 +5,8 @@ date:   2017-07-29 12:28:48 -0700
 categories: cloudtrail
 ---
 
+https://github.com/krogebry/tattletrail
+
 <p>
 Kicking off this project with a basic DSL in ruby which allows me to create a few rules.  I then evaluate these rules and create basic output that confirms I'm on the right path.
 </p>
