@@ -27,24 +27,24 @@ params:
   MgtCidr: 
     type: "vpc_cidr"
     tags:
-      Name: "doc-main"
+      Name: "main"
   #ImageId: 
     #type: "ami"
     #tags:
       #Name: "devops"
       #Version: "0.1.1"
-  KeyName: "krogebry-0"
+  KeyName: "devops-1"
   VpcId: 
     type: "vpc"
     tags:
-      Name: "doc-main"
+      Name: "main"
   Zones:
     type: "zones"
     tags:
-      - Name: "Public subnet"
-      - Name: "Private subnet"
+      - Name: "public"
+      - Name: "private"
   Subnets:
     type: "subnets"
     tags:
-      - Name: "Public subnet"
-      - Name: "Private subnet"
+      - Name: "public"
+      - Name: "private"

@@ -20,7 +20,7 @@
     "InstanceType": {
       "Description": "The EC2 instance type",
       "Type": "String",
-      "Default": "m4.large",
+      "Default": "t2.micro",
       "ConstraintDescription": "You can specify only t2.mirco."
     }
   },
@@ -43,8 +43,8 @@
       "Properties": {
         "ContainerDefinitions": [{
           "Cpu": "10",
-          "Name": "wt-api",
-          "Image": "krogebry-wt/wt-api:latest",
+          "Name": "redis",
+          "Image": "redis:latest",
           "Memory": 300,
           "Essential": "true",
           "LogConfiguration": {
@@ -55,19 +55,11 @@
               "awslogs-stream-prefix": "awslogs-example"
             }
           },
-          "MountPoints": [{
-            "ContainerPath": "/usr/local/apache2/htdocs",
-            "SourceVolume": "my-vol"
-          }],
           "PortMappings": [{
-            "HostPort": 80,
+            "HostPort": 0,
             "ContainerPort": 8080
           }]
 
-        }],
-
-        "Volumes": [{
-          "Name": "my-vol"
         }]
       }
     },
@@ -109,7 +101,7 @@
       "Type" : "AWS::ElasticLoadBalancingV2::TargetGroup",
       "Properties" : {
         "Name": { "Ref": "AWS::StackName" },
-        "Port": 80,
+        "Port": 8090,
         "VpcId": {"Ref" : "VpcId"},
         "Matcher" : { "HttpCode" : "200" },
         "Protocol": "HTTP",
@@ -117,10 +109,6 @@
         "HealthCheckTimeoutSeconds": 10,
         "HealthCheckIntervalSeconds": 30,
         "HealthyThresholdCount": 4,
-        //"TargetGroupAttributes": [{
-          //"Key": "deregistration_delay.timeout_seconds",
-          //"Value": "20"
-        //}],
         "UnhealthyThresholdCount": 3,
         "Tags" : [{ 
 					"Key" : "StackName", 
@@ -225,7 +213,7 @@
       }
     },
 
-"ECSServiceRole":{
+    "ECSServiceRole":{
       "Type":"AWS::IAM::Role",
       "Properties":{
         "AssumeRolePolicyDocument":{
@@ -268,8 +256,7 @@
           }
         ]
       }
-	},
-
+	  },
 
     "EC2SServiceRole": {
       "Type": "AWS::IAM::Role",
@@ -362,16 +349,11 @@
         "VpcId": { "Ref": "VpcId" },
         "GroupDescription": "Allows public access by HTTP",
         "SecurityGroupIngress": [{
-          "CidrIp": "0.0.0.0/0",
-          "FromPort": 80,
+          "CidrIp": "172.0.0.0/8",
           "ToPort": 80,
+          "FromPort": 80,
           "IpProtocol": "tcp"
 			  },{
-          "CidrIp": "0.0.0.0/0",
-					"FromPort":"31000",
-					"ToPort":"61000",
-          "IpProtocol": "tcp"
-        },{
           "CidrIp": "172.0.0.0/8",
           "FromPort": 22,
           "ToPort": 22,
@@ -387,19 +369,12 @@
         "Cluster": { "Ref": "ECSCluster" },
         "DesiredCount": "1",
         "LoadBalancers": [{
-          "ContainerName": "wt-api",
+          "ContainerName": "redis",
           "ContainerPort": "8080",
-          "LoadBalancerName": { "Ref": "EcsElasticLoadBalancer" }
-          //"LoadBalancerName": { "Ref": "EcsALB" }
-          //"LoadBalancerName": { "Fn::GetAtt": [ "EcsALB", "LoadBalancerName" ]}
-          //"TargetGroupArn" : { "Fn::GetAtt" : [ "EcsALB", "LoadBalancerTargetGroupArn" ]}
-          //"TargetGroupArn" : { "Ref": "EcsALB" }
+          "TargetGroupArn" : { "Ref": "EcsTargetGroup" }
         }],
         "Role": { "Ref": "ECSServiceRole" },
-        //"Role": "krogebry-test",
-        //"Role": { "Fn::GetAtt": [ "ECSServiceRole", "Arn" ]},
         "TaskDefinition": { "Ref": "taskdefinition" }
-        //"TaskDefinition": { "Fn::GetAtt": [ "taskdefinition",  }
       }
     }
 
