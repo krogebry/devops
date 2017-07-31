@@ -8,7 +8,7 @@ categories: cloudtrail
 <a href="https://github.com/krogebry/tattletrail">Code</a>
 
 <p>
-The idea witt the netdoc was to create a way to check a few important aspects regarding how a vpc and subsequent subnets+route tables are setup.
+The idea with the netdoc was to create a way to check a few important aspects regarding how a vpc and subsequent subnets+route tables are setup.
 </p>
 
 <h1>User story</h1>
@@ -35,20 +35,20 @@ The need for this netdoc comes about from the following story.  To set this up, 
 </ul>
 
 <p>
-That's 9 subnets.  And yes, this is very close to a legit, no bullshit, enterprise layout that people often try to employ.  A resonable person might suggest that you wouldn't need
+That's 9 subnets.  And yes, this is very close to a legit, no bullshit, enterprise layout that people often try to employ.  A reasonable person might suggest that you wouldn't need
 this many subnets if you understand the nature of security groups.  I agree, however, it is often the case that logic and reason fail to compare to the power of the emotional
-side which usually drives these decisions.  People often perfer to think they're safe, even if that means wildly over architecting things.
+side which usually drives these decisions.  People often prefer to think they're safe, even if that means wildly over designed things.
 </p>
 
 <p>
-It could aslo be argued that the over complexity of something like this leads to dangerous overtaxing of human based cognitive resources while we meat sacks attempt to debug
+It could also be argued that the over complexity of something like this leads to dangerous overtaxing of human based cognitive resources while we meat sacks attempt to debug
 problems.  I guess that's why I started doing these projects; it's easier to run a script to tell me if something is wrong with your Rube Goldberg network layout.
 </p>
 
 <blockquote>
 At one point we were working on a client which insisted that we automate everything.  And I do mean everything, from the key pair creation to the vpcs and everything else.
-That's an ambitous goal for something that wasn't even close to limping its way out of the dev space.  At any rate, as you could imagine, managing the level of complexity
-became an almost daily chore.  The people manging the system would often make changes to things in production to "just get things working" rather than submitting bugs
+That's an ambitious goal for something that wasn't even close to limping its way out of the dev space.  At any rate, as you could imagine, managing the level of complexity
+became an almost daily chore.  The people managing the system would often make changes to things in production to "just get things working" rather than submitting bugs
 and following the procedures.
 
 At one point we were troubleshooting a collection of problems with the dev account regarding traffic flow.  The problem that we faced most often was not being able to
