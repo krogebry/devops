@@ -131,7 +131,7 @@
           "wget https://packages.chef.io/stable/el/7/chef-server-core-12.10.0-1.el7.x86_64.rpm \n",
           "rpm -i chef-server-core-12.10.0-1.el7.x86_64.rpm \n",
           "chef-server-ctl reconfigure \n",
-          "chef-server-ctl user-create bkroger Bryan Kroger bkroger@thoughtworks.com '",{ "Ref": "Password" },"' --filename /etc/chef/bkroger.pem \n",
+          "chef-server-ctl user-create bkroger Bryan Kroger bryan.kroger@gmail.com '",{ "Ref": "Password" },"' --filename /etc/chef/bkroger.pem \n",
           "chef-server-ctl org-create devops 'DevOps Central' --association_user bkroger --filename /etc/chef/devops-validator.pem \n",
 
           "pip install --upgrade awscli \n",

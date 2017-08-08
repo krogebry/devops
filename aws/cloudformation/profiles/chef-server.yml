@@ -1,6 +1,6 @@
 ---
 name: "ChefServer"
-owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
 #region: "us-east-1"
 template: "chef-server"
 description: "ChefServer service."

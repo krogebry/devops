@@ -1,6 +1,6 @@
 ---
 name: "CTCompute"
-owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
 template: "siege"
 description: "CTCompute Service."
 modules:

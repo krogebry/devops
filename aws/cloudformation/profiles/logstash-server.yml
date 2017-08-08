@@ -1,6 +1,6 @@
 ---
 name: "Logstash Server"
-owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
 template: "logstash-server"
 description: "Logstash server service."
 params:

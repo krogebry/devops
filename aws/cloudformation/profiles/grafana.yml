@@ -1,6 +1,6 @@
 ---
 name: "Grafana"
-owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
 template: "grafana"
 description: "Grafana service."
 params:

@@ -1,0 +1,38 @@
+---
+name: "ent_network"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
+template: "network"
+description: "Enterprise networking in AWS."
+params:
+  Vpc:
+    cidr: 172.0.0.0/16
+    tags:
+      Name: "ent-net"
+  Subnets:
+    - name: 'public load balancers'
+      size: 'large'
+      public: true
+    - name: 'public api routing'
+      size: 'medium'
+    - name: 'application'
+      size: 'large'
+    - name: 'database'
+      size: 'small'
+    - name: 'cache'
+      size: 'small'
+    - name: 'bastion'
+      size: 'small'
+    - name: 'security'
+      size: 'medium'
+  NetworkRules:
+    - name: 'public lb to public api routing'
+      src_subnet: 'public load balancers'
+      dst_subnet: 'public api routing'
+      allow:
+        - 80
+    - name: 'public api routing to application'
+      src_subnet: 'public api routing'
+      dst_subnet: 'application'
+      allow:
+        - 80
+

@@ -1,0 +1,36 @@
+---
+name: "WorkoutTracker"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
+template: "ecs"
+description: "Simple workout tracker application using ECS."
+modules:
+  - "base"
+  - "vpc"
+params:
+  MgtCidr: 
+    type: "vpc_cidr"
+    tags:
+      Name: "main"
+  #ImageId: 
+    #type: "ami"
+    #tags:
+      #Name: "devops"
+      #Version: "0.1.1"
+  KeyName: "devops-1"
+  DockerImageName:
+    type: "docker_image_name"
+    image_name: "workout-tracker"
+  VpcId: 
+    type: "vpc"
+    tags:
+      Name: "main"
+  Zones:
+    type: "zones"
+    tags:
+      - Name: "public"
+      - Name: "private"
+  Subnets:
+    type: "subnets"
+    tags:
+      - Name: "public"
+      - Name: "private"

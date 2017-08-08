@@ -1,6 +1,6 @@
 ---
 name: "Infrastructure"
-owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
 modules:
   - "base"
   - "vpc"

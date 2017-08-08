@@ -1,6 +1,6 @@
 ---
 name: "Global stuff"
-owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
 region: "us-east-1"
 description: "Global variables."
 params:

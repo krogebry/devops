@@ -1,6 +1,6 @@
 ---
 name: "GoCD Agents"
-owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
 template: "gocd-agents"
 description: "GoCD agents service."
 params:

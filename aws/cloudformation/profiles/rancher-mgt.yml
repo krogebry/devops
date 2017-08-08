@@ -1,6 +1,6 @@
 ---
 name: "Rancher Management"
-owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
 template: "rancher-mgt"
 description: "Rancher management service."
 params:

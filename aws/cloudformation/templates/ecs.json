@@ -17,12 +17,18 @@
       "Description": "Minimum number of instances that can be launched in your ECS cluster."
     },
 
+    "DockerImageName": {
+      "Description": "Full URI of the docker image container",
+      "Type": "String"
+    },
+
     "InstanceType": {
       "Description": "The EC2 instance type",
       "Type": "String",
       "Default": "t2.micro",
       "ConstraintDescription": "You can specify only t2.mirco."
     }
+
   },
 
   "Mappings": {
@@ -43,8 +49,8 @@
       "Properties": {
         "ContainerDefinitions": [{
           "Cpu": "10",
-          "Name": "redis",
-          "Image": "redis:latest",
+          "Name": "workout-tracker",
+          "Image": { "Ref": "DockerImageName" },
           "Memory": 300,
           "Essential": "true",
           "LogConfiguration": {
@@ -64,27 +70,6 @@
       }
     },
 
-    "EcsElasticLoadBalancer": {
-      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
-      "Properties": {
-        "Subnets": { "Ref": "Subnets" },
-        "CrossZone": "true",
-        "Listeners": [{
-          "Protocol": "HTTP",
-          "InstancePort": "80",
-          "LoadBalancerPort": "80"
-        }],
-        "HealthCheck": {
-          "Target": "HTTP:80/healthz",
-          "HealthyThreshold": "2",
-          "UnhealthyThreshold": "10",
-          "Interval": "30",
-          "Timeout": "5"
-        },
-        "SecurityGroups": [{ "Ref": "PublicHTTP" }]
-      }
-    },
-
     "EcsALB": {
       "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
       "Properties": {
@@ -101,11 +86,12 @@
       "Type" : "AWS::ElasticLoadBalancingV2::TargetGroup",
       "Properties" : {
         "Name": { "Ref": "AWS::StackName" },
-        "Port": 8090,
+        "Port": 8080,
         "VpcId": {"Ref" : "VpcId"},
         "Matcher" : { "HttpCode" : "200" },
         "Protocol": "HTTP",
         "HealthCheckProtocol": "HTTP",
+        "HealthCheckPath": "/healthz",
         "HealthCheckTimeoutSeconds": 10,
         "HealthCheckIntervalSeconds": 30,
         "HealthyThresholdCount": 4,
@@ -204,7 +190,7 @@
         "InstanceType": { "Ref": "InstanceType" },
         "IamInstanceProfile": { "Ref": "EC2InstanceProfile" },
         "KeyName": { "Ref": "KeyName" },
-        "SecurityGroups": [{ "Ref": "PublicHTTP" }],
+        "SecurityGroups": [{ "Ref": "PrivateInternal" }],
         "InstanceMonitoring": "false",
         "AssociatePublicIpAddress": "true",
         "UserData": {
@@ -217,84 +203,41 @@
       "Type":"AWS::IAM::Role",
       "Properties":{
         "AssumeRolePolicyDocument":{
-          "Statement":[
-            {
-							"Sid": "ecsallow",
-              "Effect":"Allow",
-              "Principal":{
-                "Service":[
-                  "ecs.amazonaws.com"
-                ]
-              },
-              "Action":[
-                "sts:AssumeRole"
-              ]
-            }
-          ]
-        },
-        "Path":"/",
-        "Policies":[
-          {
-            "PolicyName":"ecs-service",
-            "PolicyDocument":{
-              "Statement":[
-                {
-                  "Effect":"Allow",
-                  "Action":[
-                    "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-                    "elasticloadbalancing:DeregisterTargets",
-                    "elasticloadbalancing:Describe*",
-                    "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-                    "elasticloadbalancing:RegisterTargets",
-                    "ec2:Describe*",
-                    "ec2:AuthorizeSecurityGroupIngress"
-                  ],
-                  "Resource":"*"
-                }
-              ]
-            }
-          }
-        ]
-      }
-	  },
-
-    "EC2SServiceRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [{
-            "Effect": "Allow",
-            "Principal": {
-              "Service": [
-                "ecs.amazonaws.com",
-                "application-autoscaling.amazonaws.com",
-                "ec2.amazonaws.com"
-              ]
+          "Statement":[{
+					  "Sid": "ecsallow",
+            "Effect":"Allow",
+            "Principal":{
+              "Service":[ "ecs.amazonaws.com" ]
             },
-            "Action": [
-              "sts:AssumeRole"
-            ]
+            "Action":[ "sts:AssumeRole" ]
           }]
         },
-        "Path": "/",
-        "Policies": [{
-          "PolicyName": "ecs-service",
-          "PolicyDocument": {
-            "Statement": [{
-              "Effect": "Allow",
-              "Action": [
-                "*"
-                //"elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-                //"elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-                //"ec2:Describe*",
-                //"ec2:AuthorizeSecurityGroupIngress"
+        "Path":"/",
+        "Policies":[{
+          "PolicyName":"ecs-service",
+          "PolicyDocument":{
+            "Statement":[{
+              "Effect":"Allow",
+              "Action":[
+                "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                "ec2:Describe*",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "elasticloadbalancing:*",
+                "elasticloadbalancing:DeregisterTargets",
+                "elasticloadbalancing:Describe*",
+                "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:GetAuthorizationToken"
               ],
-              "Resource": "*"
+              "Resource":"*"
             }]
           }
         }]
       }
-    },
+	  },
 
     "EC2Role": {
       "Type": "AWS::IAM::Role",
@@ -303,9 +246,7 @@
           "Statement": [{
             "Effect": "Allow",
             "Principal": {
-              "Service": [
-                "ec2.amazonaws.com"
-              ]
+              "Service": [ "ec2.amazonaws.com" ]
             },
             "Action": [
               "sts:AssumeRole"
@@ -324,9 +265,27 @@
                 "ecs:Poll",
                 "ecs:RegisterContainerInstance",
                 "ecs:StartTelemetrySession",
+                "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                "ec2:Describe*",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "elasticloadbalancing:*",
+                "elasticloadbalancing:DeregisterTargets",
+                "elasticloadbalancing:Describe*",
+                "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:GetAuthorizationToken",
                 "ecs:Submit*",
                 "logs:CreateLogStream",
-                "logs:PutLogEvents"
+                "logs:PutLogEvents",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:GetAuthorizationToken",
+                "s3:Get*",
+                "s3:List*"
               ],
               "Resource": "*"
             }]
@@ -343,20 +302,34 @@
       }
     },
 
+    "PrivateInternal": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "VpcId": { "Ref": "VpcId" },
+        "GroupDescription": "Allows public access by HTTP",
+        "SecurityGroupIngress": [{
+          "CidrIp": "172.30.0.0/16",
+          "ToPort": "65535",
+          "FromPort": "0",
+          "IpProtocol": "tcp"
+			  },{
+          "CidrIp": "172.0.0.0/8",
+          "FromPort": "22",
+          "ToPort": "22",
+          "IpProtocol": "tcp"
+        }]
+      }
+    },
+
     "PublicHTTP": {
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
         "VpcId": { "Ref": "VpcId" },
         "GroupDescription": "Allows public access by HTTP",
         "SecurityGroupIngress": [{
-          "CidrIp": "172.0.0.0/8",
+          "CidrIp": "0.0.0.0/0",
           "ToPort": 80,
           "FromPort": 80,
-          "IpProtocol": "tcp"
-			  },{
-          "CidrIp": "172.0.0.0/8",
-          "FromPort": 22,
-          "ToPort": 22,
           "IpProtocol": "tcp"
         }]
       }
@@ -369,7 +342,7 @@
         "Cluster": { "Ref": "ECSCluster" },
         "DesiredCount": "1",
         "LoadBalancers": [{
-          "ContainerName": "redis",
+          "ContainerName": "workout-tracker",
           "ContainerPort": "8080",
           "TargetGroupArn" : { "Ref": "EcsTargetGroup" }
         }],

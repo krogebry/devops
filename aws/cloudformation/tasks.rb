@@ -3,6 +3,7 @@
 ##
 require 'yaml'
 require 'erubis'
+require 'netaddr'
 require 'deep_merge'
 require 'digest/sha1'
 require 'securerandom'
@@ -66,6 +67,67 @@ namespace :cf do
     File.open(format('%s/.chef/keys/bkroger-%s.pem', ENV['HOME'], chef_version), 'w') do |f|
       f.write r.body.read
     end
+  end
+
+  desc 'Launch networking rig'
+  task :launch_net, :profile_name, :stack_version, :stack_name do |t, args|
+    ## This is a special task which handles a complex network layout deployment.
+    profile_name = args[:profile_name]
+    region = ENV['AWS_DEFAULT_REGION'] || 'us-east-1'
+    stack_version = args[:stack_version]
+
+    ## Check to make sure the profile name exists.
+    fs_profile_file = File.join('cloudformation', 'profiles', format('%s.yml', profile_name))
+    Log.debug(format('FS(profile_file): %s', fs_profile_file))
+
+    unless File.exists? fs_profile_file
+      Log.fatal('Failed to find profile!')
+      exit
+    end
+
+    subnet_sizes = {
+      'large': 4,
+      'medium': 2,
+      'small': 1
+    }
+
+    yaml = YAML::load(File::read(fs_profile_file))
+
+    pp yaml
+
+    vpc = yaml['params']['Vpc']
+
+    net = NetAddr::CIDR.create(vpc['cidr'])
+    blocks = net.subnet(:Bits => 24)
+
+    cache = DevOps::Cache.new()
+    creds = Aws::SharedCredentials.new()
+    ec2_client = Aws::EC2::Client.new(region: region, credentials: creds)
+
+    # describe_availability_zones
+    #azs = ec2_client.describe_availability_zones()
+    #pp azs
+
+    #pp blocks
+    #pp NetAddr::merge([blocks[0], blocks[1]], :Objectify => false)
+    #sub1 = net.subnet(:Bits => 26, :NumSubnets => 1)
+    #sub2 = net.subnet(:Bits => 23, :NumSubnets => 1)
+
+    #pp sub1
+    #pp sub2
+
+    #blocks = net.subnet(:Bits => 24)
+    #pp net.fill_in([blocks[0], blocks[2]])
+    #pp 
+
+    yaml['params']['Subnets'].each do |subnet|
+      subnet['blocks'] = []
+
+    end
+
+    yaml['params']['NetworkRules'].each do |net_rule|
+    end
+
   end
 
   desc 'Launch a stack based on a profile PROFILE_NAME STACK_VERSION STACK_NAME'
@@ -150,26 +212,26 @@ namespace :cf do
       f.puts(stack_tpl.to_json)
     end
 
-    #pp stack_tpl
-    #exit
-
     params = []
     params.push({parameter_key: "StackVersion", parameter_value: stack_version.gsub(/\./, '-')})
-    #params.push({ parameter_key: "StackVersionName", parameter_value: stack_version })
 
     yaml['params'] ||= []
 
     yaml['params'].each do |k, v|
       val = if (v.class == Hash)
-              v['value']
-            else
-              v
-            end
+        v['value']
+      else
+        v
+      end
 
       params.push({
-                      parameter_key: k,
-                      parameter_value: val
-                  })
+        parameter_key: k,
+        parameter_value: val
+      })
+    end
+
+    File.open("/tmp/params.json", "w") do |f|
+      f.puts(params.to_json)
     end
 
     stack_name = format('%s-%s', (args[:stack_name] == nil ? yaml['name'] : args[:stack_name]), stack_version.gsub(/\./, '-'))
@@ -193,7 +255,7 @@ namespace :cf do
         capabilities: ["CAPABILITY_IAM"],
         tags: [
           key: 'Owner',
-          value: 'bkroger@thoughtworks.com'
+          value: 'bryan.kroger@gmail.com'
         ]
       )
 
@@ -202,22 +264,21 @@ namespace :cf do
 
       ## Stack does not exist, create it.
       cf_client.create_stack({
-                                 stack_name: stack_name,
-                                 template_body: stack_tpl.to_json,
-                                 parameters: params,
-                                 disable_rollback: true,
-                                 timeout_in_minutes: 30,
-                                 capabilities: ["CAPABILITY_IAM"],
-                                 tags: [{
-                                            key: 'Owner',
-                                            value: 'bkroger@thoughtworks.com'
-                                        }]
-                             })
+        stack_name: stack_name,
+        template_body: stack_tpl.to_json,
+        parameters: params,
+        disable_rollback: true,
+        timeout_in_minutes: 30,
+        capabilities: ["CAPABILITY_IAM"],
+        tags: [{
+          key: 'Owner',
+          value: 'bryan.kroger@gmail.com'
+        }]
+      })
 
     end
 
   end ## launch
+
 end
-
-
 

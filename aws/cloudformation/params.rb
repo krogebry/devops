@@ -159,6 +159,11 @@ class ParamsProc
     v
   end
 
+  def docker_image_name( v )
+    v['value'] = format('%s.dkr.ecr.%s.amazonaws.com/%s', ENV['AWS_ACCOUNT_ID'], ENV['AWS_DEFAULT_REGION'], v['image_name'])
+    v
+  end
+
   def password( v )
     v['value'] = SecureRandom.hex
     v

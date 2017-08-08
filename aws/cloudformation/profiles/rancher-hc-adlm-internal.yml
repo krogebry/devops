@@ -1,6 +1,6 @@
 ---
 name: "Rancher-HC-ADLM-Internal"
-owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
 template: "rancher-hc"
 description: "Rancher Host Capacity for ADLM Internal use."
 params:

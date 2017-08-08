@@ -1,6 +1,6 @@
 ---
 name: "ESCluster"
-owner: "Bryan Kroger (bkroger@thoughtworks.com)"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
 template: "es-cluster"
 description: "ESCluster service."
 params:
