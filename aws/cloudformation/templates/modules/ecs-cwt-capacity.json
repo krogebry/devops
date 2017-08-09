@@ -27,7 +27,7 @@
         "Period": "60", 
         "Dimensions": [ {
           "Name": "ClusterName",
-          "Value": { "Ref": "AWS::StackName" }
+          "Value": { "Ref": "ECSCluster" }
         }],
         "Namespace": "AWS/ECS",
         "Statistic": "Average",
@@ -46,7 +46,7 @@
         "Period": "60", 
         "Dimensions": [ {
           "Name": "ClusterName",
-          "Value": { "Ref": "AWS::StackName" }
+          "Value": { "Ref": "ECSCluster" }
         }],
         "Namespace": "AWS/ECS",
         "Statistic": "Average",
@@ -65,7 +65,7 @@
         "Period": "60", 
         "Dimensions": [ {
           "Name": "ClusterName",
-          "Value": { "Ref": "AWS::StackName" }
+          "Value": { "Ref": "ECSCluster" }
         }],
         "Namespace": "AWS/ECS",
         "Statistic": "Average",
@@ -84,7 +84,7 @@
         "Period": "60", 
         "Dimensions": [ {
           "Name": "ClusterName",
-          "Value": { "Ref": "AWS::StackName" }
+          "Value": { "Ref": "ECSCluster" }
         }],
         "Namespace": "AWS/ECS",
         "Statistic": "Average",

@@ -95,20 +95,18 @@ class ModulesProc
   def ecs_cwt_capacity( m_config )
     json = load_module('ecs-cwt-capacity')    
 
-    attach = m_config['params'].has_key?('attach') ? m_config['params']['attach'] : 'all'
-    Log.debug('attach: %s' % attach)
+    alarms = json['Resources'].select{|k,v| v['Type'] == 'AWS::CloudWatch::Alarm'}
+    policies = json['Resources'].select{|k,v| v['Type'] == 'AWS::AutoScaling::ScalingPolicy'}
 
-    if attach == 'all'
-      asgs = @stack_tpl['Resources'].select{|k,v| v['Type'] == "AWS::AutoScaling::AutoScalingGroup"}
-      asgs.each do |asg_name, asg_cfg|
-        new_json = deep_copy(json)
-        policies = new_json['Resources'].select{|k,v| v['Type'] == "AWS::AutoScaling::ScalingPolicy"}
-        policies.each do |policy_name, policy_config|
-          policy_config['Properties']['AutoScalingGroupName'] = { 'Ref' => asg_name }
-        end
-        @stack_tpl['Resources'] = @stack_tpl['Resources'].deep_merge(new_json['Resources'])
-      end
+    policies.each do |policy_name, policy_config|
+      policy_config['Properties']['AutoScalingGroupName'] = { 'Ref' => m_config['params']['asg_name'] }
     end
+
+    alarms.each do |alarm_name, alarm_config|
+      alarm_config['Properties']['Dimensions'][0]['Value'] = { 'Ref' => m_config['params']['ecs_cluster_name'] }
+    end
+
+    @stack_tpl['Resources'] = @stack_tpl['Resources'].deep_merge(json['Resources'])
   end
 
 end
