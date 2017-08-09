@@ -9,6 +9,7 @@ require 'digest/sha1'
 require 'securerandom'
 
 require './cloudformation/params.rb'
+require './cloudformation/modules.rb'
 
 namespace :cf do
 
@@ -147,10 +148,6 @@ namespace :cf do
 
     yaml = YAML::load(File::read(fs_profile_file))
 
-    if (yaml.has_key?('params'))
-      p = ParamsProc.new(yaml.merge({'region' => region}))
-      yaml['params'] = p.compile()
-    end
 
     ## Template
     fs_tpl_file = File.join('cloudformation', 'templates', format('%s.json', yaml['template']))
@@ -161,55 +158,19 @@ namespace :cf do
 
     stack_tpl = JSON::parse(File.read(fs_tpl_file))
 
-    ## Layer in the modules
-    if (yaml.has_key?('modules'))
-      yaml['modules'].each do |m|
-        fs_module_file = File.join('cloudformation', 'templates', 'modules', format('%s.json' % m))
-        next unless File.exists? fs_module_file
-        Log.debug(format('Loading module: %s', fs_module_file))
-        mod_json = JSON::parse(File.read(fs_module_file))
-
-        ## Merge params.
-        stack_tpl["Parameters"] = stack_tpl['Parameters'].deep_merge(mod_json['Parameters'])
-
-        ## Check for Resources.
-        if (mod_json.has_key?('Resources'))
-          stack_tpl['Resources'] = stack_tpl['Resources'].deep_merge(mod_json['Resources'])
-        end
-
-        ## Config sets
-        ## Find all LC stanzas
-        next unless mod_json.has_key?('ConfigSets')
-        lcs = stack_tpl['Resources'].select { |r_name, r_info| r_info["Type"] == "AWS::AutoScaling::LaunchConfiguration" }
-        lcs.each do |lc_name, lc_info|
-          stack_tpl['Resources'][lc_name]['Metadata']['AWS::CloudFormation::Init'].merge!(mod_json['ConfigSets'])
-
-          ## Check for user data
-          new_user_data = []
-          stack_tpl['Resources'][lc_name]['Properties']['UserData']['Fn::Base64']['Fn::Join'][1].each do |r|
-            if (r.class == Hash)
-              if (r.keys[0] == "DevOpsMod")
-                Log.debug(format('Injecting user data for mod'))
-                mod_json["UserData"].each do |udr|
-                  new_user_data.push(udr)
-                end
-              else
-                new_user_data.push(r)
-              end
-            else
-              new_user_data.push(r)
-            end
-
-          end
-          stack_tpl['Resources'][lc_name]['Properties']['UserData']['Fn::Base64']['Fn::Join'][1] = new_user_data
-
-        end
-
-      end
+    if yaml.has_key?('modules')
+      m = ModulesProc.new(yaml['modules'], stack_tpl)
+      stack_tpl = m.compile
     end
 
     File.open("/tmp/stack.json", "w") do |f|
       f.puts(stack_tpl.to_json)
+    end
+
+    ## Params
+    if yaml.has_key?('params')
+      p = ParamsProc.new(yaml.merge({'region' => region}))
+      yaml['params'] = p.compile()
     end
 
     params = []
@@ -248,15 +209,16 @@ namespace :cf do
     Log.debug(format('Stack exists(%s): %s', stack_name, stack_exists))
 
     if stack_exists
+      Log.debug(format('Updating stack'))
       cf_client.update_stack(
-        stack_name: stack_name,
-        template_body: stack_tpl.to_json,
-        parameters: params,
-        capabilities: ["CAPABILITY_IAM"],
-        tags: [
+        tags: [{
           key: 'Owner',
           value: 'bryan.kroger@gmail.com'
-        ]
+        }],
+        parameters: params,
+        stack_name: stack_name,
+        capabilities: ["CAPABILITY_IAM"],
+        template_body: stack_tpl.to_json
       )
 
     else
@@ -264,16 +226,16 @@ namespace :cf do
 
       ## Stack does not exist, create it.
       cf_client.create_stack({
-        stack_name: stack_name,
-        template_body: stack_tpl.to_json,
-        parameters: params,
-        disable_rollback: true,
-        timeout_in_minutes: 30,
-        capabilities: ["CAPABILITY_IAM"],
         tags: [{
           key: 'Owner',
           value: 'bryan.kroger@gmail.com'
-        }]
+        }],
+        parameters: params,
+        stack_name: stack_name,
+        capabilities: ["CAPABILITY_IAM"],
+        template_body: stack_tpl.to_json,
+        disable_rollback: true,
+        timeout_in_minutes: 30
       })
 
     end

@@ -7,7 +7,7 @@
         "Cooldown" : "120",
         "AdjustmentType" : "ChangeInCapacity",
         "ScalingAdjustment" : "5",
-        "AutoScalingGroupName" : { "Ref" : "ECSAutoScalingGroup" }
+        "AutoScalingGroupName" : ""
       }
     },
 
@@ -17,7 +17,7 @@
         "Cooldown" : "120",
         "AdjustmentType" : "ChangeInCapacity",
         "ScalingAdjustment" : "-1",
-        "AutoScalingGroupName" : { "Ref" : "ECSAutoScalingGroup" }
+        "AutoScalingGroupName" : ""
       }
     },
 

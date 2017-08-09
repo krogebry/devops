@@ -6,7 +6,10 @@ description: "Simple workout tracker application using ECS."
 modules:
   - "base"
   - "vpc"
-  - "ecs-cwt-capacity"
+  - name: "ECSScaleTrigger"
+    type: "ecs_cwt_capacity"
+    params: 
+      attach: "all"
 params:
   MgtCidr: 
     type: "vpc_cidr"
