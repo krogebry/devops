@@ -1,0 +1,101 @@
+{
+  "Resources": {
+
+    "ClusterScaleUpPolicy" : {
+      "Type" : "AWS::AutoScaling::ScalingPolicy",
+      "Properties" : {
+        "Cooldown" : "120",
+        "AdjustmentType" : "ChangeInCapacity",
+        "ScalingAdjustment" : "5",
+        "AutoScalingGroupName" : { "Ref" : "ECSAutoScalingGroup" }
+      }
+    },
+
+    "ClusterScaleDownPolicy" : {
+      "Type" : "AWS::AutoScaling::ScalingPolicy",
+      "Properties" : {
+        "Cooldown" : "120",
+        "AdjustmentType" : "ChangeInCapacity",
+        "ScalingAdjustment" : "-1",
+        "AutoScalingGroupName" : { "Ref" : "ECSAutoScalingGroup" }
+      }
+    },
+
+    "MemResHigh": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Period": "60", 
+        "Dimensions": [ {
+          "Name": "ClusterName",
+          "Value": { "Ref": "AWS::StackName" }
+        }],
+        "Namespace": "AWS/ECS",
+        "Statistic": "Average",
+        "Threshold": "75", 
+        "MetricName": "MemoryReservation",
+        "AlarmActions": [{ "Ref": "ClusterScaleUpPolicy" }],
+        "AlarmDescription": "Alarm if RAM reservation is over capacity",
+        "EvaluationPeriods": "1",
+        "ComparisonOperator": "GreaterThanThreshold"
+      }
+    },
+
+    "MemResLow": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Period": "60", 
+        "Dimensions": [ {
+          "Name": "ClusterName",
+          "Value": { "Ref": "AWS::StackName" }
+        }],
+        "Namespace": "AWS/ECS",
+        "Statistic": "Average",
+        "Threshold": "50", 
+        "MetricName": "MemoryReservation",
+        "AlarmActions": [{ "Ref": "ClusterScaleUpPolicy" }],
+        "AlarmDescription": "Alarm if RAM reservation is over capacity",
+        "EvaluationPeriods": "1",
+        "ComparisonOperator": "LessThanThreshold"
+      }
+    },
+
+    "CPUResHigh": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Period": "60", 
+        "Dimensions": [ {
+          "Name": "ClusterName",
+          "Value": { "Ref": "AWS::StackName" }
+        }],
+        "Namespace": "AWS/ECS",
+        "Statistic": "Average",
+        "Threshold": "75", 
+        "MetricName": "CPUReservation",
+        "AlarmActions": [{ "Ref": "ClusterScaleUpPolicy" }],
+        "AlarmDescription": "Alarm if CPU reservation is too high",
+        "EvaluationPeriods": "1",
+        "ComparisonOperator": "GreaterThanThreshold"
+      }
+    },
+
+    "CPUResLow": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Period": "60", 
+        "Dimensions": [ {
+          "Name": "ClusterName",
+          "Value": { "Ref": "AWS::StackName" }
+        }],
+        "Namespace": "AWS/ECS",
+        "Statistic": "Average",
+        "Threshold": "50", 
+        "MetricName": "CPUReservation",
+        "AlarmActions": [{ "Ref": "ClusterScaleUpPolicy" }],
+        "AlarmDescription": "Alarm if CPU reservation is too high",
+        "EvaluationPeriods": "1",
+        "ComparisonOperator": "LessThanThreshold"
+      }
+    }
+
+  }
+}

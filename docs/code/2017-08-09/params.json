@@ -1,0 +1,30 @@
+[
+  {
+    "parameter_key": "StackVersion",
+    "parameter_value": "0-1-0"
+  },
+  {
+    "parameter_key": "MgtCidr",
+    "parameter_value": "172.30.0.0/16"
+  },
+  {
+    "parameter_key": "KeyName",
+    "parameter_value": "devops-1"
+  },
+  {
+    "parameter_key": "DockerImageName",
+    "parameter_value": "Wubalubadubdub.dkr.ecr.us-east-1.amazonaws.com/workout-tracker"
+  },
+  {
+    "parameter_key": "VpcId",
+    "parameter_value": "vpc-21d67f46"
+  },
+  {
+    "parameter_key": "Zones",
+    "parameter_value": "us-east-1e,us-east-1d"
+  },
+  {
+    "parameter_key": "Subnets",
+    "parameter_value": "subnet-5441157e,subnet-816b3ad9"
+  }
+]

@@ -1,0 +1,620 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": {
+    "DesiredCapacity": {
+      "Type": "Number",
+      "Default": "1",
+      "Description": "Number of instances to launch in your ECS cluster."
+    },
+    "MaxSize": {
+      "Type": "Number",
+      "Default": "1",
+      "Description": "Maximum number of instances that can be launched in your ECS cluster."
+    },
+    "MinSize": {
+      "Type": "Number",
+      "Default": "1",
+      "Description": "Minimum number of instances that can be launched in your ECS cluster."
+    },
+    "DockerImageName": {
+      "Description": "Full URI of the docker image container",
+      "Type": "String"
+    },
+    "InstanceType": {
+      "Description": "The EC2 instance type",
+      "Type": "String",
+      "Default": "t2.micro",
+      "ConstraintDescription": "You can specify only t2.mirco."
+    },
+    "InfStackVersion": {
+      "Type": "String",
+      "Default": "0.1.0",
+      "Description": "Role profile ARN"
+    },
+    "StackVersion": {
+      "Type": "String",
+      "Default": "0.1.0",
+      "Description": "Stack version."
+    },
+    "S3BucketName": {
+      "Type": "String",
+      "Default": "0.1.0",
+      "Description": "Name of the DevOps bucket."
+    },
+    "KeyName": {
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "Description": "The EC2 Key Pair to allow SSH access to the instances",
+      "ConstraintDescription": "must be the name of an existing EC2 KeyPair."
+    },
+    "MgtCidr": {
+      "Type": "String",
+      "Description": "Role profile ARN"
+    },
+    "Subnets": {
+      "Type": "List<AWS::EC2::Subnet::Id>",
+      "Description": "The list of SubnetIds in your Virtual Private Cloud (VPC)",
+      "ConstraintDescription": "must be a list of an existing subnets in the selected Virtual Private Cloud."
+    },
+    "Zones": {
+      "Type": "List<String>",
+      "Description": "The list of AvailabilityZones for your Virtual Private Cloud (VPC)",
+      "ConstraintDescription": "must be a list if valid EC2 availability zones for the selected Virtual Private Cloud"
+    },
+    "VpcId": {
+      "Type": "AWS::EC2::VPC::Id",
+      "Description": "VpcId of your existing Virtual Private Cloud (VPC)",
+      "ConstraintDescription": "Must be the VPC Id of an existing Virtual Private Cloud."
+    }
+  },
+  "Mappings": {
+    "AWSRegionToAMI": {
+      "us-east-1": {
+        "AMIID": "ami-1924770e"
+      },
+      "us-east-2": {
+        "AMIID": "ami-446f3521"
+      },
+      "us-west-2": {
+        "AMIID": "ami-56ed4936"
+      }
+    }
+  },
+  "Resources": {
+    "ECSCluster": {
+      "Type": "AWS::ECS::Cluster"
+    },
+    "taskdefinition": {
+      "Type": "AWS::ECS::TaskDefinition",
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "Cpu": "10",
+            "Name": "workout-tracker",
+            "Image": {
+              "Ref": "DockerImageName"
+            },
+            "Memory": 300,
+            "Essential": "true",
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": "krogebry-test",
+                "awslogs-region": {
+                  "Ref": "AWS::Region"
+                },
+                "awslogs-stream-prefix": "awslogs-example"
+              }
+            },
+            "PortMappings": [
+              {
+                "HostPort": 0,
+                "ContainerPort": 8080
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "EcsALB": {
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "Properties": {
+        "Subnets": {
+          "Ref": "Subnets"
+        },
+        "SecurityGroups": [
+          {
+            "Ref": "PublicHTTP"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "StackName",
+            "Value": {
+              "Ref": "AWS::StackName"
+            }
+          }
+        ]
+      }
+    },
+    "EcsTargetGroup": {
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "Properties": {
+        "Name": {
+          "Ref": "AWS::StackName"
+        },
+        "Port": 8080,
+        "VpcId": {
+          "Ref": "VpcId"
+        },
+        "Matcher": {
+          "HttpCode": "200"
+        },
+        "Protocol": "HTTP",
+        "HealthCheckProtocol": "HTTP",
+        "HealthCheckPath": "/healthz",
+        "HealthCheckTimeoutSeconds": 10,
+        "HealthCheckIntervalSeconds": 30,
+        "HealthyThresholdCount": 4,
+        "UnhealthyThresholdCount": 3,
+        "Tags": [
+          {
+            "Key": "StackName",
+            "Value": {
+              "Ref": "AWS::StackName"
+            }
+          }
+        ]
+      }
+    },
+    "ALBListener": {
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+      "Properties": {
+        "Port": "80",
+        "Protocol": "HTTP",
+        "DefaultActions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "EcsTargetGroup"
+            }
+          }
+        ],
+        "LoadBalancerArn": {
+          "Ref": "EcsALB"
+        }
+      }
+    },
+    "ECSAutoScalingGroup": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "MinSize": {
+          "Ref": "MinSize"
+        },
+        "MaxSize": {
+          "Ref": "MaxSize"
+        },
+        "DesiredCapacity": {
+          "Ref": "DesiredCapacity"
+        },
+        "AvailabilityZones": {
+          "Ref": "Zones"
+        },
+        "VPCZoneIdentifier": {
+          "Ref": "Subnets"
+        },
+        "LaunchConfigurationName": {
+          "Ref": "ContainerInstances"
+        }
+      },
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Timeout": "PT15M"
+        }
+      },
+      "UpdatePolicy": {
+        "AutoScalingRollingUpdate": {
+          "MinInstancesInService": "1",
+          "MaxBatchSize": "1",
+          "PauseTime": "PT15M",
+          "WaitOnResourceSignals": "true"
+        }
+      }
+    },
+    "ContainerInstances": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "config": {
+            "commands": {
+              "01_add_instance_to_cluster": {
+                "command": {
+                  "Fn::Sub": "#!/bin/bash\necho ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config\n"
+                }
+              }
+            },
+            "files": {
+              "/etc/cfn/cfn-hup.conf": {
+                "content": {
+                  "Fn::Sub": "[main]\nstack=${AWS::StackId}\nregion=${AWS::Region}\n"
+                },
+                "mode": "000400",
+                "owner": "root",
+                "group": "root"
+              },
+              "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
+                "content": {
+                  "Fn::Sub": "[cfn-auto-reloader-hook]\ntriggers=post.update\npath=Resources.ContainerInstances.Metadata.AWS::CloudFormation::Init\naction=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ContainerInstances --region ${AWS::Region}\nrunas=root\n"
+                }
+              }
+            },
+            "services": {
+              "sysvinit": {
+                "cfn-hup": {
+                  "enabled": "true",
+                  "ensureRunning": "true",
+                  "files": [
+                    "/etc/cfn/cfn-hup.conf",
+                    "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "ImageId": {
+          "Fn::FindInMap": [
+            "AWSRegionToAMI",
+            {
+              "Ref": "AWS::Region"
+            },
+            "AMIID"
+          ]
+        },
+        "InstanceType": {
+          "Ref": "InstanceType"
+        },
+        "IamInstanceProfile": {
+          "Ref": "EC2InstanceProfile"
+        },
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "SecurityGroups": [
+          {
+            "Ref": "PrivateInternal"
+          }
+        ],
+        "InstanceMonitoring": "false",
+        "AssociatePublicIpAddress": "true",
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Sub": "#!/bin/bash -xe\nyum install -y aws-cfn-bootstrap\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ContainerInstances --region ${AWS::Region}\nsleep 0\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroup --region ${AWS::Region}\n"
+          }
+        }
+      }
+    },
+    "ECSServiceRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Sid": "ecsallow",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "ecs.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "ecs-service",
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                    "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                    "ec2:Describe*",
+                    "ec2:AuthorizeSecurityGroupIngress",
+                    "elasticloadbalancing:*",
+                    "elasticloadbalancing:DeregisterTargets",
+                    "elasticloadbalancing:Describe*",
+                    "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                    "ecr:BatchCheckLayerAvailability",
+                    "ecr:BatchGetImage",
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:GetAuthorizationToken"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "EC2Role": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "ec2.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "ecs-instance-service",
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ecs:DeregisterContainerInstance",
+                    "ecs:DiscoverPollEndpoint",
+                    "ecs:Poll",
+                    "ecs:RegisterContainerInstance",
+                    "ecs:StartTelemetrySession",
+                    "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                    "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                    "ec2:Describe*",
+                    "ec2:AuthorizeSecurityGroupIngress",
+                    "elasticloadbalancing:*",
+                    "elasticloadbalancing:DeregisterTargets",
+                    "elasticloadbalancing:Describe*",
+                    "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                    "ecr:BatchCheckLayerAvailability",
+                    "ecr:BatchGetImage",
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:GetAuthorizationToken",
+                    "ecs:Submit*",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                    "ecr:BatchCheckLayerAvailability",
+                    "ecr:BatchGetImage",
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:GetAuthorizationToken",
+                    "s3:Get*",
+                    "s3:List*"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "EC2InstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "EC2Role"
+          }
+        ]
+      }
+    },
+    "PrivateInternal": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VpcId"
+        },
+        "GroupDescription": "Allows public access by HTTP",
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "172.30.0.0/16",
+            "ToPort": "65535",
+            "FromPort": "0",
+            "IpProtocol": "tcp"
+          },
+          {
+            "CidrIp": "172.0.0.0/8",
+            "FromPort": "22",
+            "ToPort": "22",
+            "IpProtocol": "tcp"
+          }
+        ]
+      }
+    },
+    "PublicHTTP": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VpcId"
+        },
+        "GroupDescription": "Allows public access by HTTP",
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "ToPort": 80,
+            "FromPort": 80,
+            "IpProtocol": "tcp"
+          }
+        ]
+      }
+    },
+    "service": {
+      "Type": "AWS::ECS::Service",
+      "DependsOn": [
+        "ALBListener",
+        "ECSAutoScalingGroup",
+        "ECSServiceRole",
+        "EcsTargetGroup",
+        "EC2Role",
+        "taskdefinition"
+      ],
+      "Properties": {
+        "Cluster": {
+          "Ref": "ECSCluster"
+        },
+        "DesiredCount": "1",
+        "LoadBalancers": [
+          {
+            "ContainerName": "workout-tracker",
+            "ContainerPort": "8080",
+            "TargetGroupArn": {
+              "Ref": "EcsTargetGroup"
+            }
+          }
+        ],
+        "Role": {
+          "Ref": "ECSServiceRole"
+        },
+        "TaskDefinition": {
+          "Ref": "taskdefinition"
+        }
+      }
+    },
+    "ClusterScaleUpPolicy": {
+      "Type": "AWS::AutoScaling::ScalingPolicy",
+      "Properties": {
+        "Cooldown": "120",
+        "AdjustmentType": "ChangeInCapacity",
+        "ScalingAdjustment": "5",
+        "AutoScalingGroupName": {
+          "Ref": "ECSAutoScalingGroup"
+        }
+      }
+    },
+    "ClusterScaleDownPolicy": {
+      "Type": "AWS::AutoScaling::ScalingPolicy",
+      "Properties": {
+        "Cooldown": "120",
+        "AdjustmentType": "ChangeInCapacity",
+        "ScalingAdjustment": "-1",
+        "AutoScalingGroupName": {
+          "Ref": "ECSAutoScalingGroup"
+        }
+      }
+    },
+    "MemResHigh": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Period": "60",
+        "Dimensions": [
+          {
+            "Name": "ClusterName",
+            "Value": {
+              "Ref": "AWS::StackName"
+            }
+          }
+        ],
+        "Namespace": "AWS/ECS",
+        "Statistic": "Average",
+        "Threshold": "75",
+        "MetricName": "MemoryReservation",
+        "AlarmActions": [
+          {
+            "Ref": "ClusterScaleUpPolicy"
+          }
+        ],
+        "AlarmDescription": "Alarm if RAM reservation is over capacity",
+        "EvaluationPeriods": "1",
+        "ComparisonOperator": "GreaterThanThreshold"
+      }
+    },
+    "MemResLow": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Period": "60",
+        "Dimensions": [
+          {
+            "Name": "ClusterName",
+            "Value": {
+              "Ref": "AWS::StackName"
+            }
+          }
+        ],
+        "Namespace": "AWS/ECS",
+        "Statistic": "Average",
+        "Threshold": "50",
+        "MetricName": "MemoryReservation",
+        "AlarmActions": [
+          {
+            "Ref": "ClusterScaleUpPolicy"
+          }
+        ],
+        "AlarmDescription": "Alarm if RAM reservation is over capacity",
+        "EvaluationPeriods": "1",
+        "ComparisonOperator": "GreaterThanThreshold"
+      }
+    },
+    "CPUResHigh": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Period": "60",
+        "Dimensions": [
+          {
+            "Name": "ClusterName",
+            "Value": {
+              "Ref": "AWS::StackName"
+            }
+          }
+        ],
+        "Namespace": "AWS/ECS",
+        "Statistic": "Average",
+        "Threshold": "75",
+        "MetricName": "CPUReservation",
+        "AlarmActions": [
+          {
+            "Ref": "ClusterScaleUpPolicy"
+          }
+        ],
+        "AlarmDescription": "Alarm if CPU reservation is too high",
+        "EvaluationPeriods": "1",
+        "ComparisonOperator": "GreaterThanThreshold"
+      }
+    },
+    "CPUResLow": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Period": "60",
+        "Dimensions": [
+          {
+            "Name": "ClusterName",
+            "Value": {
+              "Ref": "AWS::StackName"
+            }
+          }
+        ],
+        "Namespace": "AWS/ECS",
+        "Statistic": "Average",
+        "Threshold": "50",
+        "MetricName": "CPUReservation",
+        "AlarmActions": [
+          {
+            "Ref": "ClusterScaleUpPolicy"
+          }
+        ],
+        "AlarmDescription": "Alarm if CPU reservation is too high",
+        "EvaluationPeriods": "1",
+        "ComparisonOperator": "GreaterThanThreshold"
+      }
+    }
+  },
+  "Outputs": {}
+}

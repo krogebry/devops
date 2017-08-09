@@ -6,16 +6,12 @@ description: "Simple workout tracker application using ECS."
 modules:
   - "base"
   - "vpc"
+  - "ecs-cwt-capacity"
 params:
   MgtCidr: 
     type: "vpc_cidr"
     tags:
       Name: "main"
-  #ImageId: 
-    #type: "ami"
-    #tags:
-      #Name: "devops"
-      #Version: "0.1.1"
   KeyName: "devops-1"
   DockerImageName:
     type: "docker_image_name"

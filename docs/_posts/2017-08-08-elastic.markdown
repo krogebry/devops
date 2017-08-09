@@ -1,0 +1,202 @@
+---
+layout: post
+title:  "Making things elastic."
+date:   Tue Aug  8 18:10:33 PDT 2017
+categories: cloudformation
+---
+
+<h1>Overview</h1>
+
+<p>
+AWS and the cloud in general ( in whatever form that takes ) is all about being elastic.  This elastic property is what can ultimately save us money and make
+our lives easier.
+</p>
+
+<p>
+At one point many moons ago, I had a discussion with a collogue regarding the cost of a data center versus the cost of the cloud.  His argument that the cloud ends up
+costing more than a data center.  His perspective and experience made this understandable.  From his perspective the cloud was big, stupid and expensive.  My experience
+has been similar in that I've seen enterprise companies do really stupid things over a protracting time, which ends up costing them lots of money.
+</p>
+
+<p>
+In this post I'm going to explore one of many ways in which we can change this dynamic and help people utilize the real power of the cloud.  We do this by working
+the elastic aspect of our compute resources.  Specifically we're going to work around our development areas.  This could apply to our other higher environments,
+but for now let's just stick with a very specific use case that involve developer pipelines in our CI/CD process.  In a nut shell we want to keep our compute costs 
+down while still allowing our developers to iterate quickly.  We do this with AutoScaleGroups ( ASG ) and CloudWatch Trigers ( CW, CWT ).
+</p>
+
+<p>
+We start this journey by looking at how developers can use the ElasticContainerService ( ECS ) in AWS.  Our wokflow would look like this for a typical deployment
+in our CI/CD pipeline.
+</p>
+
+<ul>
+  <li><b>aws ecr get-login</b> have docker login to ECR</li>
+  <li>Push the docker container to ECR with <b>docker push</b></li>
+  <li>Use the aws cli to create a new task def.</li>
+  <li>Update the currently running service with the new task def id.</li>
+</ul>
+
+<p>
+In the previous post I demonstrated how to create an ECS cluster using an ASG.  The ASG started with min: 1, max: 1, desired: 1 this is so that we can keep the
+expenses of the dev environment low.  However, keeping the profile low causes a problem at this point in the workflow.  When a new task is created and
+the service is updated the cluster will effectively be trying to schedule two tasks of similar configurations on the same cluster.
+This is how this might play out on a cluster using a simple t1.micro which has a total of <b>2048</b> CPU and <b>2000</b> RAM.
+Each application task def is designed to take exactly have of the resources, so <b>1024</b> CPU and <b>1000</b> RAM per task.
+</p>
+
+<table style="border: 1px solid #000;width: 100%;">
+  <tr> 
+    <th style="width: 50%;"></th>
+    <th>CPU Availiable</th>
+    <th>CPU Reserved</th>
+    <th>RAM Avaliable</th>
+    <th>RAM Reserved</th>
+  </tr>
+
+  <tr>
+    <td>Inital state ( no apps deployed )</td>
+    <td>2048</td>
+    <td>0</td>
+    <td>2000</td>
+    <td>0</td>
+  </tr>
+
+  <tr>
+    <td>First version of application is deployed</td>
+    <td>1024</td>
+    <td>1024</td>
+    <td>1000</td>
+    <td>1000</td>
+  </tr>
+
+  <tr>
+    <td>Second version of application is deployed</td>
+    <td>0</td>
+    <td>2048</td>
+    <td>0</td>
+    <td>2000</td>
+  </tr>
+</table>
+
+<br/>
+ 
+<ul>
+  <li>When we first schedule a task on the cluster we put the cluster we end up allocating exactly 50% of the cluster.</li>
+  <li>When we do our first deployment we end up having two tasks on the cluster, which means the cluster is now 100% utilized.</li>
+  <li>The first task def will eventually bleed out and deallocate itself from the cluster leaving the cluster at 50% capacity.</li>
+</ul>
+
+<p>
+This is where we can get into trouble.  If we only have one task on the cluster and we're only doing one deployment at a time, then we should be fine
+here.  However, that's highly unlikely in a world of microservices.  In most cases we're going to have at least 3, probably more, maybe even as many
+as 10 services running on this cluster.  We could have things like redis, or even our database running on the cluster.  In some cases running
+the db right on the cluster can make our iterations faster.
+</p>
+
+<p>
+At this point, if we have more than two services we'll end up with a completely consumed cluster after our first deployment.  This is where the power
+of the ASG and CWT can come in.  We're going to implement a simple trigger that is going to expand the cluster out quickly, then slowly bring
+it back to one over the course of a few hours.
+</p>
+
+<h1>Use case</h1>
+
+<p>
+The user story that we're solving here is from the perspective of a developer coming into work on any given morning.  Or, if you're in the valley,
+maybe closer to early afternoon.
+</p>
+
+<p>
+Our development team might even have CI/CD pipelines running builds early in the morning on master or a release branch as a matter of automation
+like a nightly build, but done early in the morning to take advantage of this particular functionality.  The build fires off, either by automation
+or by someone doing their first build of the day.   The cluster ends up getting maxed out because it's wildly under provisioned at 1/4/1.
+</p>
+
+<p>
+The CWT can detect that the cluster is over 75% <b>reservation</b> and automatically fire up +5 more instances.  At least, that's the request, but
+since we've set our max=4 on the ASG, only 3 instances will be spun up.  This is in order to keep an absolute ceiling on the ASG.  My setting of
+4 is completely arbitrary, of course, you should use whatever setting you feel is proper for your layout.
+</p>
+
+<p>
+Eventually the old tasks will bleed off and we'll be back to a <75% reservation.  The CWT trigger waits until the cluster is under 50% reservation,
+then it will start taking 1 instance down per hour as long as the reservation is under 50% during that time.  If, at any point the reservation
+goes above the 75% threshold, the ASG will try to keep the desired count at the max, or whatever the calculation is based on the trigger.
+</p>
+
+<p>
+Basically we're liberal about giving compute instances to developers that need the resources, but conservative about taking them away.  Once
+the resources are no longer needed, the ASG will scale back down to it's original setting of 1/4/1 until the next morning.
+</p>
+
+<p>
+This allows us to actually be elastic about our compute resources, but more importantly we're using a system that is constantly giving
+us fresh compute resources and rolling out old ones.  This means that it's nearly impossible to maintain any one-off hacks on the instances.
+</p>
+
+<p>
+In some cases developers might find this to be an insufferable pain in the ass because it completely blocks them from being able to do
+any custom things on the compute resources.  We, of course, appreciate their concern, but ultimatly should help them find a better
+way of customizing their environment.
+</b>
+
+<h1>Let's do this!!</h1>
+
+<p>
+Along with the CWT I'm also going to tie into something that my framework uses called the modular composition thingie.  It's basically a way
+to shorthand big things in my yaml config.  My plan here is to use this system to implement a modular way of plugging this pattern into
+any and all ASG's in a template.
+</p>
+
+<p>
+This is the first part of my configuration file for the workout tracker:
+</p>
+
+{% highlight yaml %}
+---
+name: "WorkoutTracker"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
+template: "ecs"
+description: "Simple workout tracker application using ECS."
+modules:
+  - "base"
+  - "vpc"
+{% endhighlight %}
+
+<p>
+I'm going to add something to the modules list here called <b>cwt</b> then add some bits that allow me to tune my params for this module.  This
+is my new config.
+</p>
+
+{% highlight yaml %}
+---
+name: "WorkoutTracker"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
+template: "ecs"
+description: "Simple workout tracker application using ECS."
+modules:
+  - "base"
+  - "vpc"
+  - "ecs-cwt-capacity"
+{% endhighlight %}
+
+<p>
+My modular system works by loading up a module in the templates directory, then doing a deep merge with the content of the current template data structure.
+This allows me to express smaller, more <a href="https://github.com/krogebry/devops/tree/master/aws/cloudformation/templates/modules">modular chunks</a> of code and just reuse each piece as needed.
+I have modules that handle all kinds of things.  I can even integrate chef by simply adding a line to the modules system.  Or, I can leave it out and do something
+custom like I'm doing here with the ECS stack.
+</p>
+
+<p>
+Now when I create my stack I end up with a bunch of cloud watch alarms attached to the cluster.
+<a href="/devops/code/2017-08-09/stack.json">stack.json</a> <a href="/devops/code/2017-08-09/params.json">params.json</a>
+</p>
+
+<h1>Wrap up</h1>
+
+<p>
+There's actually a big flaw in this design in that I'm hard coding the Ref to the ASG in the module.  I plan on breaking out my modular system into a 
+more versatile system that can handle these conditions better with a little extra code.  Much like the params system.  That'll be the next version.
+So far, I haven't had a huge need to do something like this, but this seems like the perfect use case for doing the work.
+</p>
