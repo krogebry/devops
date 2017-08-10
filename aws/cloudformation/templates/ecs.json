@@ -48,7 +48,7 @@
       "Type": "AWS::ECS::TaskDefinition",
       "Properties": {
         "ContainerDefinitions": [{
-          "Cpu": "10",
+          "Cpu": "1024",
           "Name": "workout-tracker",
           "Image": { "Ref": "DockerImageName" },
           "Memory": 300,

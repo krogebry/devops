@@ -6,6 +6,13 @@ description: "Simple workout tracker application using ECS."
 modules:
   - "base"
   - "vpc"
+  - name: "R53 endpoint"
+    type: "r53"
+    params:
+      alb_name: "EcsALB"
+      host_name: "wt-dev"
+      domain_name: "krogebry.com"
+      init_weight: 0
   - name: "ECSScaleTrigger"
     type: "ecs_cwt_capacity"
     params: 

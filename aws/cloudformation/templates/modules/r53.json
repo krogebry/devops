@@ -1,0 +1,22 @@
+{
+  "Resources": {
+
+    "DNSEntry" : {
+      "Type" : "AWS::Route53::RecordSetGroup",
+      "Properties" : {
+        "Comment" : "DNS entry point for ALB or ELB.",
+        "HostedZoneId" : "",
+        "RecordSets" : [{
+          "Name" : "",
+          "Type" : "A",
+					"Weight": "0",
+          "AliasTarget": {
+            "DNSName": { "Fn::GetAtt": [ "ALBName", "DNSName" ] },
+            "HostedZoneId": { "Fn::GetAtt": [ "ALBName", "CanonicalHostedZoneNameID" ] }
+          }
+        }]
+      }
+    }
+
+  }
+}

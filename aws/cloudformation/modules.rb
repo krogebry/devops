@@ -13,6 +13,8 @@ class ModulesProc
   def initialize(yaml, stack_tpl)
     @config = yaml
     @stack_tpl = stack_tpl
+
+    @cache = DevOps::Cache.new
   end
 
   def load_module( module_name )
@@ -105,6 +107,35 @@ class ModulesProc
     alarms.each do |alarm_name, alarm_config|
       alarm_config['Properties']['Dimensions'][0]['Value'] = { 'Ref' => m_config['params']['ecs_cluster_name'] }
     end
+
+    @stack_tpl['Resources'] = @stack_tpl['Resources'].deep_merge(json['Resources'])
+  end
+
+  def r53( m_config )
+    json = load_module('r53')
+
+    #lbs = @stack_tpl['Resources'].select{|k,v| v['Type'] == 'AWS::ElasticLoadBalancingV2::LoadBalancer'}
+
+    creds = Aws::SharedCredentials.new()
+    route53 = Aws::Route53::Client.new(credentials: creds)
+
+    cache_key = format('r53_%s', m_config['params']['domain_name'])
+    zones = @cache.cached_json( cache_key ) do
+      route53.list_hosted_zones_by_name({ dns_name: m_config['params']['domain_name'] }).data.to_h.to_json
+    end
+    zone_id = zones['hosted_zones'].first['id'].split('/')[-1]
+    Log.debug(format('ZoneId: %s', zone_id))
+
+    json['Resources']['DNSEntry']['Properties']['HostedZoneId'] = zone_id
+    r_record = {
+      "TTL" => "900",
+      "Name" => format('%s.%s', m_config['params']['host_name'], m_config['params']['domain_name']),
+      "Type" => "CNAME",
+      "Weight" => m_config['params']['init_weight'],
+      "SetIdentifier" => { "Ref": 'AWS::StackName' },
+      "ResourceRecords" => [{ "Fn::GetAtt": [ m_config['params']['alb_name'], "DNSName" ] }]
+    }
+    json['Resources']['DNSEntry']['Properties']['RecordSets'] = [r_record]
 
     @stack_tpl['Resources'] = @stack_tpl['Resources'].deep_merge(json['Resources'])
   end

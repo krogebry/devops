@@ -1,0 +1,109 @@
+---
+layout: post
+title:  "Implementing weighted DNS into the workout tracker"
+date:   Tue Aug  9 11:10:33 PDT 2017
+categories: cloudformation
+---
+
+<h1>Overview</h1>
+
+<p>
+Weighted DNS is probably one of the coolest things one can do in AWS.  This is how we can do b/g deployments at the infrastructure level.
+I'm going to implement this with the workout tracker by implementing a simple r53 rule with a default weight of 0.  Then we change
+the weight of the new stack when we're ready.  We can change the weight to whatever we want.
+</p>
+
+<h1>Implementation</h1>
+
+<p>
+The way this works is to setup a weighted DNS entry for our FQDN.  In this came I'm using <b>wt-dev.krogebry.com</b> to point to my stack.
+</p>
+
+{% highlight json %}
+    "DNSEntry": {
+      "Type": "AWS::Route53::RecordSetGroup",
+      "Properties": {
+        "Comment": "DNS entry point for ALB or ELB.",
+        "HostedZoneId": "Z1WUMG9UYDKDTR",
+        "RecordSets": [
+          {
+            "TTL": "900",
+            "Name": "wt-dev.krogebry.com",
+            "Type": "CNAME",
+            "Weight": 0,
+            "SetIdentifier": {
+              "Ref": "AWS::StackName"
+            },
+            "ResourceRecords": [
+              {
+                "Fn::GetAtt": [
+                  "EcsALB",
+                  "DNSName"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+{% endhighlight %}
+
+<p>
+When a new stack is created we'll have a DNS pointer to wt-dev.krogebry.com.  When the first stack is created, the weight will be set to 0.
+However, since we have a total of 1 entry in the member pool, all traffic will be sent to the first stack by default.  When we create a new
+stack, both DNS entries will have a weight of 0.
+</p>
+
+{% highlight bash %}
+$ aws route53 list-resource-record-sets --hosted-zone-id Z1WUMG9UYDKDTR|jq '.'
+{% endhighlight %}
+
+{% highlight json %}
+    {
+      "TTL": 900,
+      "Type": "CNAME",
+      "ResourceRecords": [
+        {
+          "Value": "Worko-EcsAL-QDLTVZFR4TIA-4632763.us-east-1.elb.amazonaws.com"
+        }
+      ],
+      "Name": "wt-dev.krogebry.com.",
+      "SetIdentifier": "WorkoutTracker-0-1-4",
+      "Weight": 0
+    },
+    {
+      "TTL": 900,
+      "Type": "CNAME",
+      "ResourceRecords": [
+        {
+          "Value": "Worko-EcsAL-HLL9F1B1G68O-1976995246.us-east-1.elb.amazonaws.com"
+        }
+      ],
+      "Name": "wt-dev.krogebry.com.",
+      "SetIdentifier": "WorkoutTracker-0-1-5",
+      "Weight": 0
+    }
+{% endhighlight %}
+
+<p>
+In this case all traffic will be sent to both ALB's.  We can change that behavior by setting one or the other to a value of 100.  This will
+send 100% of the traffic to that stack.
+</p>
+
+<p>
+Keep in mind that this has nothing to do with the ECS deployments.  This is strictly for doing b/g deployments at the infrastructure level.
+This is important because it allows us to completely isolate all of our resources for a given stack, almost like a silo.
+Whatever happens in that silo will *only* happen to that silo of things.  So, for example, if someone changes the properties of a security
+group in the first silo, it won't impact anything in the second silo.
+</p>
+
+<p>
+We can switch 100% of the load over to the new stack and keep the old stack running as needed until we're ready to completely take it down.
+Another advantage to this methodology is that when we remove the old stack, we know that everything attached to that stack is removed.
+</p>
+
+<p>
+This is a slight advantage over terraform in that we're using an AWS service to manage AWS resources where terraform relies on it's own
+manifest file to manage resources and state.
+</p>
+
