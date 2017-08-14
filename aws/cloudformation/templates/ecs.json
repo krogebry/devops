@@ -53,6 +53,13 @@
           "Image": { "Ref": "DockerImageName" },
           "Memory": 300,
           "Essential": "true",
+          "Environment": [{
+            "Name": "ENV_NAME",
+            "Value": "dev"
+          },{
+            "Name": "AWS_DEFAULT_REGION",
+            "Value": "us-east-1"
+          }],
           "LogConfiguration": {
             "LogDriver": "awslogs",
             "Options": {
