@@ -9,12 +9,30 @@ class ModulesProc
   @sns_client
 
   @stack_tpl
+  @stack_params
 
   def initialize(yaml, stack_tpl)
     @config = yaml
     @stack_tpl = stack_tpl
 
+    @stack_params = []
+
     @cache = DevOps::Cache.new
+  end
+
+  def set_param( k, v )
+    if v.class == Array
+      v = v.join ','
+    end
+
+    @stack_params.push({
+      parameter_key: k,
+      parameter_value: v
+    })
+  end
+
+  def get_param( param_name )
+    @stack_params.select{|k,v| k[:parameter_key] == param_name }.first[:parameter_value]
   end
 
   def load_module( module_name )
@@ -25,6 +43,21 @@ class ModulesProc
     end
     Log.debug(format('Loading module: %s', fs_module_file))
     JSON::parse(File.read(fs_module_file))
+  end
+
+  def load_script( module_name )
+    fs_module_file = File.join('cloudformation', 'templates', 'scripts', format('%s.sh' % module_name))
+    if !File.exists? fs_module_file
+      Log.debug(format('Module file not found: %s', fs_module_file))
+      raise Exception.new()
+    end
+    Log.debug(format('Loading module: %s', fs_module_file))
+
+    ro = []
+    File.read(fs_module_file).each_line do |l|
+      ro.push({"Fn::Sub" => l})
+    end
+    {"Fn::Join" => ["\n", ro]}
   end
 
   def merge_module( module_name )
@@ -87,7 +120,7 @@ class ModulesProc
         Log.debug('module is an unknown type ')
       end
     end
-    @stack_tpl
+    [@stack_tpl, @stack_params]
   end
 
   def deep_copy( hash )
@@ -139,5 +172,224 @@ class ModulesProc
 
     @stack_tpl['Resources'] = @stack_tpl['Resources'].deep_merge(json['Resources'])
   end
+
+  def asg( m_config )
+    json = load_module('asg')
+
+    if m_config['params'].has_key?('user_data_script')
+      user_data = load_script m_config['params']['user_data_script']
+      launch_config = @stack_tpl['Resources'].select { |r_name, r_info| r_info["Type"] == "AWS::AutoScaling::LaunchConfiguration" }.first
+      @stack_tpl['Resources'][launch_config[0]]['Properties']['UserData'] = {"Fn::Base64" => user_data}
+    end
+
+    @stack_tpl['Parameters'] = @stack_tpl['Parameters'].deep_merge(json['Parameters'])
+  end
+
+  def get_subnets( vpc_id, subnet_name )
+    cache_key = format('subnets_%s_%s_%s', subnet_name, vpc_id, ENV['AWS_DEFAULT_REGION'])
+    #@cache.del_key cache_key
+    subnets = @cache.cached_json(cache_key) do
+      filters = [{
+        name: 'tag:Name',
+        values: [subnet_name]
+      },{
+        name: 'vpc-id',
+        values: [vpc_id]
+      }]
+      Log.debug('Subnet filters: %s' % filters.inspect)
+      creds = Aws::SharedCredentials.new()
+      ec2_client = Aws::EC2::Client.new(credentials: creds)
+      ec2_client.describe_subnets(filters: filters).data.to_h.to_json
+    end
+  end
+
+  def security_group( m_config )
+    sg_json = load_module('security_group')
+    
+    sg_json['SG']['Properties']['GroupDescription'] = m_config['description']
+
+    ingress_rules = []
+    m_config['params']['allow'].each do |allow|
+      if allow.has_key? 'subnet'
+        ## do subnet lookup
+        subnets = get_subnets( get_param( 'VpcId' ), allow['subnet'])
+
+        subnets['subnets'].each do |subnet|
+          ingress_rules.push({ 
+            "CidrIp" => subnet['cidr_block'],
+            "ToPort" => allow['to'],
+            "FromPort" => allow['from'],
+            "IpProtocol" => allow['protocol'] 
+          })
+        end
+
+      else
+        ingress_rules.push({ 
+          "CidrIp" => allow['cidr'],
+          "ToPort" => allow['to'],
+          "FromPort" => allow['from'],
+          "IpProtocol" => allow['protocol'] 
+        })
+      end
+
+    end
+
+    sg_json['SG']['Properties']['SecurityGroupIngress'] = ingress_rules
+    @stack_tpl['Resources'][m_config['name']] = sg_json['SG']
+  end
+
+  def vpc_client( m_config )
+    json = load_module('vpc_client')
+    creds = Aws::SharedCredentials.new()
+
+    ## VpcId
+    cache_key = format('vpcs_%s', ENV['AWS_DEFAULT_REGION'])
+    vpcs = @cache.cached_json(cache_key) do
+      filters = [{
+        name: 'tag:Name',
+        values: [m_config['params']['vpc']['name']]
+      },{
+        name: 'tag:Version',
+        values: [m_config['params']['vpc']['version']]
+      }]
+      ec2_client = Aws::EC2::Client.new(credentials: creds)
+      ec2_client.describe_vpcs(filters: filters).data.to_h.to_json
+    end
+
+    if vpcs['vpcs'].size == 0
+      raise Exception.new('Unable to locate vpc')
+    end
+
+    vpc_id = vpcs['vpcs'].first['vpc_id']
+    @stack_tpl['Parameters']['VpcId'] = json['Parameters']['VpcId']
+
+    set_param( 'VpcId', vpc_id )
+    
+    ## Allow all traffic from security subnets
+    ## Allow only ssh from bastion subnets
+
+    m_config['params']['require_subnets'].each do |subnet_name|
+      cache_key = format('subnets_%s_%s_%s', subnet_name, vpc_id, ENV['AWS_DEFAULT_REGION'])
+      #@cache.del_key cache_key
+      subnets = @cache.cached_json(cache_key) do
+        filters = [{
+          name: 'tag:Name',
+          values: [subnet_name]
+        },{
+          name: 'vpc-id',
+          values: [vpc_id]
+        }]
+        Log.debug('Subnet filters: %s' % filters.inspect)
+        ec2_client = Aws::EC2::Client.new(credentials: creds)
+        ec2_client.describe_subnets(filters: filters).data.to_h.to_json
+      end
+
+      zone_param_tpl = deep_copy json['Parameters']['Zones']
+      subnet_param_tpl = deep_copy json['Parameters']['Subnets']
+
+      @stack_tpl['Parameters'][format('%sZones', subnet_name)] = zone_param_tpl
+      @stack_tpl['Parameters'][format('%sSubnets', subnet_name)] = subnet_param_tpl
+
+      set_param(format('%sZones', subnet_name), subnets['subnets'].map{|s| s['availability_zone'] })
+      set_param(format('%sSubnets', subnet_name), subnets['subnets'].map{|s| s['subnet_id'] })
+    end
+
+    ## Clear out the placeholder artifacts from the template.
+    json['Parameters'].delete 'Zones'
+    json['Parameters'].delete 'Subnets'
+    json['Parameters'].delete 'BastionCidr'
+  end
+
+  def network( m_config )
+    cache_key = 'azs_%s' % ENV['AWS_DEFAULT_REGION']
+
+    ## bastion route table requires igw
+    ## all others should use a nat
+
+    azs = @cache.cached_json(cache_key) do
+      creds = Aws::SharedCredentials.new()
+      ec2_client = Aws::EC2::Client.new(credentials: creds)
+      ec2_client.describe_availability_zones().data.to_h.to_json
+    end
+
+    net = NetAddr::CIDR.create(m_config['params']['cidr'])
+    blocks = net.subnet(:Bits => 24)
+
+    @stack_tpl['Resources']['VPC']['Properties']['CidrBlock'] = m_config['params']['cidr']
+
+    i = 0
+    subnet_block_i = 0
+    m_config['params']['subnets'].each do |m_subnet|
+      block_size = if m_subnet['size'] == 'large'
+        4
+      elsif m_subnet['size'] == 'medium'
+        2
+      else
+        1
+      end
+
+      # Log.debug("subnet_block_i: %i\tblock_size: %i" % [subnet_block_i, block_size])
+
+      az_list = if m_subnet['cross_zone'] == false
+        [azs['availability_zones'].first]
+      else
+        azs['availability_zones']
+      end
+
+      # pp m_subnet
+
+      az_list.each do |az|
+        subnet = deep_copy @stack_tpl['Resources']['Subnet']
+
+        prefix = if m_subnet['public'] == true
+          'Public'
+        else
+          'Private'
+        end
+
+        #Log.debug('prefix: %s' % prefix)
+
+        subnet_rta_name = format('%sSubnetRTA%i', prefix, i)
+        subnet_rta = deep_copy @stack_tpl['Resources'][format('%sSubnetRouteTableAssociation', prefix)]
+
+        subnet['Properties']['Tags'].push({
+          'Key' => 'Name',
+          'Value' => m_subnet['name']
+        })
+
+        subnet_cidr = NetAddr::merge(blocks[subnet_block_i,block_size]).first
+        subnet['Properties']['CidrBlock'] = subnet_cidr
+        subnet['Properties']['AvailabilityZone'] = az['zone_name']
+
+        subnet_rta['Properties']['SubnetId'] = {"Ref" => format('Subnet%i', i)}
+
+        if m_subnet['use_nat'] == true
+          subnet['Properties']['MapPublicIpOnLaunch'] = true
+          @stack_tpl['Resources']['NAT']['Properties']['SubnetId'] = {'Ref' => format('Subnet%i', i)}
+        end
+
+        @stack_tpl['Resources'][format('Subnet%i', i)] = subnet
+        @stack_tpl['Resources'][subnet_rta_name] = subnet_rta
+
+        i+=1
+        subnet_block_i += block_size
+      end
+    end
+
+    @stack_tpl['Resources'].delete 'Subnet'
+    @stack_tpl['Resources'].delete 'PublicSubnetRouteTableAssociation'
+    @stack_tpl['Resources'].delete 'PrivateSubnetRouteTableAssociation'
+
+    @stack_tpl['Resources']['VPC']['Properties']['Tags'].push({
+      'Key' => 'Name',
+      'Value' => m_config['params']['name']
+    })
+
+    @stack_tpl['Resources']['VPC']['Properties']['Tags'].push({
+      'Key' => 'Version',
+      'Value' => {"Ref": "StackVersion"}
+    })
+  end
+
 
 end

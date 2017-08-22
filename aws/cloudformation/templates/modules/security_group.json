@@ -1,0 +1,10 @@
+{
+	"SG": {
+  	"Type": "AWS::EC2::SecurityGroup",
+    "Properties": {
+    	"VpcId": { "Ref": "VpcId" },
+      "GroupDescription": "",
+      "SecurityGroupIngress": []
+    }
+  }
+}

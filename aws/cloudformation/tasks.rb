@@ -13,6 +13,10 @@ require './cloudformation/modules.rb'
 
 namespace :cf do
 
+  desc 'Turn a stack up'
+  task :up do |t,args|
+  end
+
   desc 'Status'
   task :stats do |t,args|
     cache = DevOps::Cache.new()
@@ -70,40 +74,9 @@ namespace :cf do
     end
   end
 
-  desc 'Launch networking rig'
-  task :launch_net, :profile_name, :stack_version, :stack_name do |t, args|
-    ## This is a special task which handles a complex network layout deployment.
-    profile_name = args[:profile_name]
-    region = ENV['AWS_DEFAULT_REGION'] || 'us-east-1'
-    stack_version = args[:stack_version]
 
-    ## Check to make sure the profile name exists.
-    fs_profile_file = File.join('cloudformation', 'profiles', format('%s.yml', profile_name))
-    Log.debug(format('FS(profile_file): %s', fs_profile_file))
-
-    unless File.exists? fs_profile_file
-      Log.fatal('Failed to find profile!')
-      exit
-    end
-
-    subnet_sizes = {
-      'large': 4,
-      'medium': 2,
-      'small': 1
-    }
-
-    yaml = YAML::load(File::read(fs_profile_file))
-
-    pp yaml
-
-    vpc = yaml['params']['Vpc']
-
-    net = NetAddr::CIDR.create(vpc['cidr'])
-    blocks = net.subnet(:Bits => 24)
-
-    cache = DevOps::Cache.new()
-    creds = Aws::SharedCredentials.new()
-    ec2_client = Aws::EC2::Client.new(region: region, credentials: creds)
+    #net = NetAddr::CIDR.create(vpc['cidr'])
+    #blocks = net.subnet(:Bits => 24)
 
     # describe_availability_zones
     #azs = ec2_client.describe_availability_zones()
@@ -120,16 +93,6 @@ namespace :cf do
     #blocks = net.subnet(:Bits => 24)
     #pp net.fill_in([blocks[0], blocks[2]])
     #pp 
-
-    yaml['params']['Subnets'].each do |subnet|
-      subnet['blocks'] = []
-
-    end
-
-    yaml['params']['NetworkRules'].each do |net_rule|
-    end
-
-  end
 
   desc 'Launch a stack based on a profile PROFILE_NAME STACK_VERSION STACK_NAME'
   task :launch, :profile_name, :stack_version, :stack_name do |t, args|
@@ -148,7 +111,6 @@ namespace :cf do
 
     yaml = YAML::load(File::read(fs_profile_file))
 
-
     ## Template
     fs_tpl_file = File.join('cloudformation', 'templates', format('%s.json', yaml['template']))
     if (!File.exists?(fs_tpl_file))
@@ -158,9 +120,10 @@ namespace :cf do
 
     stack_tpl = JSON::parse(File.read(fs_tpl_file))
 
+    params = []
     if yaml.has_key?('modules')
       m = ModulesProc.new(yaml['modules'], stack_tpl)
-      stack_tpl = m.compile
+      (stack_tpl, params) = m.compile
     end
 
     File.open("/tmp/stack.json", "w") do |f|
@@ -173,8 +136,8 @@ namespace :cf do
       yaml['params'] = p.compile()
     end
 
-    params = []
-    params.push({parameter_key: "StackVersion", parameter_value: stack_version.gsub(/\./, '-')})
+    #params.push({parameter_key: "StackVersion", parameter_value: stack_version.gsub(/\./, '-')})
+    params.push({parameter_key: "StackVersion", parameter_value: stack_version})
 
     yaml['params'] ||= []
 
@@ -201,12 +164,14 @@ namespace :cf do
     creds = Aws::SharedCredentials.new()
     cf_client = Aws::CloudFormation::Client.new(region: region, credentials: creds)
 
-    cache_key = format('cf_stacks-%s-%s', ENV['AWS_PROFILE'], ENV['AWS_DEFAULT_REGION'])
-    stacks = cache.cached_json(cache_key) do
+    cf_cache_key = format('cf_stacks-%s-%s', ENV['AWS_PROFILE'], ENV['AWS_DEFAULT_REGION'])
+    stacks = cache.cached_json cf_cache_key do
       cf_client.describe_stacks().data.to_h.to_json
     end
     stack_exists = stacks['stacks'].select { |s| s['stack_name'] == stack_name }.compact.size == 0 ? false : true
     Log.debug(format('Stack exists(%s): %s', stack_name, stack_exists))
+
+    # exit
 
     if stack_exists
       Log.debug(format('Updating stack'))
@@ -237,6 +202,8 @@ namespace :cf do
         disable_rollback: true,
         timeout_in_minutes: 30
       })
+
+      cache.del_key cf_cache_key
 
     end
 

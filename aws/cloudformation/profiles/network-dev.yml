@@ -1,0 +1,30 @@
+---
+name: "Network"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
+template: "network"
+description: "Complex network thingie"
+modules:
+  - "base"
+  - name: "VPC Network"
+    type: "network"
+    params:
+      cidr: "10.1.0.0/16"
+      name: "dev"
+      subnets:
+        - name: PublicLoadBalancer
+          size: medium
+          public: true
+        - name: Application
+          size: medium
+        - name: Data
+          size: small
+        - name: Cache
+          size: small
+        - name: Bastion
+          size: small
+          public: true
+          use_nat: true
+          cross_zone: false
+        - name: Security
+          size: small
+          cross_zone: false

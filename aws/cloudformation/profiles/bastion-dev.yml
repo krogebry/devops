@@ -1,0 +1,26 @@
+---
+name: "Bastion"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
+template: "bastion"
+description: "Simple bastion entry point."
+modules:
+  - "base"
+  - name: "Networking"
+    type: "vpc_client"
+    params:
+      require_subnets:
+        - Bastion
+      vpc: 
+        name: "dev"
+        version: "0.1.9"
+  - name: "ASG Handler"
+    type: "asg"
+    params:
+      user_data_script: bastion
+params:
+  KeyName: "devops-1"
+  ImageId:
+    type: "ami"
+    tags:
+      Name: "devops"
+      Version: "0.2.1"

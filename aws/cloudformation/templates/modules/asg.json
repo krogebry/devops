@@ -1,0 +1,37 @@
+{
+  "Parameters": { 
+    "InstanceType": {
+      "Type": "String",
+      "Default": "t2.small",
+      "Description": "Type of instance."
+    },
+
+    "KeyName": {
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "Description": "The EC2 Key Pair to allow SSH access to the instances",
+      "ConstraintDescription": "must be the name of an existing EC2 KeyPair."
+    },
+
+    "ImageId": {
+      "Type": "AWS::EC2::Image::Id",
+      "Description": "The EC2 Image Id",
+      "ConstraintDescription": "must be the name of an existing AMI."
+    },
+
+    "DesiredCapacity": {
+      "Type": "Number",
+      "Default": "1",
+      "Description": "Number of instances to launch in your ECS cluster."
+    },
+    "MaxSize": {
+      "Type": "Number",
+      "Default": "1",
+      "Description": "Maximum number of instances that can be launched in your ECS cluster."
+    },
+    "MinSize": {
+      "Type": "Number",
+      "Default": "1",
+      "Description": "Minimum number of instances that can be launched in your ECS cluster."
+    }
+  }
+}

@@ -27,6 +27,12 @@
       "Type": "String",
       "Default": "t2.micro",
       "ConstraintDescription": "You can specify only t2.mirco."
+    },
+
+    "KeyName": {
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "Description": "The EC2 Key Pair to allow SSH access to the instances",
+      "ConstraintDescription": "must be the name of an existing EC2 KeyPair."
     }
 
   },
@@ -44,7 +50,7 @@
       "Type": "AWS::ECS::Cluster"
     },
 
-    "taskdefinition": {
+    "TaskDefinition": {
       "Type": "AWS::ECS::TaskDefinition",
       "Properties": {
         "ContainerDefinitions": [{
@@ -80,11 +86,11 @@
     "EcsALB": {
       "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
       "Properties": {
-        "Subnets": { "Ref": "Subnets" },
-        "SecurityGroups": [{ "Ref": "PublicHTTP" }],
+        "Subnets": { "Ref": "PublicLoadBalancerSubnets" },
+        "SecurityGroups": [{ "Ref": "PublicToALB" }],
         "Tags": [{
-          "Key": "StackName",
-          "Value": { "Ref": "AWS::StackName" }
+          "Key": "Version",
+          "Value": { "Ref": "StackVersion" }
         }]
       }
     },
@@ -104,8 +110,8 @@
         "HealthyThresholdCount": 4,
         "UnhealthyThresholdCount": 3,
         "Tags" : [{ 
-					"Key" : "StackName", 
-					"Value" : { "Ref": "AWS::StackName" }
+					"Key" : "Version", 
+					"Value" : { "Ref": "StackVersion" }
 				}]
       }
     },
@@ -129,8 +135,8 @@
         "MinSize": { "Ref": "MinSize" },
         "MaxSize": { "Ref": "MaxSize" },
         "DesiredCapacity": { "Ref": "DesiredCapacity" },
-        "AvailabilityZones": { "Ref": "Zones" },
-        "VPCZoneIdentifier": { "Ref": "Subnets" },
+        "AvailabilityZones": { "Ref": "ApplicationZones" },
+        "VPCZoneIdentifier": { "Ref": "ApplicationSubnets" },
         "LaunchConfigurationName": { "Ref": "ContainerInstances" }
       },
       "CreationPolicy": {
@@ -186,23 +192,16 @@
       },
 
       "Properties": {
-        "ImageId": {
-          "Fn::FindInMap": [
-            "AWSRegionToAMI", {
-              "Ref": "AWS::Region"
-            },
-            "AMIID"
-          ]
-        },
-        "InstanceType": { "Ref": "InstanceType" },
-        "IamInstanceProfile": { "Ref": "EC2InstanceProfile" },
-        "KeyName": { "Ref": "KeyName" },
-        "SecurityGroups": [{ "Ref": "PrivateInternal" }],
-        "InstanceMonitoring": "false",
-        "AssociatePublicIpAddress": "true",
         "UserData": {
           "Fn::Base64": { "Fn::Sub": "#!/bin/bash -xe\nyum install -y aws-cfn-bootstrap\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ContainerInstances --region ${AWS::Region}\nsleep 0\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroup --region ${AWS::Region}\n"}
-        }
+        },
+        "ImageId": { "Fn::FindInMap": [ "AWSRegionToAMI", { "Ref": "AWS::Region" }, "AMIID" ]},
+        "KeyName": { "Ref": "KeyName" },
+        "InstanceType": { "Ref": "InstanceType" },
+        "SecurityGroups": [{ "Ref": "EC2ClusterInstances" }],
+        "IamInstanceProfile": { "Ref": "EC2InstanceProfile" },
+        "InstanceMonitoring": "false",
+        "AssociatePublicIpAddress": "false"
       }
     },
 
@@ -309,42 +308,9 @@
       }
     },
 
-    "PrivateInternal": {
-      "Type": "AWS::EC2::SecurityGroup",
-      "Properties": {
-        "VpcId": { "Ref": "VpcId" },
-        "GroupDescription": "Allows public access by HTTP",
-        "SecurityGroupIngress": [{
-          "CidrIp": "172.30.0.0/16",
-          "ToPort": "65535",
-          "FromPort": "0",
-          "IpProtocol": "tcp"
-			  },{
-          "CidrIp": "172.0.0.0/8",
-          "FromPort": "22",
-          "ToPort": "22",
-          "IpProtocol": "tcp"
-        }]
-      }
-    },
-
-    "PublicHTTP": {
-      "Type": "AWS::EC2::SecurityGroup",
-      "Properties": {
-        "VpcId": { "Ref": "VpcId" },
-        "GroupDescription": "Allows public access by HTTP",
-        "SecurityGroupIngress": [{
-          "CidrIp": "0.0.0.0/0",
-          "ToPort": 80,
-          "FromPort": 80,
-          "IpProtocol": "tcp"
-        }]
-      }
-    },
-
-    "service": {
+    "Service": {
       "Type": "AWS::ECS::Service",
-      "DependsOn": [ "ALBListener", "ECSAutoScalingGroup", "ECSServiceRole", "EcsTargetGroup", "EC2Role", "taskdefinition" ],
+      "DependsOn": [ "ALBListener", "ECSAutoScalingGroup", "ECSServiceRole", "EcsTargetGroup", "EC2Role", "TaskDefinition" ],
       "Properties": {
         "Cluster": { "Ref": "ECSCluster" },
         "DesiredCount": "1",
@@ -354,11 +320,9 @@
           "TargetGroupArn" : { "Ref": "EcsTargetGroup" }
         }],
         "Role": { "Ref": "ECSServiceRole" },
-        "TaskDefinition": { "Ref": "taskdefinition" }
+        "TaskDefinition": { "Ref": "TaskDefinition" }
       }
     }
 
-  },
-
-  "Outputs": { }
+  }
 }

@@ -1,0 +1,139 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": {
+  },
+
+  "Resources": {
+
+    "BastionASG": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "MinSize": { "Ref": "MinSize" },
+        "MaxSize": { "Ref": "MaxSize" },
+        "DesiredCapacity": { "Ref": "DesiredCapacity" },
+        "AvailabilityZones": { "Ref": "BastionZones" },
+        "VPCZoneIdentifier": { "Ref": "BastionSubnets" },
+        "LaunchConfigurationName": { "Ref": "BastionInstances" }
+      },
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Timeout": "PT15M"
+        }
+      },
+      "UpdatePolicy": {
+        "AutoScalingRollingUpdate": {
+          "PauseTime": "PT5M",
+          "MaxBatchSize": "1",
+          "MinInstancesInService": "1",
+          "WaitOnResourceSignals": "true"
+        }
+      }
+    },
+
+    "BastionInstances": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "config": {
+            "files": {
+              "/etc/cfn/cfn-hup.conf": {
+                "content": { "Fn::Sub": "[main]\nstack=${AWS::StackId}\nregion=${AWS::Region}\n" },
+                "mode": "000400",
+                "owner": "root",
+                "group": "root"
+              },
+              "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
+                "content": { "Fn::Sub": "[cfn-auto-reloader-hook]\ntriggers=post.update\npath=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init\naction=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource BastionASG --region ${AWS::Region}\nrunas=root\n" }
+              }
+            },
+            "services": {
+              "sysvinit": {
+                "cfn-hup": {
+                  "enabled": "true",
+                  "ensureRunning": "true",
+                  "files": [
+                    "/etc/cfn/cfn-hup.conf",
+                    "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+
+      "Properties": {
+        "ImageId": { "Ref": "ImageId" },
+        "InstanceType": { "Ref": "InstanceType" },
+        "IamInstanceProfile": { "Ref": "EC2InstanceProfile" },
+        "KeyName": { "Ref": "KeyName" },
+        "SecurityGroups": [{ "Ref": "PrivateInternal" }],
+        "InstanceMonitoring": "false",
+        "AssociatePublicIpAddress": "true",
+        "UserData": ""
+      }
+    },
+
+    "EC2Role": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": {
+              "Service": [ "ec2.amazonaws.com" ]
+            },
+            "Action": [
+              "sts:AssumeRole"
+            ]
+          }]
+        },
+        "Path": "/",
+        "Policies": [{
+          "PolicyName": "ecs-instance-service",
+          "PolicyDocument": {
+            "Statement": [{
+              "Effect": "Allow",
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "cloudformation:SignalResource",
+                "s3:Get*",
+                "s3:List*"
+              ],
+              "Resource": "*"
+            }]
+          }
+        }]
+      }
+    },
+
+    "EC2InstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [{ "Ref": "EC2Role" }]
+      }
+    },
+
+    "PrivateInternal": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "VpcId": { "Ref": "VpcId" },
+        "GroupDescription": "Allows public access by HTTP",
+        "SecurityGroupIngress": [{
+          "CidrIp": "172.30.0.0/16",
+          "ToPort": "65535",
+          "FromPort": "0",
+          "IpProtocol": "tcp"
+			  },{
+          "CidrIp": "172.0.0.0/8",
+          "FromPort": "22",
+          "ToPort": "22",
+          "IpProtocol": "tcp"
+        }]
+      }
+    }
+
+  }
+}

@@ -1,0 +1,130 @@
+{
+	"Parameters": {
+	},
+
+  "Resources": {
+
+    "VPC": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": "",
+        "Tags": [{
+          "Key": "Version",
+          "Value": {"Ref": "StackVersion"}
+        }]
+      }
+    },
+
+		"PublicRouteTable": {
+    	"Type": "AWS::EC2::RouteTable",
+      "Properties" : {
+        "Tags": [{ 
+					"Key": "Version", 
+					"Value": { "Ref": "StackVersion" }
+        },{
+					"Key": "Name", 
+					"Value": "Public"
+				}],
+      	"VpcId": { "Ref" : "VPC" }
+      }
+    },
+
+    "PublicSubnetRouteTableAssociation": {
+    	"Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+      	"SubnetId": "",
+        "RouteTableId": { "Ref": "PublicRouteTable" }
+    	}
+		},
+
+		"DefaultPublicRoute": {
+    	"Type": "AWS::EC2::Route",
+      "DependsOn": "InternetGateway",
+      "Properties": {
+        "GatewayId": { "Ref": "InternetGateway" },
+      	"RouteTableId": { "Ref": "PublicRouteTable" },
+        "DestinationCidrBlock": "0.0.0.0/0"
+      }
+    },
+
+    "InternetGateway": {
+    	"Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+      	"Tags": [{
+					"Key": "Version", 
+					"Value": {"Ref": "StackVersion"}
+				}]
+      }
+    },
+
+		"PublicAttachGateway" : {
+   		"Type": "AWS::EC2::VPCGatewayAttachment",
+   		"Properties": {
+      		"VpcId": { "Ref": "VPC" },
+      		"InternetGatewayId": { "Ref": "InternetGateway" }
+   		}
+		},
+
+		"PrivateRouteTable": {
+    	"Type": "AWS::EC2::RouteTable",
+      "Properties" : {
+        "Tags": [{ 
+					"Key": "Version", 
+					"Value": { "Ref": "StackVersion" }
+        },{
+					"Key": "Name", 
+					"Value": "Private"
+				}],
+      	"VpcId": { "Ref" : "VPC" }
+      }
+    },
+
+    "PrivateSubnetRouteTableAssociation": {
+    	"Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+      	"SubnetId": "",
+        "RouteTableId": { "Ref": "PrivateRouteTable" }
+    	}
+		},
+
+		"DefaultPrivateRoute": {
+    	"Type": "AWS::EC2::Route",
+      "DependsOn": "NAT",
+      "Properties": {
+        "NatGatewayId": { "Ref": "NAT" },
+      	"RouteTableId": { "Ref": "PrivateRouteTable" },
+        "DestinationCidrBlock": "0.0.0.0/0"
+      }
+    },
+
+		"NAT": {
+  		"Type": "AWS::EC2::NatGateway",
+  		"Properties": {
+    		"SubnetId": "",
+    		"AllocationId": { "Fn::GetAtt" : ["NATEIP", "AllocationId"]}
+  		}
+		},
+
+		"NATEIP" : {
+  		"Type" : "AWS::EC2::EIP",
+  		"Properties" : {
+    		"Domain" : "vpc"
+  		}
+		},
+
+    "Subnet": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {"Ref": "VPC"},
+        "AvailabilityZone": {},
+        "CidrBlock": "",
+        "Tags": [{
+          "Key": "Version",
+          "Value": {"Ref": "StackVersion"}
+        }]
+      }
+    }
+
+  }
+
+}
