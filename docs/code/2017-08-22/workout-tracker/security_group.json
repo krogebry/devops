@@ -1,0 +1,81 @@
+{
+  "IpPermissionsEgress": [
+    {
+      "PrefixListIds": [],
+      "Ipv6Ranges": [],
+      "IpRanges": [
+        {
+          "CidrIp": "0.0.0.0/0"
+        }
+      ],
+      "IpProtocol": "-1",
+      "UserIdGroupPairs": []
+    }
+  ],
+  "Description": "EC2 cluster instances.",
+  "Tags": [
+    {
+      "Value": "WT-dev-0-3-0",
+      "Key": "aws:cloudformation:stack-name"
+    },
+    {
+      "Value": "bryan.kroger@gmail.com",
+      "Key": "Owner"
+    },
+    {
+      "Value": "arn:aws:cloudformation:us-east-1:903369196314:stack/WT-dev-0-3-0/5523db70-881a-11e7-aa8b-50d5cd0dfcc6",
+      "Key": "aws:cloudformation:stack-id"
+    },
+    {
+      "Value": "EC2ClusterInstances",
+      "Key": "aws:cloudformation:logical-id"
+    }
+  ],
+  "GroupName": "WT-dev-0-3-0-EC2ClusterInstances-STEFNTPKUMUA",
+  "VpcId": "vpc-e63d1c9f",
+  "OwnerId": "903369196314",
+  "GroupId": "sg-4341ca33",
+  "IpPermissions": [
+    {
+      "ToPort": 65535,
+      "IpRanges": [
+        {
+          "CidrIp": "10.1.6.0/23"
+        },
+        {
+          "CidrIp": "10.1.2.0/23"
+        },
+        {
+          "CidrIp": "10.1.8.0/23"
+        },
+        {
+          "CidrIp": "10.1.0.0/23"
+        },
+        {
+          "CidrIp": "10.1.10.0/23"
+        },
+        {
+          "CidrIp": "10.1.4.0/23"
+        }
+      ],
+      "IpProtocol": "tcp",
+      "FromPort": 32768,
+      "Ipv6Ranges": [],
+      "PrefixListIds": [],
+      "UserIdGroupPairs": []
+    },
+    {
+      "ToPort": 22,
+      "IpRanges": [
+        {
+          "CidrIp": "10.1.36.0/24"
+        }
+      ],
+      "IpProtocol": "tcp",
+      "FromPort": 22,
+      "Ipv6Ranges": [],
+      "PrefixListIds": [],
+      "UserIdGroupPairs": []
+    }
+  ]
+}

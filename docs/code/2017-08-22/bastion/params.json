@@ -1,0 +1,50 @@
+[
+  {
+    "ParameterKey": "KeyName",
+    "ParameterValue": "devops-1"
+  },
+  {
+    "ParameterKey": "MinSize",
+    "ParameterValue": "1"
+  },
+  {
+    "ParameterKey": "InfStackVersion",
+    "ParameterValue": "0.1.0"
+  },
+  {
+    "ParameterKey": "VpcId",
+    "ParameterValue": "vpc-e63d1c9f"
+  },
+  {
+    "ParameterKey": "ImageId",
+    "ParameterValue": "ami-a4c7edb2"
+  },
+  {
+    "ParameterKey": "DesiredCapacity",
+    "ParameterValue": "1"
+  },
+  {
+    "ParameterKey": "S3BucketName",
+    "ParameterValue": "0.1.0"
+  },
+  {
+    "ParameterKey": "InstanceType",
+    "ParameterValue": "t2.small"
+  },
+  {
+    "ParameterKey": "BastionSubnets",
+    "ParameterValue": "subnet-e20fc386"
+  },
+  {
+    "ParameterKey": "MaxSize",
+    "ParameterValue": "1"
+  },
+  {
+    "ParameterKey": "BastionZones",
+    "ParameterValue": "us-east-1a"
+  },
+  {
+    "ParameterKey": "StackVersion",
+    "ParameterValue": "0.3.0"
+  }
+]

@@ -14,7 +14,39 @@ require './cloudformation/modules.rb'
 namespace :cf do
 
   desc 'Turn a stack up'
-  task :up do |t,args|
+  task :up, :env_name, :version do |t,args|
+    version = args[:version]
+    env_name = args[:env_name]
+
+    #Rake::Task['cf:launch'].invoke( 'network-%s' % env_name, version, 'network-%s' % env_name )
+    cmd_wait = format('aws cloudformation wait stack-create-complete --stack-name network-%s-%s', env_name, version.gsub(/\./,'-'))
+    Log.debug('CMD(wait): %s' % cmd_wait)
+    Rake::Task['cf:launch'].reenable
+    system cmd_wait
+
+    Rake::Task['flush_cache'].invoke()
+
+    Rake::Task['cf:launch'].invoke( 'bastion-%s' % env_name, version, 'bastion-%s' % env_name )
+    Rake::Task['cf:launch'].reenable
+    Rake::Task['cf:launch'].invoke( 'workout-tracker-%s' % env_name, version, 'WT-%s' % env_name )
+  end
+
+  desc "Turn down a stack"
+  task :down, :env_name, :version do |t,args|
+    version = args[:version]
+    env_name = args[:env_name]
+
+    cmd_del_bastion = format('aws cloudformation delete-stack --stack-name bastion-%s-%s', env_name, version.gsub(/\./,'-'))
+    cmd_del_wt = format('aws cloudformation delete-stack --stack-name WT-%s-%s', env_name, version.gsub(/\./,'-'))
+    cmd_wait_wt = format('aws cloudformation wait stack-delete-complete --stack-name WT-%s-%s', env_name, version.gsub(/\./,'-'))
+
+    cmd_del_network = format('aws cloudformation delete-stack --stack-name network-%s-%s', env_name, version.gsub(/\./,'-'))
+
+    system cmd_del_bastion
+    system cmd_del_wt
+    system cmd_wait_wt
+
+    system cmd_del_network
   end
 
   desc 'Status'

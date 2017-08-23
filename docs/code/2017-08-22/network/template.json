@@ -1,0 +1,1014 @@
+{
+  "Resources": {
+    "NATEIP": {
+      "Properties": {
+        "Domain": "vpc"
+      },
+      "Type": "AWS::EC2::EIP"
+    },
+    "Subnet0": {
+      "Properties": {
+        "CidrBlock": "10.1.0.0/23",
+        "AvailabilityZone": "us-east-1a",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "PublicLoadBalancer"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "PrivateSubnetRTA23": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet23"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "PublicSubnetRTA4": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet4"
+        },
+        "RouteTableId": {
+          "Ref": "PublicRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "PublicSubnetRTA1": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet1"
+        },
+        "RouteTableId": {
+          "Ref": "PublicRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "Subnet9": {
+      "Properties": {
+        "CidrBlock": "10.1.18.0/23",
+        "AvailabilityZone": "us-east-1d",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Application"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "PublicSubnetRTA3": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet3"
+        },
+        "RouteTableId": {
+          "Ref": "PublicRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "Subnet3": {
+      "Properties": {
+        "CidrBlock": "10.1.6.0/23",
+        "AvailabilityZone": "us-east-1d",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "PublicLoadBalancer"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "PrivateSubnetRTA14": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet14"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "Subnet18": {
+      "Properties": {
+        "CidrBlock": "10.1.30.0/24",
+        "AvailabilityZone": "us-east-1a",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Cache"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "Subnet13": {
+      "Properties": {
+        "CidrBlock": "10.1.25.0/24",
+        "AvailabilityZone": "us-east-1b",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Data"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "PrivateSubnetRTA18": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet18"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "PrivateSubnetRTA17": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet17"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "Subnet16": {
+      "Properties": {
+        "CidrBlock": "10.1.28.0/24",
+        "AvailabilityZone": "us-east-1e",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Data"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "Subnet12": {
+      "Properties": {
+        "CidrBlock": "10.1.24.0/24",
+        "AvailabilityZone": "us-east-1a",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Data"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "Subnet7": {
+      "Properties": {
+        "CidrBlock": "10.1.14.0/23",
+        "AvailabilityZone": "us-east-1b",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Application"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "PublicAttachGateway": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "InternetGateway"
+        },
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment"
+    },
+    "Subnet1": {
+      "Properties": {
+        "CidrBlock": "10.1.2.0/23",
+        "AvailabilityZone": "us-east-1b",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "PublicLoadBalancer"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "PrivateSubnetRTA6": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet6"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "PrivateSubnetRTA15": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet15"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "PrivateSubnetRTA11": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet11"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "PrivateSubnetRTA25": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet25"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "PrivateSubnetRTA12": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet12"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "Subnet10": {
+      "Properties": {
+        "CidrBlock": "10.1.20.0/23",
+        "AvailabilityZone": "us-east-1e",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Application"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "PrivateSubnetRTA9": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet9"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "Subnet2": {
+      "Properties": {
+        "CidrBlock": "10.1.4.0/23",
+        "AvailabilityZone": "us-east-1c",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "PublicLoadBalancer"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "PrivateSubnetRTA10": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet10"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "Subnet24": {
+      "Properties": {
+        "CidrBlock": "10.1.36.0/24",
+        "AvailabilityZone": "us-east-1a",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Bastion"
+          }
+        ],
+        "MapPublicIpOnLaunch": true,
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "Subnet20": {
+      "Properties": {
+        "CidrBlock": "10.1.32.0/24",
+        "AvailabilityZone": "us-east-1c",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Cache"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "InternetGateway": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          }
+        ]
+      },
+      "Type": "AWS::EC2::InternetGateway"
+    },
+    "Subnet11": {
+      "Properties": {
+        "CidrBlock": "10.1.22.0/23",
+        "AvailabilityZone": "us-east-1f",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Application"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "PrivateSubnetRTA7": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet7"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "PublicSubnetRTA0": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet0"
+        },
+        "RouteTableId": {
+          "Ref": "PublicRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "Subnet5": {
+      "Properties": {
+        "CidrBlock": "10.1.10.0/23",
+        "AvailabilityZone": "us-east-1f",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "PublicLoadBalancer"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "PrivateRouteTable": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Private"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::RouteTable"
+    },
+    "NAT": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet24"
+        },
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "NATEIP",
+            "AllocationId"
+          ]
+        }
+      },
+      "Type": "AWS::EC2::NatGateway"
+    },
+    "PrivateSubnetRTA22": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet22"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "DefaultPublicRoute": {
+      "Properties": {
+        "GatewayId": {
+          "Ref": "InternetGateway"
+        },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "RouteTableId": {
+          "Ref": "PublicRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::Route",
+      "DependsOn": "InternetGateway"
+    },
+    "Subnet19": {
+      "Properties": {
+        "CidrBlock": "10.1.31.0/24",
+        "AvailabilityZone": "us-east-1b",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Cache"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "DefaultPrivateRoute": {
+      "Properties": {
+        "NatGatewayId": {
+          "Ref": "NAT"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        },
+        "DestinationCidrBlock": "0.0.0.0/0"
+      },
+      "Type": "AWS::EC2::Route",
+      "DependsOn": "NAT"
+    },
+    "PublicSubnetRTA5": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet5"
+        },
+        "RouteTableId": {
+          "Ref": "PublicRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "Subnet21": {
+      "Properties": {
+        "CidrBlock": "10.1.33.0/24",
+        "AvailabilityZone": "us-east-1d",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Cache"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "PrivateSubnetRTA8": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet8"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "Subnet15": {
+      "Properties": {
+        "CidrBlock": "10.1.27.0/24",
+        "AvailabilityZone": "us-east-1d",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Data"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "PublicRouteTable": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Public"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::RouteTable"
+    },
+    "Subnet17": {
+      "Properties": {
+        "CidrBlock": "10.1.29.0/24",
+        "AvailabilityZone": "us-east-1f",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Data"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "PrivateSubnetRTA13": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet13"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "Subnet25": {
+      "Properties": {
+        "CidrBlock": "10.1.37.0/24",
+        "AvailabilityZone": "us-east-1a",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Security"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "Subnet4": {
+      "Properties": {
+        "CidrBlock": "10.1.8.0/23",
+        "AvailabilityZone": "us-east-1e",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "PublicLoadBalancer"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "Subnet23": {
+      "Properties": {
+        "CidrBlock": "10.1.35.0/24",
+        "AvailabilityZone": "us-east-1f",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Cache"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "PublicSubnetRTA24": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet24"
+        },
+        "RouteTableId": {
+          "Ref": "PublicRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "PrivateSubnetRTA20": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet20"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "PrivateSubnetRTA19": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet19"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "Subnet22": {
+      "Properties": {
+        "CidrBlock": "10.1.34.0/24",
+        "AvailabilityZone": "us-east-1e",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Cache"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "Subnet6": {
+      "Properties": {
+        "CidrBlock": "10.1.12.0/23",
+        "AvailabilityZone": "us-east-1a",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Application"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "PrivateSubnetRTA21": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet21"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "VPC": {
+      "Properties": {
+        "CidrBlock": "10.1.0.0/16",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "dev"
+          },
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          }
+        ]
+      },
+      "Type": "AWS::EC2::VPC"
+    },
+    "Subnet8": {
+      "Properties": {
+        "CidrBlock": "10.1.16.0/23",
+        "AvailabilityZone": "us-east-1c",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Application"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+    "PublicSubnetRTA2": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet2"
+        },
+        "RouteTableId": {
+          "Ref": "PublicRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "PrivateSubnetRTA16": {
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet16"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateRouteTable"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+    "Subnet14": {
+      "Properties": {
+        "CidrBlock": "10.1.26.0/24",
+        "AvailabilityZone": "us-east-1c",
+        "Tags": [
+          {
+            "Key": "Version",
+            "Value": {
+              "Ref": "StackVersion"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": "Data"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      },
+      "Type": "AWS::EC2::Subnet"
+    }
+  },
+  "Parameters": {
+    "S3BucketName": {
+      "Type": "String",
+      "Description": "Name of the DevOps bucket.",
+      "Default": "0.1.0"
+    },
+    "InfStackVersion": {
+      "Type": "String",
+      "Description": "Infrastructure stack version.",
+      "Default": "0.1.0"
+    },
+    "StackVersion": {
+      "Type": "String",
+      "Description": "Stack version.",
+      "Default": "0.1.0"
+    }
+  }
+}

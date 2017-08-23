@@ -1,0 +1,58 @@
+[
+  {
+    "ParameterValue": "[ACCOUNT_ID].dkr.ecr.us-east-1.amazonaws.com/workout-tracker",
+    "ParameterKey": "DockerImageName"
+  },
+  {
+    "ParameterValue": "subnet-db0bc7bf,subnet-29d79525,subnet-30a04c0f,subnet-f8f1fdb0,subnet-1a410936,subnet-95ce8dcf",
+    "ParameterKey": "ApplicationSubnets"
+  },
+  {
+    "ParameterValue": "1",
+    "ParameterKey": "DesiredCapacity"
+  },
+  {
+    "ParameterValue": "subnet-6e8a8626,subnet-90d1939c,subnet-fd4d05d1,subnet-e204c886,subnet-8ca549b3,subnet-a7d291fd",
+    "ParameterKey": "PublicLoadBalancerSubnets"
+  },
+  {
+    "ParameterValue": "1",
+    "ParameterKey": "MaxSize"
+  },
+  {
+    "ParameterValue": "us-east-1a,us-east-1f,us-east-1b,us-east-1c,us-east-1e,us-east-1d",
+    "ParameterKey": "ApplicationZones"
+  },
+  {
+    "ParameterValue": "devops-1",
+    "ParameterKey": "KeyName"
+  },
+  {
+    "ParameterValue": "1",
+    "ParameterKey": "MinSize"
+  },
+  {
+    "ParameterValue": "0.1.0",
+    "ParameterKey": "InfStackVersion"
+  },
+  {
+    "ParameterValue": "vpc-e63d1c9f",
+    "ParameterKey": "VpcId"
+  },
+  {
+    "ParameterValue": "us-east-1c,us-east-1f,us-east-1e,us-east-1a,us-east-1b,us-east-1d",
+    "ParameterKey": "PublicLoadBalancerZones"
+  },
+  {
+    "ParameterValue": "0.1.0",
+    "ParameterKey": "S3BucketName"
+  },
+  {
+    "ParameterValue": "t2.micro",
+    "ParameterKey": "InstanceType"
+  },
+  {
+    "ParameterValue": "0.3.0",
+    "ParameterKey": "StackVersion"
+  }
+]

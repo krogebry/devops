@@ -1,0 +1,3 @@
+2017-08-21 18:37:31,670 [DEBUG] Response: 400 https://cloudformation.us-east-1.amazonaws.com/?Status=SUCCESS&ContentType=JSON&StackName=BastionDev-0-2-4&Version=2010-05-15&UniqueId=i-0ca701c5d32cf6479&Action=SignalResource&LogicalResourceId=BastionInstances [headers: {'x-amzn-requestid': 'cab08ec0-869f-11e7-a79f-5d957fe75fa6', 'date': 'Mon, 21 Aug 2017 18:37:31 GMT', 'content-length': '188', 'content-type': 'application/json', 'connection': 'close'}]
+2017-08-21 18:37:31,672 [DEBUG] Response error: {"Error":{"Code":"ValidationError","Message":"Resource BastionInstances is of type AWS_AS_LC_V3 and cannot be signaled","Type":"Sender"},"RequestId":"cab08ec0-869f-11e7-a79f-5d957fe75fa6"}
+

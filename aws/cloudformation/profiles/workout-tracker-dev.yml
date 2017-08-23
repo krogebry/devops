@@ -13,7 +13,7 @@ modules:
         - Application
       vpc: 
         name: "dev"
-        version: "0.1.9"
+        version: "0.3.0"
   - name: "R53 endpoint"
     type: "r53"
     params:

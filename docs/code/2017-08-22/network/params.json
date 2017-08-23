@@ -1,0 +1,14 @@
+[
+  {
+    "ParameterValue": "0.1.0",
+    "ParameterKey": "InfStackVersion"
+  },
+  {
+    "ParameterValue": "0.1.0",
+    "ParameterKey": "S3BucketName"
+  },
+  {
+    "ParameterValue": "0.3.0",
+    "ParameterKey": "StackVersion"
+  }
+]
