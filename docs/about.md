@@ -17,3 +17,5 @@ and knowing how to convince people not to blow their face off.
 <p>
 I treat my career like a startup; like the startup of me.  Failures and pivots are always part of the process.
 </p>
+
+<a href="https://www.linkedin.com/in/bryankroger/">Linkedin</a>
