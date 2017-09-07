@@ -13,7 +13,7 @@ modules:
         - Application
       vpc: 
         name: "dev"
-        version: "0.3.0"
+        version: "0.3.1"
   - name: "R53 endpoint"
     type: "r53"
     params:
@@ -52,4 +52,4 @@ params:
   KeyName: "devops-1"
   DockerImageName:
     type: "docker_image_name"
-    image_name: "workout-tracker"
+    image_name: "redis"

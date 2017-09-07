@@ -8,7 +8,7 @@
     },
     "MaxSize": {
       "Type": "Number",
-      "Default": "1",
+      "Default": "2",
       "Description": "Maximum number of instances that can be launched in your ECS cluster."
     },
     "MinSize": {
@@ -16,30 +16,23 @@
       "Default": "1",
       "Description": "Minimum number of instances that can be launched in your ECS cluster."
     },
-
-    "DockerImageName": {
-      "Description": "Full URI of the docker image container",
-      "Type": "String"
-    },
-
     "InstanceType": {
       "Description": "The EC2 instance type",
       "Type": "String",
-      "Default": "t2.micro",
+      "Default": "t2.small",
       "ConstraintDescription": "You can specify only t2.mirco."
     },
-
     "KeyName": {
       "Type": "AWS::EC2::KeyPair::KeyName",
       "Description": "The EC2 Key Pair to allow SSH access to the instances",
       "ConstraintDescription": "must be the name of an existing EC2 KeyPair."
     }
-
   },
 
   "Mappings": {
     "AWSRegionToAMI": {
-      "us-east-1": { "AMIID": "ami-1924770e" },
+      "us-east-1": { "AMIID": "ami-7b40176d" },
+      "us-east-1-old": { "AMIID": "ami-1924770e" },
       "us-east-2": { "AMIID": "ami-446f3521" },
 			"us-west-2": { "AMIID": "ami-56ed4936" }
     }
@@ -48,85 +41,6 @@
   "Resources": {
     "ECSCluster": {
       "Type": "AWS::ECS::Cluster"
-    },
-
-    "TaskDefinition": {
-      "Type": "AWS::ECS::TaskDefinition",
-      "Properties": {
-        "ContainerDefinitions": [{
-          "Cpu": "1024",
-          "Name": "workout-tracker",
-          "Image": { "Ref": "DockerImageName" },
-          "Memory": 300,
-          "Essential": "true",
-          "Environment": [{
-            "Name": "ENV_NAME",
-            "Value": "dev"
-          },{
-            "Name": "AWS_DEFAULT_REGION",
-            "Value": "us-east-1"
-          }],
-          "LogConfiguration": {
-            "LogDriver": "awslogs",
-            "Options": {
-              "awslogs-group": "krogebry-test",
-              "awslogs-region": { "Ref": "AWS::Region" },
-              "awslogs-stream-prefix": "awslogs-example"
-            }
-          },
-          "PortMappings": [{
-            "HostPort": 0,
-            "ContainerPort": 8080
-          }]
-
-        }]
-      }
-    },
-
-    "EcsALB": {
-      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
-      "Properties": {
-        "Subnets": { "Ref": "PublicLoadBalancerSubnets" },
-        "SecurityGroups": [{ "Ref": "PublicToALB" }],
-        "Tags": [{
-          "Key": "Version",
-          "Value": { "Ref": "StackVersion" }
-        }]
-      }
-    },
-
-    "EcsTargetGroup" : {
-      "Type" : "AWS::ElasticLoadBalancingV2::TargetGroup",
-      "Properties" : {
-        "Name": { "Ref": "AWS::StackName" },
-        "Port": 8080,
-        "VpcId": {"Ref" : "VpcId"},
-        "Matcher" : { "HttpCode" : "200" },
-        "Protocol": "HTTP",
-        "HealthCheckProtocol": "HTTP",
-        "HealthCheckPath": "/healthz",
-        "HealthCheckTimeoutSeconds": 10,
-        "HealthCheckIntervalSeconds": 30,
-        "HealthyThresholdCount": 4,
-        "UnhealthyThresholdCount": 3,
-        "Tags" : [{ 
-					"Key" : "Version", 
-					"Value" : { "Ref": "StackVersion" }
-				}]
-      }
-    },
-
-    "ALBListener" : {
-      "Type" : "AWS::ElasticLoadBalancingV2::Listener",
-      "Properties" : {
-        "Port" : "80",
-        "Protocol" : "HTTP",
-        "DefaultActions" : [{
-          "Type" : "forward",
-          "TargetGroupArn" : { "Ref" : "EcsTargetGroup" }
-        }],
-        "LoadBalancerArn" : { "Ref" : "EcsALB" }
-      }
     },
 
     "ECSAutoScalingGroup": {
@@ -205,46 +119,6 @@
       }
     },
 
-    "ECSServiceRole":{
-      "Type":"AWS::IAM::Role",
-      "Properties":{
-        "AssumeRolePolicyDocument":{
-          "Statement":[{
-					  "Sid": "ecsallow",
-            "Effect":"Allow",
-            "Principal":{
-              "Service":[ "ecs.amazonaws.com" ]
-            },
-            "Action":[ "sts:AssumeRole" ]
-          }]
-        },
-        "Path":"/",
-        "Policies":[{
-          "PolicyName":"ecs-service",
-          "PolicyDocument":{
-            "Statement":[{
-              "Effect":"Allow",
-              "Action":[
-                "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-                "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-                "ec2:Describe*",
-                "ec2:AuthorizeSecurityGroupIngress",
-                "elasticloadbalancing:*",
-                "elasticloadbalancing:DeregisterTargets",
-                "elasticloadbalancing:Describe*",
-                "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:GetAuthorizationToken"
-              ],
-              "Resource":"*"
-            }]
-          }
-        }]
-      }
-	  },
-
     "EC2Role": {
       "Type": "AWS::IAM::Role",
       "Properties": {
@@ -274,6 +148,8 @@
                 "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
                 "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
                 "ec2:Describe*",
+                "dynamodb:Scan",
+                "dynamodb:Query",
                 "ec2:AuthorizeSecurityGroupIngress",
                 "elasticloadbalancing:*",
                 "elasticloadbalancing:DeregisterTargets",
@@ -306,23 +182,6 @@
         "Path": "/",
         "Roles": [{ "Ref": "EC2Role" }]
       }
-    },
-
-    "Service": {
-      "Type": "AWS::ECS::Service",
-      "DependsOn": [ "ALBListener", "ECSAutoScalingGroup", "ECSServiceRole", "EcsTargetGroup", "EC2Role", "TaskDefinition" ],
-      "Properties": {
-        "Cluster": { "Ref": "ECSCluster" },
-        "DesiredCount": "1",
-        "LoadBalancers": [{
-          "ContainerName": "workout-tracker",
-          "ContainerPort": "8080",
-          "TargetGroupArn" : { "Ref": "EcsTargetGroup" }
-        }],
-        "Role": { "Ref": "ECSServiceRole" },
-        "TaskDefinition": { "Ref": "TaskDefinition" }
-      }
     }
-
   }
 }

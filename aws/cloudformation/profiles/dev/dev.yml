@@ -1,0 +1,53 @@
+---
+name: "Development environment"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
+modules:
+  - "base"
+  - name: "Networking"
+    type: "vpc_client"
+    params:
+      require_subnets:
+        - PublicLoadBalancer
+        - Application
+      vpc: 
+        name: "dev"
+        version: "0.3.1"
+  - name: "R53 endpoint"
+    type: "r53"
+    params:
+      alb_name: "EcsALB"
+      host_name: "wt-dev"
+      domain_name: "krogebry.com"
+      init_weight: 0
+  - name: "EC2ClusterInstances"
+    type: "security_group"
+    description: "EC2 cluster instances."
+    params:
+      allow:
+        - subnet: Bastion
+          to: 22
+          from: 22
+          protocol: tcp
+        - subnet: PublicLoadBalancer
+          to: 65535
+          from: 32768
+          protocol: tcp
+  - name: "PublicToALB"
+    description: "Public access to ALB"
+    type: "security_group"
+    params:
+      allow:
+        - cidr: 0.0.0.0/0
+          to: 80
+          from: 80
+          protocol: tcp
+  - name: "ECSScaleTrigger"
+    type: "ecs_cwt_capacity"
+    params: 
+      asg_name: "ECSAutoScalingGroup"
+      ecs_cluster_name: "ECSCluster"
+params:
+  KeyName: "devops-1"
+  DockerImageName:
+    type: "docker_image_name"
+    image_name: "workout-tracker"

@@ -18,7 +18,9 @@ namespace :cf do
     version = args[:version]
     env_name = args[:env_name]
 
-    #Rake::Task['cf:launch'].invoke( 'network-%s' % env_name, version, 'network-%s' % env_name )
+    Rake::Task['flush_cache'].invoke()
+
+    Rake::Task['cf:launch'].invoke( 'network-%s' % env_name, version, 'network-%s' % env_name )
     cmd_wait = format('aws cloudformation wait stack-create-complete --stack-name network-%s-%s', env_name, version.gsub(/\./,'-'))
     Log.debug('CMD(wait): %s' % cmd_wait)
     Rake::Task['cf:launch'].reenable
@@ -205,13 +207,21 @@ namespace :cf do
 
     # exit
 
+    tags = [{
+      key: 'Owner',
+      value: ENV['USER']
+    },{
+      key: 'EnvName',
+      value: 'dev'
+    },{
+      key: 'Version',
+      value: stack_version
+    }]
+
     if stack_exists
       Log.debug(format('Updating stack'))
       cf_client.update_stack(
-        tags: [{
-          key: 'Owner',
-          value: 'bryan.kroger@gmail.com'
-        }],
+        tags: tags,
         parameters: params,
         stack_name: stack_name,
         capabilities: ["CAPABILITY_IAM"],
@@ -223,10 +233,7 @@ namespace :cf do
 
       ## Stack does not exist, create it.
       cf_client.create_stack({
-        tags: [{
-          key: 'Owner',
-          value: 'bryan.kroger@gmail.com'
-        }],
+        tags: tags,
         parameters: params,
         stack_name: stack_name,
         capabilities: ["CAPABILITY_IAM"],

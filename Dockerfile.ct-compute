@@ -6,7 +6,7 @@ COPY ./aws/ /opt/aws/
 COPY ./libs /opt/libs
 #COPY ./aws/Rakefile /opt/aws/Rakefile
 
-RUN cd /opt/aws/cloudtrail && bundle install
+RUN cd /opt/aws/cloudtrail && bundle update
 
 ENV "COUNT=50"
 ENV "QUEUE=files"

@@ -1,0 +1,148 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": {
+    "ECSCluster": {
+      "Type": "String",
+      "Description": "ECS Cluster name"
+    }
+  },
+
+  "Resources": {
+    "TaskDefinition": {
+      "Type": "AWS::ECS::TaskDefinition",
+      "Properties": {
+        "ContainerDefinitions": [{
+          "Cpu": "1024",
+          "Name": "",
+          "Image": "",
+          "Memory": 300,
+          "Essential": "true",
+          "Environment": [{
+            "Name": "ENV_NAME",
+            "Value": "dev"
+          },{
+            "Name": "AWS_DEFAULT_REGION",
+            "Value": { "Ref": "AWS::Region" }
+          }],
+          "LogConfiguration": {
+            "LogDriver": "awslogs",
+            "Options": {
+              "awslogs-group": "krogebry-test",
+              "awslogs-region": { "Ref": "AWS::Region" },
+              "awslogs-stream-prefix": "awslogs-example"
+            }
+          },
+          "PortMappings": [{
+            "HostPort": 0,
+            "ContainerPort": 8080
+          }]
+
+        }]
+      }
+    },
+
+    "EcsALB": {
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "Properties": {
+        "Subnets": { "Ref": "PublicLoadBalancerSubnets" },
+        "SecurityGroups": [{ "Ref": "PublicToALB" }],
+        "Tags": [{
+          "Key": "Version",
+          "Value": { "Ref": "StackVersion" }
+        }]
+      }
+    },
+
+    "EcsTargetGroup" : {
+      "Type" : "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "Properties" : {
+        "Name": { "Ref": "AWS::StackName" },
+        "Port": 8080,
+        "VpcId": {"Ref" : "VpcId"},
+        "Matcher" : { "HttpCode" : "200" },
+        "Protocol": "HTTP",
+        "HealthCheckProtocol": "HTTP",
+        "HealthCheckPath": "/healthz",
+        "HealthCheckTimeoutSeconds": 10,
+        "HealthCheckIntervalSeconds": 30,
+        "HealthyThresholdCount": 4,
+        "UnhealthyThresholdCount": 3,
+        "Tags" : [{ 
+					"Key" : "Version", 
+					"Value" : { "Ref": "StackVersion" }
+				}]
+      }
+    },
+
+    "ALBListener" : {
+      "Type" : "AWS::ElasticLoadBalancingV2::Listener",
+      "Properties" : {
+        "Port" : "80",
+        "Protocol" : "HTTP",
+        "DefaultActions" : [{
+          "Type" : "forward",
+          "TargetGroupArn" : { "Ref" : "EcsTargetGroup" }
+        }],
+        "LoadBalancerArn" : { "Ref" : "EcsALB" }
+      }
+    },
+
+
+    "ECSServiceRole":{
+      "Type":"AWS::IAM::Role",
+      "Properties":{
+        "AssumeRolePolicyDocument":{
+          "Statement":[{
+					  "Sid": "ecsallow",
+            "Effect":"Allow",
+            "Principal":{
+              "Service":[ "ecs.amazonaws.com" ]
+            },
+            "Action":[ "sts:AssumeRole" ]
+          }]
+        },
+        "Path":"/",
+        "Policies":[{
+          "PolicyName":"ecs-service",
+          "PolicyDocument":{
+            "Statement":[{
+              "Effect":"Allow",
+              "Action":[
+                "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                "ec2:Describe*",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "elasticloadbalancing:*",
+                "elasticloadbalancing:DeregisterTargets",
+                "elasticloadbalancing:Describe*",
+                "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:GetAuthorizationToken"
+              ],
+              "Resource":"*"
+            }]
+          }
+        }]
+      }
+	  },
+
+    "Service": {
+      "Type": "AWS::ECS::Service",
+      "DependsOn": [ "ALBListener", "ECSServiceRole", "TaskDefinition" ],
+      "Properties": {
+        "Cluster": { "Ref": "ECSCluster" },
+        "DesiredCount": "1",
+        "LoadBalancers": [{
+          "ContainerName": "workout-tracker",
+          "ContainerPort": "8080",
+          "TargetGroupArn" : { "Ref": "EcsTargetGroup" }
+        }],
+        "Role": { "Ref": "ECSServiceRole" },
+        "TaskDefinition": { "Ref": "TaskDefinition" }
+      }
+    }
+
+  }
+}

@@ -1,0 +1,55 @@
+---
+name: "WorkoutTracker"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
+template: "stub"
+description: "Simple workout tracker application using ECS."
+modules:
+  - "base"
+  - name: "WorkoutTrackerService"
+    type: "ecs_service"
+    params:
+      cluster_env: "dev"
+      cluster_version: "0.4.0"
+      containers:
+        - name: "workout-tracker"
+          cpu: 500
+          image: "workout-tracker:latest"
+          memory: 500
+        - name: "cache"
+          cpu: 500
+          image: "redis"
+          memory: 500
+  - name: "Networking"
+    type: "vpc_client"
+    params:
+      require_subnets:
+        - PublicLoadBalancer
+        - Application
+      vpc: 
+        name: "dev"
+        version: "0.3.1"
+  - name: "R53 endpoint"
+    type: "r53"
+    params:
+      alb_name: "EcsALB"
+      host_name: "wt-dev"
+      domain_name: "krogebry.com"
+      init_weight: 0
+  - name: "EC2ClusterInstances"
+    type: "security_group"
+    description: "EC2 cluster instances."
+    params:
+      allow:
+        - subnet: PublicLoadBalancer
+          to: 65535
+          from: 32768
+          protocol: tcp
+  - name: "PublicToALB"
+    description: "Public access to ALB"
+    type: "security_group"
+    params:
+      allow:
+        - cidr: 0.0.0.0/0
+          to: 80
+          from: 80
+          protocol: tcp

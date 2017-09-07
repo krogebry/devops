@@ -127,6 +127,91 @@ class ModulesProc
     Marshal.load(Marshal.dump(hash))
   end
 
+  def get_stack_by_filters( filters )
+    creds = Aws::SharedCredentials.new()
+    cf_client = Aws::CloudFormation::Client.new(credentials: creds)
+
+    sel_filters = filters.map{|f| { 'key' => f.keys[0], 'value' => f.values[0] }}
+
+    cache_key = 'cf_stacks'
+    stacks = @cache.cached_json( cache_key ) do
+      cf_client.list_stacks(stack_status_filter: ['CREATE_COMPLETE', 'UPDATE_COMPLETE']).data.to_h.to_json
+    end
+
+    stacks['stack_summaries'].each do |summary|
+      cache_key = format('cf_stacks_%s', summary['stack_name'])
+      stack_info = @cache.cached_json( cache_key ) do
+        cf_client.describe_stacks(stack_name: summary['stack_name']).data.to_h.to_json
+      end
+
+      #pp stack_info['stacks'].first['tags']
+
+      #if stack_info['stacks'].first['tags'].include? sel_filters
+      stack_info['stacks'].first['tags'].each do |tag_set|
+        found_tags = 0
+        if sel_filters.include? tag_set
+          found_tags += 1
+          Log.debug( 'Found tags' )
+        end
+        return stack_info['stacks'].first if found_tags == (filters.size - 1)
+      end
+    end
+    return nil
+  end
+
+  def get_stack_resources( stack_name )
+    creds = Aws::SharedCredentials.new()
+    cf_client = Aws::CloudFormation::Client.new(credentials: creds)
+    cache_key = format('cf_stack_resources_%s', stack_name)
+    resources = @cache.cached_json( cache_key ) do
+      cf_client.describe_stack_resources(stack_name: stack_name).data.to_h.to_json
+    end
+    return resources
+  end
+
+  def get_stack_resource( stack_name, resource_name )
+    creds = Aws::SharedCredentials.new()
+    cf_client = Aws::CloudFormation::Client.new(credentials: creds)
+    cache_key = format('cf_stack_resource_%s_%s', stack_name, resource_name)
+    resource = @cache.cached_json( cache_key ) do
+      cf_client.describe_stack_resource(stack_name: stack_name, logical_resource_id: resource_name).data.to_h.to_json
+    end
+    return resource
+  end
+
+  def ecs_service( m_config )
+    json = load_module('ecs-service')    
+
+    stack = get_stack_by_filters([
+      { 'EnvName' => m_config['params']['cluster_env'] },
+      { 'Version' => m_config['params']['cluster_version'] }
+    ])
+
+    ecs_cluster = get_stack_resource( stack['stack_name'], 'ECSCluster' )
+    ecs_cluster_name = ecs_cluster['stack_resource_detail']['physical_resource_id']
+    set_param('ECSCluster', ecs_cluster_name)
+
+    container_def = json['Resources']['TaskDefinition']['Properties']['ContainerDefinitions'].first
+
+    container_defs = []
+
+    m_config['params']['containers'].each do |container|
+      c_def = deep_copy( container_def )
+      c_def['Cpu'] = container['cpu']
+      c_def['Memory'] = container['memory']
+
+      c_def['Name'] = container['name']
+      c_def['Image'] = format('%s.dkr.ecr.%s.amazonaws.com/%s', ENV['AWS_ACCOUNT_ID'], ENV['AWS_DEFAULT_REGION'], container['image'])
+      container_defs.push( c_def )
+      json['Resources']['Service']['Properties']['LoadBalancers'][0]['ContainerName'] = container['name']
+    end
+
+    json['Resources']['TaskDefinition']['Properties']['ContainerDefinitions'] = container_defs
+
+    @stack_tpl['Resources'] = @stack_tpl['Resources'].deep_merge(json['Resources'])
+    @stack_tpl['Parameters'] = @stack_tpl['Parameters'].deep_merge(json['Parameters'])
+  end
+
   def ecs_cwt_capacity( m_config )
     json = load_module('ecs-cwt-capacity')    
 

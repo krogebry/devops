@@ -1,0 +1,42 @@
+---
+name: "Misty"
+owner: "Bryan Kroger (bryan.kroger@gmail.com)"
+template: "stub"
+description: "Misty's engine"
+modules:
+  - "base"
+  - name: "WorkoutTrackerService"
+    type: "ecs_service"
+    params:
+      cluster_env: "dev"
+      cluster_version: "0.4.0"
+      containers:
+        - name: "misty"
+          cpu: 500
+          image: "misty:latest"
+          memory: 500
+  - name: "Networking"
+    type: "vpc_client"
+    params:
+      require_subnets:
+        - PublicLoadBalancer
+        - Application
+      vpc: 
+        name: "dev"
+        version: "0.3.1"
+  - name: "R53 endpoint"
+    type: "r53"
+    params:
+      alb_name: "EcsALB"
+      host_name: "misty-dev"
+      domain_name: "krogebry.com"
+      init_weight: 0
+  - name: "PublicToALB"
+    description: "Public access to ALB"
+    type: "security_group"
+    params:
+      allow:
+        - cidr: 0.0.0.0/0
+          to: 80
+          from: 80
+          protocol: tcp
