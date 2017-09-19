@@ -18,9 +18,6 @@
           "Memory": 300,
           "Essential": "true",
           "Environment": [{
-            "Name": "ENV_NAME",
-            "Value": "dev"
-          },{
             "Name": "AWS_DEFAULT_REGION",
             "Value": { "Ref": "AWS::Region" }
           }],
@@ -45,7 +42,7 @@
       "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
       "Properties": {
         "Subnets": { "Ref": "PublicLoadBalancerSubnets" },
-        "SecurityGroups": [{ "Ref": "PublicToALB" }],
+        "SecurityGroups": [],
         "Tags": [{
           "Key": "Version",
           "Value": { "Ref": "StackVersion" }
@@ -66,7 +63,7 @@
         "HealthCheckTimeoutSeconds": 10,
         "HealthCheckIntervalSeconds": 30,
         "HealthyThresholdCount": 4,
-        "UnhealthyThresholdCount": 3,
+        "UnhealthyThresholdCount": 4,
         "Tags" : [{ 
 					"Key" : "Version", 
 					"Value" : { "Ref": "StackVersion" }
@@ -86,7 +83,6 @@
         "LoadBalancerArn" : { "Ref" : "EcsALB" }
       }
     },
-
 
     "ECSServiceRole":{
       "Type":"AWS::IAM::Role",

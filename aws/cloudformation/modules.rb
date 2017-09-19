@@ -144,17 +144,14 @@ class ModulesProc
         cf_client.describe_stacks(stack_name: summary['stack_name']).data.to_h.to_json
       end
 
-      #pp stack_info['stacks'].first['tags']
-
-      #if stack_info['stacks'].first['tags'].include? sel_filters
+      found_tags = 0
       stack_info['stacks'].first['tags'].each do |tag_set|
-        found_tags = 0
         if sel_filters.include? tag_set
           found_tags += 1
-          Log.debug( 'Found tags' )
         end
-        return stack_info['stacks'].first if found_tags == (filters.size - 1)
       end
+      Log.debug(format( 'Found tags: %i', found_tags ))
+      return stack_info['stacks'].first if found_tags == filters.size
     end
     return nil
   end
@@ -183,6 +180,7 @@ class ModulesProc
     json = load_module('ecs-service')    
 
     stack = get_stack_by_filters([
+      { 'Name' => m_config['params']['cluster_name'] },
       { 'EnvName' => m_config['params']['cluster_env'] },
       { 'Version' => m_config['params']['cluster_version'] }
     ])
@@ -195,6 +193,31 @@ class ModulesProc
 
     container_defs = []
 
+    if m_config['params']['load_balancer']
+      json['Resources']['EcsALB']['Properties']['Type'] = m_config['params']['load_balancer']['type'] if m_config['params']['load_balancer'].has_key?( 'type' )
+      json['Resources']['EcsALB']['Properties']['Scheme'] = m_config['params']['load_balancer']['scheme'] if m_config['params']['load_balancer'].has_key?( 'scheme' )
+
+      json['Resources']['ALBListener']['Properties']['Port'] = m_config['params']['load_balancer']['port'] if m_config['params']['load_balancer'].has_key?( 'port' )
+
+      if m_config['params']['load_balancer'].has_key?( 'subnets' )
+        json['Resources']['EcsALB']['Properties']['Subnets'] = { "Ref" => m_config['params']['load_balancer']['subnets'] }
+      end
+
+      if m_config['params']['load_balancer']['scheme'] == 'internal'
+        json['Resources']['EcsALB']['Properties'].delete( 'SecurityGroups' )
+        json['Resources']['ALBListener']['Properties']['Protocol'] = 'TCP'
+
+        json['Resources']['EcsTargetGroup']['Properties']['Port'] = m_config['params']['load_balancer']['port']
+        json['Resources']['EcsTargetGroup']['Properties']['Protocol'] = 'TCP'
+        json['Resources']['EcsTargetGroup']['Properties']['HealthCheckProtocol'] = 'TCP'
+
+        json['Resources']['EcsTargetGroup']['Properties'].delete( 'Matcher' )
+        json['Resources']['EcsTargetGroup']['Properties'].delete( 'HealthCheckPath' )
+      else
+        json['Resources']['EcsALB']['Properties']['SecurityGroups'] = m_config['params']['load_balancer']['security_groups'].map{|sg_name| { "Ref" => sg_name }}
+      end
+    end
+
     m_config['params']['containers'].each do |container|
       c_def = deep_copy( container_def )
       c_def['Cpu'] = container['cpu']
@@ -202,6 +225,21 @@ class ModulesProc
 
       c_def['Name'] = container['name']
       c_def['Image'] = format('%s.dkr.ecr.%s.amazonaws.com/%s', ENV['AWS_ACCOUNT_ID'], ENV['AWS_DEFAULT_REGION'], container['image'])
+
+      if container['listener']
+        c_def['PortMappings'][0]['ContainerPort'] = container['listener']
+        json['Resources']['Service']['Properties']['LoadBalancers'][0]['ContainerPort'] = container['listener']
+      end
+
+      if container['environment']
+        container['environment'].each do |k,v|
+          c_def['Environment'].push({
+            'Name' => k,
+            'Value' => v
+          })
+        end
+      end
+
       container_defs.push( c_def )
       json['Resources']['Service']['Properties']['LoadBalancers'][0]['ContainerName'] = container['name']
     end

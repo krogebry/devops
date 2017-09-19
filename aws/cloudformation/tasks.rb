@@ -211,6 +211,9 @@ namespace :cf do
       key: 'Owner',
       value: ENV['USER']
     },{
+      key: 'Name',
+      value: args[:stack_name]
+    },{
       key: 'EnvName',
       value: 'dev'
     },{

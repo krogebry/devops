@@ -1,49 +1,53 @@
 ---
-name: "Misty"
+name: "Misty-Cache"
 owner: "Bryan Kroger (bryan.kroger@gmail.com)"
 template: "stub"
-description: "Misty's engine"
+description: "Cache for misty's engine"
 modules:
   - "base"
-  - name: "MistyService"
+  - name: "MistyCacheService"
     type: "ecs_service"
     params:
       cluster_env: "dev"
       cluster_name: "ECSDev"
       cluster_version: "0.7.0"
       load_balancer:
-        security_groups: ["PublicToALB"]
+        type: "network"
+        port: 6379
+        scheme: "internal"
+        subnets: "CacheSubnets"
+        security_groups: ["Internal"]
       containers:
-        - name: "misty"
+        - name: "misty-cache"
           cpu: 500
-          image: "misty:latest"
+          image: "redis:latest"
           memory: 500
+          listener: 6379
           environment:
             ENV_NAME: "dev"
-            MISTY_ENV_NAME: "dev"
             CACHE_HOSTNAME: "misty-dev-cache.krogebry.com"
   - name: "Networking"
     type: "vpc_client"
     params:
       require_subnets:
-        - PublicLoadBalancer
+        - Cache
         - Application
       vpc: 
         name: "dev"
-        version: "0.6.0"
+        version: "0.7.0"
   - name: "R53 endpoint"
     type: "r53"
     params:
       alb_name: "EcsALB"
-      host_name: "misty-dev"
+      host_name: "misty-dev-cache"
       domain_name: "krogebry.com"
       init_weight: 0
-  - name: "PublicToALB"
+  - name: "Internal"
     description: "Public access to ALB"
     type: "security_group"
     params:
       allow:
-        - cidr: 0.0.0.0/0
-          to: 80
-          from: 80
+        - cidr: 10.1.0.0/16
+          to: 6379
+          from: 6379
           protocol: tcp

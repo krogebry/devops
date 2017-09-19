@@ -1,8 +1,8 @@
 ---
-name: "WorkoutTracker"
+name: "ECS Cluster"
 owner: "Bryan Kroger (bryan.kroger@gmail.com)"
 template: "ecs-cluster"
-description: "Simple workout tracker application using ECS."
+description: "Cluster for ECS."
 modules:
   - "base"
   - name: "Networking"
@@ -12,7 +12,7 @@ modules:
         - Application
       vpc: 
         name: "dev"
-        version: "0.3.1"
+        version: "0.7.0"
   - name: "EC2ClusterInstances"
     type: "security_group"
     description: "EC2 cluster instances."
