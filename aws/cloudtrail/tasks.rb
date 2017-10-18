@@ -5,31 +5,148 @@ require 'mongo'
 require 'resque'
 require 'resque/tasks'
 
-require './cloudtrail/instance.rb'
-require './cloudtrail/compressed_file.rb'
-require './cloudtrail/db.rb'
-require './cloudtrail/redis.rb'
+#require './cloudtrail/instance.rb'
+#require './cloudtrail/compressed_file.rb'
+#require './cloudtrail/db.rb'
+#require './cloudtrail/redis.rb'
 
-DATA_DIR = File.join('/', 'mnt', 'data')
+#DATA_DIR = File.join('/', 'mnt', 'data')
+DATA_DIR = File.join('/', 'mnt', 'SecureDisk', 'cloudtrail')
 
-if ENV['REDIS_HOSTNAME']
-  Resque.redis = '%s:6379' % ENV['REDIS_HOSTNAME']
+#if ENV['REDIS_HOSTNAME']
+  #Resque.redis = '%s:6379' % ENV['REDIS_HOSTNAME']
+#end
+
+begin
+  if ENV['USE_AWS_CREDS'] == true
+    creds = Aws::SharedCredentials.new()
+    S3Client = Aws::S3::Client.new(credentials: creds)
+    SQSClient = Aws::SQS::Client.new(credentials: creds)
+    DynamoClient = Aws::DynamoDB::Client.new(credentials: creds)
+
+  else
+    S3Client = Aws::S3::Client.new()
+    SQSClient = Aws::SQS::Client.new()
+    DynamoClient = Aws::DynamoDB::Client.new()
+
+  end
+
+rescue => e
+  Log.fatal('Failed to create dynamodb client: %s' % e)
+  exit
+
+end
+
+def clean_json( json )
+  json.each do |k,v|
+    if v.class == Hash
+      if v.keys.size == 0
+        json[k] = nil
+      else
+        v = clean_json( v ) 
+      end
+    end
+    json[k] = nil if v == ""
+  end
+  json
+end
+
+def nap( msg='Napping' )
+  timer = rand(0.5) + rand(0.3)
+  Log.debug(format('%s %.3f', msg, timer))
+  sleep( timer )
 end
 
 namespace :cloudtrail do
+
+	desc 'Proc SQS'
+  task :proc_sqs do |t,args|
+    queue_url = format('https://sqs.us-east-1.amazonaws.com/%s/tt_data_sync', ENV['AWS_ACCOUNT_ID'])
+    messages = SQSClient.receive_message( queue_url: queue_url )
+    messages.messages.each do |message|
+      body = JSON::parse message.body
+      i = 0
+      num_files = body['files'].size
+      body['files'].each do |filename|
+        gz_reader = Zlib::GzipReader.new(File.open(filename))
+        json = JSON::parse(gz_reader.read())
+
+        i_records = 0
+        num_records = json['Records'].size
+        batch = []
+        i_batch = 0
+        num_per_batch = 20
+
+        json['Records'].each do |r|
+          r['r_id'] = format('%s-%s', r['requestID'], r['eventID'])
+          #r = clean_json(r)
+          batch.push({ put_request: { item: clean_json(r) }})
+
+          if i_batch >= num_per_batch
+            Log.debug('Flushing')
+            begin
+              DynamoClient.batch_write_item({
+                request_items: {
+                  'tattletrail' => batch
+                }
+              })
+
+            rescue Aws::DynamoDB::Errors::ValidationException => e
+              pp batch
+              exit
+
+            end
+
+            batch = []
+            i_batch = 0
+            nap
+          end
+
+          #DynamoClient.put_item({
+            #item: r,
+            #table_name: 'tattletrail'
+          #})
+          #nap
+
+          i_batch += 1
+          i_records += 1
+          Log.debug(format('%i / %i', i_records, num_records))
+        end
+        i += 1
+        Log.debug(format('%i / %i', i, num_files))
+      end
+
+      SQSClient.delete_message(
+        queue_url: queue_url,
+        receipt_handle: message.receipt_handle
+      )
+      sleep( 1 )
+
+    end
+  end
 
   desc 'Slurp some files'
   task :slurp, :hostname do |t,args|
     files = []
 
+    num_files_per_queue = 100
+
     hostname = args[:hostname].nil? ? 'localhost' : args[:hostname]
 
-    db = CloudTrailDB.new(hostname)
-    CloudTrailRedis.new(hostname)
+    #db = CloudTrailDB.new(hostname)
+    #CloudTrailRedis.new(hostname)
 
     Log.debug('Gathering files from: %s' % DATA_DIR)
     file_list = Dir.glob(File.join(DATA_DIR, '**/*.gz'))
     Log.debug('Found %i files' % file_list.size)
+
+    while file_list.size > 0
+    	message = {'files' => file_list.pop( num_files_per_queue )}
+      SQSClient.send_message(
+      	queue_url: format('https://sqs.us-east-1.amazonaws.com/%s/tt_data_sync', ENV['AWS_ACCOUNT_ID']),
+      	message_body: message.to_json
+      )
+    end
 
     # all_compressed_files = []
     # db.conn[:compressed_files].find.each do |row|
@@ -39,18 +156,18 @@ namespace :cloudtrail do
 
     # Log.debug('Pulled %i records from the db' % all_compressed_files.size)
 
-    file_list.each do |filename|
-      check = db.conn[:compressed_files].find({ :filename => filename })
-      files.push(filename) if check.count() == 0
+    #file_list.each do |filename|
+      #check = db.conn[:compressed_files].find({ :filename => filename })
+      #files.push(filename) if check.count() == 0
       # all_compressed_files.include?(filename) ? next : files.push(filename)
-    end
+    #end
 
-    num_files = files.size
-    Log.debug('Found %i files' % num_files)
+    #num_files = files.size
+    #Log.debug('Found %i files' % file_list.size)
 
-    files.each do |filename|
-      Resque.enqueue(CTCompressedFile, filename, hostname)
-    end
+    #files.each do |filename|
+      #Resque.enqueue(CTCompressedFile, filename, hostname)
+    #end
   end
 
   desc 'snap'

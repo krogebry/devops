@@ -9,8 +9,8 @@ modules:
     type: "ecs_service"
     params:
       cluster_env: "dev"
-      cluster_name: "ECSDev"
-      cluster_version: "0.7.0"
+      cluster_name: "DevCluster"
+      cluster_version: "0.4.0"
       load_balancer:
         security_groups: ["PublicToALB"]
       containers:
@@ -20,6 +20,8 @@ modules:
           memory: 500
           environment:
             ENV_NAME: "dev"
+            FB_APP_ID: "165492310670315"
+            FB_APP_SECRET: "8d24ce85e4f55b10e64afe961c77dff8"
             MISTY_ENV_NAME: "dev"
             CACHE_HOSTNAME: "misty-dev-cache.krogebry.com"
   - name: "Networking"
@@ -30,7 +32,7 @@ modules:
         - Application
       vpc: 
         name: "dev"
-        version: "0.6.0"
+        version: "0.7.0"
   - name: "R53 endpoint"
     type: "r53"
     params:

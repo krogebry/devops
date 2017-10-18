@@ -9,8 +9,8 @@ modules:
     type: "ecs_service"
     params:
       cluster_env: "dev"
-      cluster_name: "ECSDev"
-      cluster_version: "0.7.0"
+      cluster_name: "DevCluster"
+      cluster_version: "0.4.0"
       load_balancer:
         type: "network"
         port: 6379

@@ -43,7 +43,8 @@ namespace :lambda do
     #arn = format('arn:aws:iam::%s:role/lambda_exec_role' % account_id)
     profile_name = ENV['AWS_PROFILE_NAME']
 
-    s3_bucket = format('nm-lambda-functions-2016-12-02')
+    #s3_bucket = format('nm-lambda-functions-2016-12-02')
+    s3_bucket = format('krogebry')
 
     creds = Aws::SharedCredentials.new()
     s3_client = Aws::S3::Client.new(credentials: creds)

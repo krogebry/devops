@@ -193,9 +193,11 @@ class ModulesProc
 
     container_defs = []
 
+    ecs_alb_props = json['Resources']['EcsALB']['Properties']
+
     if m_config['params']['load_balancer']
-      json['Resources']['EcsALB']['Properties']['Type'] = m_config['params']['load_balancer']['type'] if m_config['params']['load_balancer'].has_key?( 'type' )
-      json['Resources']['EcsALB']['Properties']['Scheme'] = m_config['params']['load_balancer']['scheme'] if m_config['params']['load_balancer'].has_key?( 'scheme' )
+      ecs_alb_props['Type'] = m_config['params']['load_balancer']['type'] if m_config['params']['load_balancer'].has_key?( 'type' )
+      ecs_alb_props['Scheme'] = m_config['params']['load_balancer']['scheme'] if m_config['params']['load_balancer'].has_key?( 'scheme' )
 
       json['Resources']['ALBListener']['Properties']['Port'] = m_config['params']['load_balancer']['port'] if m_config['params']['load_balancer'].has_key?( 'port' )
 
@@ -230,6 +232,8 @@ class ModulesProc
         c_def['PortMappings'][0]['ContainerPort'] = container['listener']
         json['Resources']['Service']['Properties']['LoadBalancers'][0]['ContainerPort'] = container['listener']
       end
+
+      c_def['LogConfiguration']['Options']['awslogs-stream-prefix'] = m_config['name']
 
       if container['environment']
         container['environment'].each do |k,v|
