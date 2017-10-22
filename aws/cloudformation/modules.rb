@@ -312,6 +312,81 @@ class ModulesProc
     @stack_tpl['Parameters'] = @stack_tpl['Parameters'].deep_merge(json['Parameters'])
   end
 
+  def cw_logs_policy( m_config )
+		policies = @stack_tpl['Resources']['EC2Role']['Properties']['Policies'].first
+    kms_statement = {
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "*"
+    }
+    policies['PolicyDocument']['Statement'].push kms_statement
+  end
+
+  def kms_policy( m_config )
+		policies = @stack_tpl['Resources']['EC2Role']['Properties']['Policies'].first
+
+    cache_key = format('kms_aliases')
+    data = @cache.cached_json( cache_key ) do 
+      creds = Aws::SharedCredentials.new()
+      kms_client = Aws::KMS::Client.new(credentials: creds)
+      kms_client.list_aliases.data.to_h.to_json
+    end
+    kms_alias = data['aliases'].select{|a| a['alias_name'] == format('alias/%s', m_config['params']['key_alias'])}.first
+
+    kms_statement = {
+      "Effect": "Allow",
+      "Action": [
+        "kms:Encrypt",
+        "kms:Decrypt"
+      ],
+      "Resource": { 'Fn::Sub' => format('arn:aws:kms:${AWS::Region}:%s:key/%s', ENV['AWS_ACCOUNT_ID'], kms_alias['target_key_id']) }
+    }
+    policies['PolicyDocument']['Statement'].push kms_statement
+
+    @stack_tpl['Parameters']['KMSKeyId'] = {
+      "Type": "String",
+      "Description": "Chef environment name"
+    }
+    set_param('KMSKeyId', kms_alias['target_key_id'])
+
+    kms_statement = {
+      "Effect": "Allow",
+      "Action": [
+        "kms:ListAliases"
+      ],
+      "Resource": "*"
+    }
+    policies['PolicyDocument']['Statement'].push kms_statement
+  end
+
+  def chef_client( m_config )
+    dna = { 'run_list' => m_config['params']['run_list'] }
+    client_rb = format('chef_server_url "https://%s/organizations/devops"', m_config['params']['server_hostname'], m_config['params']['env_name'])
+    client_rb << "\n"
+    client_rb << format('log_location "/var/log/chef/client.log"')
+    client_rb << "\n"
+    client_rb << format('ssl_verify_mode :verify_none')
+    client_rb << "\n"
+    client_rb << format('validation_client_name "devops-validator"')
+    client_rb << "\n"
+
+    lcs = @stack_tpl['Resources'].select { |r_name, r_info| r_info['Type'] == 'AWS::AutoScaling::LaunchConfiguration' }
+    lcs.each do |name, info|
+      info['Metadata']['AWS::CloudFormation::Init']['config']['files']['/etc/chef/dna.json']['content'] = dna.to_json
+      info['Metadata']['AWS::CloudFormation::Init']['config']['files']['/etc/chef/client.rb']['content'] = client_rb
+    end
+
+    @stack_tpl['Parameters']['ChefEnvName'] = {
+      "Type": "String",
+      "Description": "Chef environment name"
+    }
+
+    set_param( 'ChefEnvName', m_config['params']['env_name'] )
+  end
+
   def get_subnets( vpc_id, subnet_name )
     cache_key = format('subnets_%s_%s_%s', subnet_name, vpc_id, ENV['AWS_DEFAULT_REGION'])
     #@cache.del_key cache_key

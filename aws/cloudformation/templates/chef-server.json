@@ -8,6 +8,38 @@
       "Description": "ARN for the DC SNS topic."
     },
 
+		//"ImageId": {
+      //"Type": "String"
+		//},
+
+    //"DesiredCapacity": {
+      //"Type": "Number",
+      //"Default": "1",
+      //"Description": "Number of instances to launch in your ECS cluster."
+    //},
+    //"MaxSize": {
+      //"Type": "Number",
+      //"Default": "2",
+      //"Description": "Maximum number of instances that can be launched in your ECS cluster."
+    //},
+    //"MinSize": {
+      //"Type": "Number",
+      //"Default": "1",
+      //"Description": "Minimum number of instances that can be launched in your ECS cluster."
+    //},
+
+    //"InstanceType": {
+      //"Description": "The EC2 instance type",
+      //"Type": "String",
+      //"Default": "m4.2xlarge",
+      //"ConstraintDescription": "You can specify only t2.mirco."
+    //},
+    //"KeyName": {
+      //"Type": "AWS::EC2::KeyPair::KeyName",
+      //"Description": "The EC2 Key Pair to allow SSH access to the instances",
+      //"ConstraintDescription": "must be the name of an existing EC2 KeyPair."
+    //},
+
     "Password": {
       "Type": "String",
       "NoEcho": "true",
@@ -17,65 +49,14 @@
 
   "Resources": {
 
-    "InstanceSG": {
-      "Type": "AWS::EC2::SecurityGroup",
-      "Properties": {
-        "Tags": [{
-          "Key": "Application",
-          "Value": "ChefServer"
-        }],
-        "VpcId": { "Ref": "VpcId" },
-        "GroupDescription": "Enable HTTP access and SSH access",
-        "SecurityGroupIngress": [{
-          "ToPort": "443",
-          "FromPort": "443",
-          "IpProtocol": "tcp",
-          "SourceSecurityGroupId": { "Ref": "ELBSG" }
-        },{
-          "CidrIp": { "Ref": "MgtCidr" },
-          "ToPort": "443",
-          "FromPort": "443",
-          "IpProtocol": "tcp"
-        }, {
-          "CidrIp": { "Ref": "MgtCidr" },
-          "ToPort": "22",
-          "FromPort": "22",
-          "IpProtocol": "tcp"
-        }]
-      }
-    },
-
- 		"ELBSG": {
-      "Type": "AWS::EC2::SecurityGroup",
-      "Properties": {
-        "Tags": [{
-          "Key": "Application",
-          "Value": "ChefServer"
-        }],
-        "GroupDescription": "Enable HTTP access on port 80",
-        "VpcId": { "Ref": "VpcId" },
-        "SecurityGroupIngress": [ {
-          "CidrIp": { "Ref": "MgtCidr" },
-          "ToPort": "443",
-          "FromPort": "443",
-          "IpProtocol": "tcp"
-        },{
-          "CidrIp": "0.0.0.0/0",
-          "ToPort": "443",
-          "FromPort": "443",
-          "IpProtocol": "tcp"
-        }]
-      }
-    },
-
     "ChefServerASG": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
         "MinSize": "1",
-        "MaxSize": "3",
+        "MaxSize": "1",
         "DesiredCapacity": "1",
-        "AvailabilityZones": { "Ref": "Zones" },
-        "VPCZoneIdentifier": { "Ref": "Subnets" },
+        "AvailabilityZones": { "Ref": "ApplicationZones" },
+        "VPCZoneIdentifier": { "Ref": "ApplicationSubnets" },
         "LoadBalancerNames": [{ "Ref": "InternalELB" },{ "Ref": "ExternalELB"}],
         "LaunchConfigurationName": { "Ref": "ChefServerLC" },
         "NotificationConfigurations": [{
@@ -120,7 +101,7 @@
         "UserData": { "Fn::Base64": { "Fn::Join": ["", [
           "#!/bin/bash -xe\n",
 
-          "echo \"127.0.0.1 `hostname`\" >> /etc/hosts \n",
+          // "echo \"127.0.0.1 `hostname`\" >> /etc/hosts \n",
 
           "/opt/aws/bin/cfn-init -v ",
           " --stack ", { "Ref": "AWS::StackName" },
@@ -128,16 +109,17 @@
           " --configsets base_install ",
           " --region ", { "Ref": "AWS::Region" }, "\n",
 
-          "wget https://packages.chef.io/stable/el/7/chef-server-core-12.10.0-1.el7.x86_64.rpm \n",
-          "rpm -i chef-server-core-12.10.0-1.el7.x86_64.rpm \n",
-          "chef-server-ctl reconfigure \n",
-          "chef-server-ctl user-create bkroger Bryan Kroger bryan.kroger@gmail.com '",{ "Ref": "Password" },"' --filename /etc/chef/bkroger.pem \n",
-          "chef-server-ctl org-create devops 'DevOps Central' --association_user bkroger --filename /etc/chef/devops-validator.pem \n",
+          // "wget https://s3.amazonaws.com/devops-ct-main/chef-server-core-12.16.14-1.el7.x86_64.rpm \n",
+          // "rpm -i chef-server-core-12.16.14-1.el7.x86_64.rpm \n",
 
-          "pip install --upgrade awscli \n",
-          "KMS_KEY_ID=`aws --region ",{ "Ref": "AWS::Region" }, " kms list-aliases | jq '.Aliases[] | select(.AliasName == \"alias/devopskey_",{ "Ref": "InfStackVersion" },"\")|.AliasArn'|sed 's/\"//g'`\n",
-          "aws s3 cp --sse-kms-key-id ${KMS_KEY_ID} --sse 'aws:kms' /etc/chef/bkroger.pem s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/ --region ",{ "Ref": "AWS::Region" }, " \n",
-          "aws s3 cp --sse-kms-key-id ${KMS_KEY_ID} --sse 'aws:kms' /etc/chef/devops-validator.pem s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/ --region ", { "Ref": "AWS::Region" }, " \n",
+          // "chef-server-ctl reconfigure \n",
+          // "chef-server-ctl user-create bkroger Bryan Kroger bryan.kroger@gmail.com '",{ "Ref": "Password" },"' --filename /etc/chef/bkroger.pem \n",
+          // "chef-server-ctl org-create devops 'DevOps Central' --association_user bkroger --filename /etc/chef/devops-validator.pem \n",
+
+          // "pip install --upgrade awscli \n",
+          // "KMS_KEY_ID=`aws --region ",{ "Ref": "AWS::Region" }, " kms list-aliases | jq '.Aliases[] | select(.AliasName == \"alias/devopskey_",{ "Ref": "InfStackVersion" },"\")|.AliasArn'|sed 's/\"//g'`\n",
+          // "aws s3 cp --sse-kms-key-id ${KMS_KEY_ID} --sse 'aws:kms' /etc/chef/bkroger.pem s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/ --region ",{ "Ref": "AWS::Region" }, " \n",
+          // "aws s3 cp --sse-kms-key-id ${KMS_KEY_ID} --sse 'aws:kms' /etc/chef/devops-validator.pem s3://",{ "Ref": "S3BucketName" },"/chef-server/devops/ --region ", { "Ref": "AWS::Region" }, " \n",
 
           "/opt/aws/bin/cfn-signal -e $? ",
           " --stack ", { "Ref": "AWS::StackName" },
@@ -145,7 +127,7 @@
           " --region ", { "Ref": "AWS::Region" }, "\n"
         ]]}},
         "InstanceType": { "Ref": "InstanceType" },
-        "SecurityGroups": [{ "Ref": "InstanceSG" }],
+        "SecurityGroups": [{ "Ref": "ChefServer" }],
 
         "IamInstanceProfile": { "Ref": "RootInstanceProfile" },
         "InstanceMonitoring": "false",
@@ -166,7 +148,7 @@
           "Key": "Role",
           "Value": "External"
         }],
-        "Subnets": { "Ref": "Subnets" },
+        "Subnets": { "Ref": "PublicLoadBalancerSubnets" },
         "CrossZone": "true",
         "Policies": [{
           "PolicyName" : "ChefServerWebSocketPolicy",
@@ -185,7 +167,7 @@
           "HealthyThreshold": "3",
           "UnhealthyThreshold": "5"
         },
-        "SecurityGroups": [{ "Ref": "ELBSG" }]
+        "SecurityGroups": [{ "Ref": "ChefServerExternalELB" }]
       }
     },
 
@@ -203,7 +185,7 @@
           "Value": "Internal"
         }],
         "Scheme": "internal",
-        "Subnets": { "Ref": "Subnets" },
+        "Subnets": { "Ref": "PublicLoadBalancerSubnets" },
         "Policies": [{
           "PolicyName" : "ChefServerWebSocketPolicy",
           "PolicyType" : "ProxyProtocolPolicyType",
@@ -222,7 +204,43 @@
           "HealthyThreshold": "3",
           "UnhealthyThreshold": "5"
         },
-        "SecurityGroups": [{ "Ref": "ELBSG" }]
+        "SecurityGroups": [{ "Ref": "ChefServerInternalELB" }]
+      }
+    },
+
+    "ChefServerInternalELB": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "Tags": [{
+          "Key": "Application",
+          "Value": "ChefServer"
+        }],
+        "VpcId": { "Ref": "VpcId" },
+        "GroupDescription": "Enable HTTP access and SSH access",
+        "SecurityGroupIngress": [{
+          "CidrIp": "10.1.0.0/8",
+          "ToPort": "443",
+          "FromPort": "443",
+          "IpProtocol": "tcp"
+        }]
+      }
+    },
+
+    "ChefServerExternalELB": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "Tags": [{
+          "Key": "Application",
+          "Value": "ChefServer"
+        }],
+        "VpcId": { "Ref": "VpcId" },
+        "GroupDescription": "Enable HTTP access and SSH access",
+        "SecurityGroupIngress": [{
+          "CidrIp": "0.0.0.0/0",
+          "ToPort": "443",
+          "FromPort": "443",
+          "IpProtocol": "tcp"
+        }]
       }
     },
 

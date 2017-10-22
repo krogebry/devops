@@ -41,6 +41,7 @@ class ParamsProc
 
   def compile()
     ## Find any deps.
+    return if @params == nil
     @params.each do |k,v|
       Log.debug(format('%s - %s', k,v ))
 

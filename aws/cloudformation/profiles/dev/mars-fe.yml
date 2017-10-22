@@ -1,15 +1,29 @@
 ---
-name: "ChefServer"
+name: "Mars-fe"
 owner: "Bryan Kroger (bryan.kroger@gmail.com)"
-#region: "us-east-1"
-template: "chef-server"
-description: "ChefServer service."
+template: "mars-fe"
+description: "Mars front end."
 modules:
   - "base"
+  - name: "Chef client"
+    type: 'chef_client'
+    params:
+      run_list: 
+        - "role[mars-fe]"
+      env_name: "dev"
+      server_hostname: "chef.int.krogebry.com"
+  - name: "KMS handler"
+    type: "kms_policy"
+    params:
+      key_alias: "devops"
+  - name: "CW logs handler"
+    type: "cw_logs_policy"
+    params:
+      log_handler: "devops"
   - name: "ASG Handler"
     type: "asg"
     params:
-      user_data_script: chef_server
+      user_data_script: mars_fe
   - name: "Networking"
     type: "vpc_client"
     params:
@@ -19,7 +33,7 @@ modules:
       vpc:
         name: "dev"
         version: "0.9.0"
-  - name: "ChefServer"
+  - name: "MarsInternal"
     type: "security_group"
     description: "EC2 cluster instances."
     params:
@@ -39,17 +53,10 @@ params:
     tags:
       Name: "dev-central"
       Version: "ENV:INF_VERSION"
-  InstanceType: "m4.large"
+  InstanceType: "t2.small"
   ImageId:
     type: "ami"
     tags:
-      Name: "chef-server"
-      Version: "0.3.2"
-  DevCentralSNSTopicARN:
-    type: "sns_topic_arn"
-    tags:
-      Name: "DevCentralSNSTopic"
+      Name: "devops"
+      Version: "0.3.0"
   KeyName: "devops-1"
-  Password:
-    type: "password"
-    tags: null

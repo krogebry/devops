@@ -1,0 +1,132 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": { },
+
+  "Resources": {
+    "ECSCluster": {
+      "Type": "AWS::ECS::Cluster"
+    },
+
+    "MarsFEASG": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "MinSize": { "Ref": "MinSize" },
+        "MaxSize": { "Ref": "MaxSize" },
+        "DesiredCapacity": { "Ref": "DesiredCapacity" },
+        "AvailabilityZones": { "Ref": "ApplicationZones" },
+        "VPCZoneIdentifier": { "Ref": "ApplicationSubnets" },
+        "LaunchConfigurationName": { "Ref": "MarsFEInstances" }
+      },
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Timeout": "PT15M"
+        }
+      },
+      "UpdatePolicy": {
+        "AutoScalingRollingUpdate": {
+          "MinInstancesInService": "1",
+          "MaxBatchSize": "1",
+          "PauseTime": "PT15M",
+          "WaitOnResourceSignals": "true"
+        }
+      }
+    },
+
+    "MarsFEInstances": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "config": {
+            "files": {
+              "/etc/chef/dna.json": {
+                "content": "",
+                "mode": "000400",
+                "owner": "root",
+                "group": "root"
+              },
+
+              "/etc/chef/client.rb": {
+                "content": "",
+                "mode": "000400",
+                "owner": "root",
+                "group": "root"
+              },
+
+              "/etc/cfn/cfn-hup.conf": {
+                "content": { "Fn::Sub": "[main]\nstack=${AWS::StackId}\nregion=${AWS::Region}\n" },
+                "mode": "000400",
+                "owner": "root",
+                "group": "root"
+              },
+              "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
+                "content": { "Fn::Sub": "[cfn-auto-reloader-hook]\ntriggers=post.update\npath=Resources.MarsFEInstances.Metadata.AWS::CloudFormation::Init\naction=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource MarsFEInstances --region ${AWS::Region}\nrunas=root\n" }
+              }
+            },
+            "services": {
+              "sysvinit": {
+                "cfn-hup": {
+                  "enabled": "true",
+                  "ensureRunning": "true",
+                  "files": [
+                    "/etc/cfn/cfn-hup.conf",
+                    "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+
+      "Properties": {
+        "UserData": "",
+        "ImageId": { "Ref": "ImageId" },
+        "KeyName": { "Ref": "KeyName" },
+        "InstanceType": { "Ref": "InstanceType" },
+        "SecurityGroups": [{ "Ref": "MarsInternal" }],
+        "IamInstanceProfile": { "Ref": "EC2InstanceProfile" },
+        "InstanceMonitoring": "false",
+        "AssociatePublicIpAddress": "false"
+      }
+    },
+
+    "EC2Role": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": {
+              "Service": [ "ec2.amazonaws.com" ]
+            },
+            "Action": [
+              "sts:AssumeRole"
+            ]
+          }]
+        },
+        "Path": "/",
+        "Policies": [{
+          "PolicyName": "ec2_instances",
+          "PolicyDocument": {
+            "Statement": [{
+              "Effect": "Allow",
+              "Action": [
+                "s3:Get*",
+                "s3:List*"
+              ],
+              "Resource": { "Fn::Sub": "arn:aws:s3:::${S3BucketName}/chef-server/devops/devops-validator.pem" }
+            }]
+          }
+        }]
+      }
+    },
+
+    "EC2InstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [{ "Ref": "EC2Role" }]
+      }
+    }
+  }
+}

@@ -68,6 +68,7 @@
       }
     },
 
+
     "ContainerInstances": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Metadata": {

@@ -3,39 +3,38 @@ name: "Infrastructure"
 owner: "Bryan Kroger (bryan.kroger@gmail.com)"
 modules:
   - "base"
-  - "vpc"
+  #- "vpc"
   #- "bastion"
   #- "chef-client"
-  - "cw_logs"
-  - "cw_collectd"
+  #- "cw_logs"
+  #- "cw_collectd"
   #- "iam_kms_client"
 template: "inf"
 description: "Infrastructure things."
 params:
-  MgtCidr: "24.111.13.66/32"
+  #MgtCidr: "24.111.13.66/32"
+  #InstanceType: "m4.large"
 
-  InstanceType: "m4.large"
+  #ImageId:
+    #type: "ami"
+    #tags:
+      #Name: "devops"
+      #Version: "0.1.1"
 
-  ImageId:
-    type: "ami"
-    tags:
-      Name: "devops"
-      Version: "0.1.1"
+  # KeyName: "devops-0"
 
-  KeyName: "devops-0"
+  #VpcId:
+    #type: "vpc"
+    #tags:
+      #Name: "main"
 
-  VpcId:
-    type: "vpc"
-    tags:
-      Name: "main"
-
-  Zones:
-    type: "zones"
-    tags:
-      - Name: "private"
-      - Name: "public"
-  Subnets:
-    type: "subnets"
-    tags:
-      - Name: "private"
-      - Name: "public"
+  #Zones:
+    #type: "zones"
+    #tags:
+      #- Name: "private"
+      #- Name: "public"
+  #Subnets:
+    #type: "subnets"
+    #tags:
+      #- Name: "private"
+      #- Name: "public"

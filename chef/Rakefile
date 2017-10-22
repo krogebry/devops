@@ -7,6 +7,8 @@ require 'fileutils'
 
 Log = Logger.new(STDOUT)
 
+# aws s3 cp --sse "aws:kms" --sse-kms-key-id 0a3ff840-d06f-405c-8a32-cda1c9ec64ae s3://dev-central-0.1.1/chef-server/devops/bkroger.pem .
+
 namespace :chef do
 
   desc 'Bootstrap new, few install'

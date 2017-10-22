@@ -88,14 +88,6 @@
   		}
 		},
 
-		"DevOpsKeyAlias": {
-  		"Type" : "AWS::KMS::Alias",
-  		"Properties" : {
-    		"AliasName" : { "Fn::Join": [ "", ["alias/devopskey_", { "Ref": "StackVersion" }]] },
-    		"TargetKeyId" : { "Ref": "DevOpsKey" }
-  		}
-		},
-
 		"KMSUseRole": {
       "Type": "AWS::IAM::Role",
       "Properties": {

@@ -88,3 +88,13 @@ Policies": [{
   "Attributes" : [{ "Name" : "ProxyProtocol", "Value" : "true" }]
 }]
 ```
+
+## Launching Mars
+
+```
+rake cf:launch['chef-server, 0.3.4, ChefServer']
+rake cf:launch['dev/mars-fe, 0.1.4, DevMarsFE']
+rake cf:launch['dev/bastion, 0.2.8, DevBastion']
+```
+
+
