@@ -1,0 +1,51 @@
+require 'pp'
+require 'json'
+require 'erubis'
+require 'logger'
+require 'securerandom'
+
+Log = Logger.new(STDOUT)
+
+namespace :packer do
+
+  desc 'Build dev worktation'
+  task :build_dev_workstation, :version do |t,args|
+    preseed_tpl = File.read('http/preseed_jessie.erb')
+    erb = Erubis::Eruby.new(preseed_tpl)
+
+    params = {
+      root_pw: SecureRandom.base64(15),
+      user: {
+        username: 'krogebry',
+        password: SecureRandom.base64(15),
+        full_name: 'Bryan Kroger'
+      }
+    }
+
+    res = erb.result(params)
+
+    File.open('http/preseed_jessie.cfg', 'w') do |f|
+      f.puts(res)
+    end
+
+    params_file = format('/tmp/params.%s', Time.new.to_i)
+    File.open(params_file, 'w') do |f|
+      f.puts(params.to_json)
+    end
+
+    Log.info(format('Parms: %s', params_file))
+
+    packer_json = JSON.parse(File.read('debian_dev.json'))
+    packer_json['builders'][0]['ssh_password'] = params[:user][:password]
+    packer_json['provisioners'][0]['execute_command'] = format('echo \'%s\' | {{.Vars}} sudo -E -S bash \'{{.Path}}\'', params[:user][:password])
+    packer_json['builders'][0]['shutdown_command'] = format('echo \'%s\'|sudo -S /sbin/shutdown -hP now', params[:user][:password])
+
+    json_fs = 'debian_dev-build.json'
+    File.open(json_fs, 'w') do |f|
+      f.puts(packer_json.to_json)
+    end
+    cmd_run_packer = format('packer build %s', json_fs)
+    Log.debug(format('Packer: %s', cmd_run_packer))
+
+  end
+end

@@ -8,8 +8,8 @@ apt-get -y purge $(dpkg --list |egrep 'linux-image-[0-9]' |awk '{print $3,$2}' |
 apt-get -y clean
 
 # Remove history file
-unset HISTFILE
-rm ~/.bash_history /home/vagrant/.bash_history
+#unset HISTFILE
+#rm ~/.bash_history /home/vagrant/.bash_history
 
 # sync data to disk (fix packer)
 sync
