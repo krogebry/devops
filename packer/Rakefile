@@ -40,12 +40,14 @@ namespace :packer do
     packer_json['provisioners'][0]['execute_command'] = format('echo \'%s\' | {{.Vars}} sudo -E -S bash \'{{.Path}}\'', params[:user][:password])
     packer_json['builders'][0]['shutdown_command'] = format('echo \'%s\'|sudo -S /sbin/shutdown -hP now', params[:user][:password])
 
+    vars = {}
+    vars[:image_version] = args[:version]
+
     json_fs = 'debian_dev-build.json'
     File.open(json_fs, 'w') do |f|
       f.puts(packer_json.to_json)
     end
-    cmd_run_packer = format('packer build %s', json_fs)
+    cmd_run_packer = format('packer build %s %s', vars.map{|k,v| format('-var %s=%s', k,v)}.join(' '), json_fs)
     Log.debug(format('Packer: %s', cmd_run_packer))
-
   end
 end
