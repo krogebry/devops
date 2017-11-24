@@ -1,6 +1,3 @@
-##
-# CFT stuff
-##
 require 'yaml'
 require 'erubis'
 require 'netaddr'
@@ -22,7 +19,7 @@ namespace :cf do
 
     Rake::Task['cf:launch'].invoke( 'network-%s' % env_name, version, 'network-%s' % env_name )
     cmd_wait = format('aws cloudformation wait stack-create-complete --stack-name network-%s-%s', env_name, version.gsub(/\./,'-'))
-    Log.debug('CMD(wait): %s' % cmd_wait)
+    LOG.debug('CMD(wait): %s' % cmd_wait)
     Rake::Task['cf:launch'].reenable
     system cmd_wait
 
@@ -33,15 +30,14 @@ namespace :cf do
     Rake::Task['cf:launch'].invoke( 'workout-tracker-%s' % env_name, version, 'WT-%s' % env_name )
   end
 
-  desc "Turn down a stack"
+  desc 'Turn down a stack'
   task :down, :env_name, :version do |t,args|
     version = args[:version]
     env_name = args[:env_name]
 
-    cmd_del_bastion = format('aws cloudformation delete-stack --stack-name bastion-%s-%s', env_name, version.gsub(/\./,'-'))
     cmd_del_wt = format('aws cloudformation delete-stack --stack-name WT-%s-%s', env_name, version.gsub(/\./,'-'))
     cmd_wait_wt = format('aws cloudformation wait stack-delete-complete --stack-name WT-%s-%s', env_name, version.gsub(/\./,'-'))
-
+    cmd_del_bastion = format('aws cloudformation delete-stack --stack-name bastion-%s-%s', env_name, version.gsub(/\./,'-'))
     cmd_del_network = format('aws cloudformation delete-stack --stack-name network-%s-%s', env_name, version.gsub(/\./,'-'))
 
     system cmd_del_bastion
@@ -52,11 +48,13 @@ namespace :cf do
   end
 
   desc 'Status'
-  task :stats do |t,args|
+  task :stats do
     cache = DevOps::Cache.new()
 
     creds = Aws::SharedCredentials.new()
-    cft_client = Aws::CloudFormation::Client.new(region: ENV['AWS_DEFAULT_REGION'], credentials: creds)
+    cft_client = Aws::CloudFormation::Client.new(
+      region: ENV['AWS_DEFAULT_REGION'], credentials: creds
+    )
 
     cache_key = "DescribeStacks"
     stacks = cache.cached_json(cache_key) do
@@ -136,10 +134,10 @@ namespace :cf do
 
     ## Check to make sure the profile name exists.
     fs_profile_file = File.join('cloudformation', 'profiles', format('%s.yml', profile_name))
-    Log.debug(format('FS(profile_file): %s', fs_profile_file))
+    LOG.debug(format('FS(profile_file): %s', fs_profile_file))
 
     unless File.exists? fs_profile_file
-      Log.fatal('Failed to find profile!')
+      LOG.fatal('Failed to find profile!')
       exit
     end
 
@@ -148,7 +146,7 @@ namespace :cf do
     ## Template
     fs_tpl_file = File.join('cloudformation', 'templates', format('%s.json', yaml['template']))
     if (!File.exists?(fs_tpl_file))
-      Log.fatal(format('Unable to find template JSON file: %s', fs_tpl_file))
+      LOG.fatal(format('Unable to find template JSON file: %s', fs_tpl_file))
       exit
     end
 
@@ -203,7 +201,7 @@ namespace :cf do
       cf_client.describe_stacks().data.to_h.to_json
     end
     stack_exists = stacks['stacks'].select { |s| s['stack_name'] == stack_name }.compact.size == 0 ? false : true
-    Log.debug(format('Stack exists(%s): %s', stack_name, stack_exists))
+    LOG.debug(format('Stack exists(%s): %s', stack_name, stack_exists))
 
     # exit
 
@@ -222,7 +220,7 @@ namespace :cf do
     }]
 
     if stack_exists
-      Log.debug(format('Updating stack'))
+      LOG.debug(format('Updating stack'))
       cf_client.update_stack(
         tags: tags,
         parameters: params,
@@ -232,7 +230,7 @@ namespace :cf do
       )
 
     else
-      Log.debug(format('Creating stack'))
+      LOG.debug(format('Creating stack'))
 
       ## Stack does not exist, create it.
       cf_client.create_stack({

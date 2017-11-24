@@ -37,9 +37,9 @@ class EC2Instance
 
   def rate_age
     now = Time.new.to_f
-    #Log.debug('Rating age')
+    #LOG.debug('Rating age')
     launch_time = Time.parse(@data['launch_time'])
-    #Log.debug('LaunchTime: %s' % launch_time)
+    #LOG.debug('LaunchTime: %s' % launch_time)
     age = now - launch_time.to_f
     num_days = (age/86400)
     #Log.debug('Age: %s / %s' % [age, num_days])
@@ -60,7 +60,7 @@ class EC2Instance
           #Log.debug('SGRating: %s' % sg_rating)
         end
       end
-      #Log.debug('SGRating: %s' % sg_rating)
+      #LOG.debug('SGRating: %s' % sg_rating)
       exposure_rating += sg_rating
     end
     exposure_rating

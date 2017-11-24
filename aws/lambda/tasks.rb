@@ -6,7 +6,7 @@
 
 def package_lambda( project_name )
   cmd_zip = format('cd lambda/%s; zip -q -r %s.zip index.js ../node_modules/*', project_name, project_name, project_name)
-  Log.debug(format('CMD(zip): %s', cmd_zip))
+  LOG.debug(format('CMD(zip): %s', cmd_zip))
   system(cmd_zip)
   return format(File.join('lambda', project_name, format('%s.zip', project_name)))
 end
@@ -18,13 +18,13 @@ def create_lambda_package(project_name, arn)
                   project_name,
                   arn,
                   project_name)
-  Log.debug(format('CMD(create): %s', cmd))
+  LOG.debug(format('CMD(create): %s', cmd))
   system(cmd)
 end
 
 def update_lambda_package(project_name)
   cmd = format('aws lambda update-function-code --function-name %s --zip-file fileb://./lambda/%s/%s.zip', project_name, project_name, project_name)
-  Log.debug(format('CMD(update): %s', cmd))
+  LOG.debug(format('CMD(update): %s', cmd))
   system(cmd)
 end
 
@@ -55,7 +55,7 @@ namespace :lambda do
       s3_client.put_object( bucket: s3_bucket, key: File::basename(zip_file) , body: f)
     end
 
-    Log.debug(format('File uploaded'))
+    LOG.debug(format('File uploaded'))
   end
 
   desc 'Update project to lambda thingie'
@@ -127,7 +127,7 @@ namespace :lambda do
         source_arn,
         account_id)
     
-    Log.debug(format('CMD(perm): %s', cmd))
+    LOG.debug(format('CMD(perm): %s', cmd))
     system(cmd)
   end
 

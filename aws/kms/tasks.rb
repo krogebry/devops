@@ -36,7 +36,7 @@ namespace :kms do
         bucket: format('dev-central-%s', ENV['INF_VERSION'])
       )
     rescue => e
-      Log.fatal(format('Failed: %s', e))
+      LOG.fatal(format('Failed: %s', e))
       pp e.backtrace
     end
 
@@ -76,7 +76,7 @@ namespace :kms do
       end
 
     rescue => e
-      Log.fatal(format('Failed: %s', e))
+      LOG.fatal(format('Failed: %s', e))
       pp e.backtrace
     end
 

@@ -8,6 +8,12 @@ Log = Logger.new(STDOUT)
 
 namespace :packer do
 
+  desc 'Tune VM'
+  task :tune_dev_workstation, :version do |t,args|
+    # cmd_share = 'VBoxManage sharedfolder add krogebry-dev-0.2.0 --name dev --hostpath dev'
+    # cmd_encrypt = 'VBoxManage encryptmedium output-virtualbox-iso/krogebry-dev-0.2.0-disk001.vmdk --newpassword /tmp/pass'
+  end
+
   desc 'Build dev worktation'
   task :build_dev_workstation, :version do |t,args|
     preseed_tpl = File.read('http/preseed_jessie.erb')

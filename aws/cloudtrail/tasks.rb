@@ -5,17 +5,7 @@ require 'mongo'
 require 'resque'
 require 'resque/tasks'
 
-#require './cloudtrail/instance.rb'
-#require './cloudtrail/compressed_file.rb'
-#require './cloudtrail/db.rb'
-#require './cloudtrail/redis.rb'
-
-#DATA_DIR = File.join('/', 'mnt', 'data')
 DATA_DIR = File.join('/', 'mnt', 'SecureDisk', 'cloudtrail')
-
-#if ENV['REDIS_HOSTNAME']
-  #Resque.redis = '%s:6379' % ENV['REDIS_HOSTNAME']
-#end
 
 begin
   if ENV['USE_AWS_CREDS'] == true
@@ -32,7 +22,7 @@ begin
   end
 
 rescue => e
-  Log.fatal('Failed to create dynamodb client: %s' % e)
+  LOG.fatal('Failed to create dynamodb client: %s' % e)
   exit
 
 end
@@ -53,7 +43,7 @@ end
 
 def nap( msg='Napping' )
   timer = rand(0.5) + rand(0.3)
-  Log.debug(format('%s %.3f', msg, timer))
+  LOG.debug(format('%s %.3f', msg, timer))
   sleep( timer )
 end
 
@@ -83,7 +73,7 @@ namespace :cloudtrail do
           batch.push({ put_request: { item: clean_json(r) }})
 
           if i_batch >= num_per_batch
-            Log.debug('Flushing')
+            LOG.debug('Flushing')
             begin
               DynamoClient.batch_write_item({
                 request_items: {
@@ -110,10 +100,10 @@ namespace :cloudtrail do
 
           i_batch += 1
           i_records += 1
-          Log.debug(format('%i / %i', i_records, num_records))
+          LOG.debug(format('%i / %i', i_records, num_records))
         end
         i += 1
-        Log.debug(format('%i / %i', i, num_files))
+        LOG.debug(format('%i / %i', i, num_files))
       end
 
       SQSClient.delete_message(
@@ -136,9 +126,9 @@ namespace :cloudtrail do
     #db = CloudTrailDB.new(hostname)
     #CloudTrailRedis.new(hostname)
 
-    Log.debug('Gathering files from: %s' % DATA_DIR)
+    LOG.debug('Gathering files from: %s' % DATA_DIR)
     file_list = Dir.glob(File.join(DATA_DIR, '**/*.gz'))
-    Log.debug('Found %i files' % file_list.size)
+    LOG.debug('Found %i files' % file_list.size)
 
     while file_list.size > 0
     	message = {'files' => file_list.pop( num_files_per_queue )}
@@ -265,9 +255,9 @@ namespace :cloudtrail do
         value: new_version
       }]
     })
-    Log.debug('Created tags for image')
+    LOG.debug('Created tags for image')
 
-    Log.info('Waiting for snapshots')
+    LOG.info('Waiting for snapshots')
     sleep 5
 
     ## Tag the blocks.
@@ -284,9 +274,9 @@ namespace :cloudtrail do
         }]
       })
     end
-    Log.debug('Tagged block devices')
+    LOG.debug('Tagged block devices')
 
-    Log.debug("State: %s" % i.state)
+    LOG.debug("State: %s" % i.state)
   end
 
   desc 'audit'
@@ -337,7 +327,7 @@ namespace :cloudtrail do
     report.sort!{|a,b| a[:rating] <=> b[:rating]}
     #pp report
     report.each do |r|
-      Log.info('%s - %s' % [r[:rating], r[:instance_id]])
+      LOG.info('%s - %s' % [r[:rating], r[:instance_id]])
     end
 
     #Log.debug('NumInstance: %s' % num_instances)
@@ -444,7 +434,7 @@ namespace :cloudtrail do
     hostname = 'localhost'
     db = CloudTrailDB.new(hostname)
 
-    Log.debug("ASGName: %s" % args[:asg_name])
+    LOG.debug("ASGName: %s" % args[:asg_name])
 
     queries['mod_asg'] = {
         "awsRegion" => "us-west-2",
@@ -471,7 +461,7 @@ namespace :cloudtrail do
     hostname = 'localhost'
     db = CloudTrailDB.new(hostname)
 
-    Log.debug("ELBName: %s" % args[:elb_name])
+    LOG.debug("ELBName: %s" % args[:elb_name])
 
     queries['mod_elb'] = {
       "awsRegion" => "us-west-2",
@@ -495,7 +485,7 @@ namespace :cloudtrail do
   task :find_run_instance, :instance_id do |t,args|
     ts_start = Time.new.to_f()
     queries = {}
-    Log.debug("InstanceId: %s" % args[:instance_id])
+    LOG.debug("InstanceId: %s" % args[:instance_id])
     queries['run_instance'] = {
       "awsRegion" => "us-west-2",
       "responseElements.instancesSet.items.instanceId" => args[:instance_id],
@@ -516,7 +506,7 @@ namespace :cloudtrail do
     ts_start = Time.new.to_f()
     rebuild = args[:rebuild] == "true" ? true : false
     queries = {}
-    Log.debug("Stack: %s" % args[:stack_name])
+    LOG.debug("Stack: %s" % args[:stack_name])
     queries['delete_stack_report'] = {
       "awsRegion" => "us-west-2",
       "requestParameters.stackName" => /.*#{args[:stack_name]}.*/,
@@ -557,7 +547,7 @@ namespace :cloudtrail do
                                 }
 
     if rebuild
-      Log.debug("Rebuilding")
+      LOG.debug("Rebuilding")
 
       queries.each do |coll_name, query|
         DB[coll_name].drop()
@@ -576,8 +566,8 @@ namespace :cloudtrail do
       pp record
     end
 
-    Log.debug('Found %i logs' % records.count())
+    LOG.debug('Found %i logs' % records.count())
 
-    Log.debug('Runtime: %.2f' % (Time.new.to_f - ts_start))
+    LOG.debug('Runtime: %.2f' % (Time.new.to_f - ts_start))
   end
 end

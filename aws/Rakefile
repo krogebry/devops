@@ -12,29 +12,26 @@ require './lambda/tasks.rb'
 require './cloudtrail/tasks.rb'
 require './cloudformation/tasks.rb'
 
-Log = DevOps::Logger.new(STDOUT)
+LOG = DevOps::Logger.new(STDOUT)
+
+desc "Flush Cache."
+task :flush_cache do |t,args|
+  DevOps::Cache.flush
+end
 
 desc 'Update Bastion IP'
 task :update_bastion do
   public_ip = Net::HTTP.get URI "https://api.ipify.org"
   #public_ip = "71.32.37.234"
-  Log.debug(format('RemoteIP: %s', public_ip))
+  LOG.debug(format('RemoteIP: %s', public_ip))
 
   @cache = DevOps::Cache.new
-
-  # filter = [{
-  #   name: 'tag:Role',
-  #   values: ['Bastion']
-  # }, {
-  #   name: 'tag:Version',
-  #   values: [ENV['INF_VERSION'].gsub( /\./, '-' )]
-  # }]
 
   filter = [{
     name: 'tag:Application',
     values: ['CTCompute']
   }]
-  Log.debug(filter)
+  LOG.debug(filter)
 
   creds = Aws::SharedCredentials.new()
   ec2_client = Aws::EC2::Client.new(region: ENV['AWS_DEFAULT_REGION'], credentials: creds)
@@ -48,7 +45,7 @@ task :update_bastion do
   end
 
   if groups['security_groups'].empty?
-    Log.fatal(format('Unable to find SG'))
+    LOG.fatal(format('Unable to find SG'))
     exit
   end
 
@@ -72,11 +69,4 @@ task :update_bastion do
       }]
     }]
   )
-
 end
-
-desc "Flush Cache."
-task :flush_cache do |t,args|
-  DevOps::Cache.flush
-end
-
