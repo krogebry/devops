@@ -53,8 +53,8 @@
 
     "vboxmanage": [
       [ "modifyvm", "{{.Name}}", "--cpus", "4" ],
-      [ "modifyvm", "{{.Name}}", "--nic1", "nat" ],
-      [ "modifyvm", "{{.Name}}", "--nic2", "hostonly", "--hostonlyadapter2", "vboxnet0" ],
+      // [ "modifyvm", "{{.Name}}", "--nic1", "nat" ],
+      // [ "modifyvm", "{{.Name}}", "--nic2", "hostonly", "--hostonlyadapter2", "vboxnet0" ],
       [ "modifyvm", "{{.Name}}", "--audio", "none" ],
       [ "modifyvm", "{{.Name}}", "--memory", "4096" ]
     ]
@@ -62,7 +62,18 @@
 
   "provisioners": [{
     "type": "shell",
-    "execute_command": "echo 'krogebry' | {{.Vars}} sudo -E -S bash '{{.Path}}'",
+    "scripts": ["scripts/krogebry.sh"]
+  },{
+    "type": "file",
+    "source": "files/bashrc",
+    "destination": "/home/krogebry/.bashrc"
+  },{
+    "type": "file",
+    "source": "files/ssh_config",
+    "destination": "/home/krogebry/.ssh_config"
+  },{
+    "type": "shell",
+    "execute_command": "echo 'PASSWORD' | {{.Vars}} sudo -E -S bash '{{.Path}}'",
     "scripts": [
         "scripts/bootstrap.sh",
         "scripts/dev_workstation.sh",
@@ -77,5 +88,9 @@
     "type": "file",
     "source": "scripts/rvm.sh",
     "destination": "/home/krogebry/rvm.sh"
+  },{
+    "type": "file",
+    "source": "scripts/mount_shared.sh",
+    "destination": "/home/krogebry/mount_shared.sh"
   }]
 }

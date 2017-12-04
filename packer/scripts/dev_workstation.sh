@@ -10,4 +10,4 @@ apt-get install -y \
   libyajl-dev \
   ca-certificates
 
-# adduser krogebry
+usermod -aG sudo krogebry

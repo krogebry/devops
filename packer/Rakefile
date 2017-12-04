@@ -20,10 +20,11 @@ namespace :packer do
     erb = Erubis::Eruby.new(preseed_tpl)
 
     params = {
-      root_pw: SecureRandom.base64(15),
+      root_pw: SecureRandom.base64(45),
+      # disk_enc: SecureRandom.base64(45),
       user: {
         username: 'krogebry',
-        password: SecureRandom.base64(15),
+        password: SecureRandom.base64(45),
         full_name: 'Bryan Kroger'
       }
     }
@@ -43,7 +44,7 @@ namespace :packer do
 
     packer_json = JSON.parse(File.read('debian_dev.json'))
     packer_json['builders'][0]['ssh_password'] = params[:user][:password]
-    packer_json['provisioners'][0]['execute_command'] = format('echo \'%s\' | {{.Vars}} sudo -E -S bash \'{{.Path}}\'', params[:user][:password])
+    packer_json['provisioners'][3]['execute_command'] = format('echo \'%s\' | {{.Vars}} sudo -E -S bash \'{{.Path}}\'', params[:user][:password])
     packer_json['builders'][0]['shutdown_command'] = format('echo \'%s\'|sudo -S /sbin/shutdown -hP now', params[:user][:password])
 
     vars = {}
