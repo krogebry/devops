@@ -24,7 +24,7 @@ github_username:  krogebry
 
 # Build settings
 markdown: kramdown
-theme: jekyll-theme-tactile
+theme: jekyll-theme-cayman
 plugins:
   - jekyll-feed
 
