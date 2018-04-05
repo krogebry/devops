@@ -5,36 +5,22 @@ require 'mongo'
 require 'resque'
 require 'resque/tasks'
 
-#require './cloudtrail/instance.rb'
-#require './cloudtrail/compressed_file.rb'
-#require './cloudtrail/db.rb'
-#require './cloudtrail/redis.rb'
-
-#DATA_DIR = File.join('/', 'mnt', 'data')
 DATA_DIR = File.join('/', 'mnt', 'SecureDisk', 'cloudtrail')
 
-#if ENV['REDIS_HOSTNAME']
-  #Resque.redis = '%s:6379' % ENV['REDIS_HOSTNAME']
-#end
-
 begin
-  if ENV['USE_AWS_CREDS'] == true
+  if ENV['USE_AWS_CREDS']
     creds = Aws::SharedCredentials.new()
     S3Client = Aws::S3::Client.new(credentials: creds)
     SQSClient = Aws::SQS::Client.new(credentials: creds)
     DynamoClient = Aws::DynamoDB::Client.new(credentials: creds)
-
   else
     S3Client = Aws::S3::Client.new()
     SQSClient = Aws::SQS::Client.new()
     DynamoClient = Aws::DynamoDB::Client.new()
-
   end
-
 rescue => e
   Log.fatal('Failed to create dynamodb client: %s' % e)
   exit
-
 end
 
 def clean_json( json )
@@ -172,30 +158,12 @@ namespace :cloudtrail do
 
   desc 'snap'
   task :snap, :current_version, :new_version do |t,args|
-    # cache = DevOps::Cache.new()
-    creds = Aws::SharedCredentials.new()
+    creds = Aws::SharedCredentials.new
     ec2_client = Aws::EC2::Client.new(region: 'us-east-1', credentials: creds)
-
-    #instances = ec2_client.describe_instances()
-    #pp instances
-
-    ## ssh-keygen -f "/home/krogebry/.ssh/known_hosts" -R cloud0.krogebry.com
-    ## update DNS for cloud0
-    ## run s3 sync
-    ## run dc
-    ## run slurp
-    ## wait for q's to clear
-    ## (optional) backup and store in s3
-    ## create AMI snap
-    ## delete stack
-
-    # current_version = '0.9.5'
-    # new_version = '0.9.6'
 
     current_version = args[:current_version]
     new_version = args[:new_version]
 
-    endhighlight
     instance = res.reservations[0].instances[0]
     instance_id = instance.instance_id
 

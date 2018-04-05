@@ -22,21 +22,13 @@ task :update_bastion do
 
   @cache = DevOps::Cache.new
 
-  # filter = [{
-  #   name: 'tag:Role',
-  #   values: ['Bastion']
-  # }, {
-  #   name: 'tag:Version',
-  #   values: [ENV['INF_VERSION'].gsub( /\./, '-' )]
-  # }]
-
   filter = [{
     name: 'tag:Application',
     values: ['CTCompute']
   }]
   Log.debug(filter)
 
-  creds = Aws::SharedCredentials.new()
+  creds = Aws::SharedCredentials.new
   ec2_client = Aws::EC2::Client.new(region: ENV['AWS_DEFAULT_REGION'], credentials: creds)
 
   cache_key = format('security_groups_%s_%s_%s', ENV['AWS_DEFAULT_REGION'],
@@ -76,7 +68,6 @@ task :update_bastion do
 end
 
 desc "Flush Cache."
-task :flush_cache do |t,args|
+task :flush_cache do
   DevOps::Cache.flush
 end
-
