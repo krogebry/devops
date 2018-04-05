@@ -1,6 +1,6 @@
 
 class ParamsProc
-  @cache
+  @cache = nil
   @config
   @params
   @s3_client
@@ -24,9 +24,9 @@ class ParamsProc
   def get_filters( a )
     ro = []
     a.each do |k,v|
-      Log.debug(format('%s - %s', k, v))
+      LOG.debug(format('%s - %s', k, v))
       if v.match( /^ENV:/ )
-        Log.debug(format('Doing sub on: %s', k))
+        LOG.debug(format('Doing sub on: %s', k))
         (env, var_name) = v.split( ':' )
         v = ENV[var_name]
       end
@@ -43,17 +43,17 @@ class ParamsProc
     ## Find any deps.
     return if @params == nil
     @params.each do |k,v|
-      Log.debug(format('%s - %s', k,v ))
+      LOG.debug(format('%s - %s', k, v ))
 
       if(v.class == Hash && v.has_key?( 'type' ))
         begin
           v = self.send( v['type'], v )
         rescue NoMethodError => e
-          Log.fatal(format('Unknown method error: %s - %s', v['type'], e))
+          LOG.fatal(format('Unknown method error: %s - %s', v['type'], e))
           pp e.backtrace
           exit
         rescue => e
-          Log.fatal(format('Unknown error: %s', e ))
+          LOG.fatal(format('Unknown error: %s', e ))
           pp e.backtrace
           exit
         end
@@ -68,14 +68,14 @@ class ParamsProc
     end
   end
 
-  def vpc_cidr( v )
+  def vpc_cidr(v)
     cache_key = format('vpcs-%s-%s', @config['region'], ENV['AWS_PROFILE'])
     vpcs = @cache.cached_json( cache_key ) do 
       @ec2_client.describe_vpcs({ filters: get_filters( v['tags'] )}).data.to_h.to_json
     end
 
-    if(vpcs['vpcs'].size == 0)
-      Log.fatal(format('Unable to find VPC!'))
+    if vpcs['vpcs'].size == 0
+      LOG.fatal(format('Unable to find VPC!'))
       exit
     end
 
@@ -84,13 +84,13 @@ class ParamsProc
 
   def ami( v )
     cache_key = format('images-%s-%s-%s', @config['region'], ENV['AWS_PROFILE'], Digest::SHA1.hexdigest( v['tags'].to_s ))
-    Log.debug(cache_key)
+    LOG.debug(cache_key)
     objects = @cache.cached_json( cache_key ) do 
       @ec2_client.describe_images({ filters: get_filters( v['tags'] )}).data.to_h.to_json
     end
 
     if(objects['images'].size == 0)
-      Log.fatal(format('Unable to find image!'))
+      LOG.fatal(format('Unable to find image!'))
       exit
     end
 
@@ -127,7 +127,7 @@ class ParamsProc
     tags = {}
     v['tags'].each do |k,v|
       if v.match( /^ENV:/ )
-        Log.debug(format('Doing sub on: %s', k))
+        LOG.debug(format('Doing sub on: %s', k))
         (env, var_name) = v.split( ':' )
         v = ENV[var_name]
       end
@@ -139,7 +139,7 @@ class ParamsProc
     elb_target = elb_tags['tag_descriptions'].select{|elb| elb['tags'].select{|t| r = tags.select{|k,v| t['key'] == k && t['value'] == v }.size == 1 }.compact.size == tags.size }.first
 
     if(elb_target == nil)
-      Log.fatal(format('Unable to find ELB DNS!'))
+      LOG.fatal(format('Unable to find ELB DNS!'))
       exit
     end
 
@@ -174,7 +174,7 @@ class ParamsProc
     filters = get_filters( v['tags'] )
 
     bucket_name = format("%s-%s", filters.select{|f| f[:name] == 'tag:Name' }.first[:values][0], filters.select{|f| f[:name] == 'tag:Version' }.first[:values][0])
-    Log.debug(format('Bucket: %s', bucket_name))
+    LOG.debug(format('Bucket: %s', bucket_name))
 
     cache_key = format('s3_buckets-%s-%s', @config['region'], ENV['AWS_PROFILE'])
 
@@ -185,7 +185,7 @@ class ParamsProc
 
     ## Fail if we can't find the bucket.
     if bucket == nil
-      Log.fatal(format('Unable to find bucket: %s', bucket_name))
+      LOG.fatal(format('Unable to find bucket: %s', bucket_name))
       exit
     end
 
@@ -198,11 +198,11 @@ class ParamsProc
     sns_topics = @cache.cached_json( cache_key ) do
       @sns_client.list_topics().data.to_h.to_json
     end
-    Log.debug(format('Looking for: %s', v['tags']['Name']))
+    LOG.debug(format('Looking for: %s', v['tags']['Name']))
 
     topic = sns_topics['topics'].select{|t| t['topic_arn'].match( /#{v['tags']['Name']}/ )}.first
     if topic == nil
-      Log.fatal(format('Unable to find SNS topic: %s' % v['tags']['Name']))
+      LOG.fatal(format('Unable to find SNS topic: %s' % v['tags']['Name']))
       exit
     end
 

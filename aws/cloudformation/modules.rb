@@ -38,20 +38,20 @@ class ModulesProc
   def load_module( module_name )
     fs_module_file = File.join('cloudformation', 'templates', 'modules', format('%s.json' % module_name))
     if !File.exists? fs_module_file
-      Log.debug(format('Module file not found: %s', fs_module_file))
+      LOG.debug(format('Module file not found: %s', fs_module_file))
       raise Exception.new()
     end
-    Log.debug(format('Loading module: %s', fs_module_file))
+    LOG.debug(format('Loading module: %s', fs_module_file))
     JSON::parse(File.read(fs_module_file))
   end
 
   def load_script( module_name )
     fs_module_file = File.join('cloudformation', 'templates', 'scripts', format('%s.sh' % module_name))
     if !File.exists? fs_module_file
-      Log.debug(format('Module file not found: %s', fs_module_file))
+      LOG.debug(format('Module file not found: %s', fs_module_file))
       raise Exception.new()
     end
-    Log.debug(format('Loading module: %s', fs_module_file))
+    LOG.debug(format('Loading module: %s', fs_module_file))
 
     ro = []
     File.read(fs_module_file).each_line do |l|
@@ -79,7 +79,7 @@ class ModulesProc
       @stack_tpl['Resources'][lc_name]['Properties']['UserData']['Fn::Base64']['Fn::Join'][1].each do |r|
         if (r.class == Hash)
           if (r.keys[0] == "DevOpsMod")
-            Log.debug(format('Injecting user data for mod'))
+            LOG.debug(format('Injecting user data for mod'))
             mod_json["UserData"].each do |udr|
               new_user_data.push(udr)
             end
@@ -97,27 +97,27 @@ class ModulesProc
   def compile()
     @config.each do |m|
       if m.class == String
-        Log.debug('module is a string')
+        LOG.debug('module is a string')
         merge_module(m)
 
       elsif m.class == Hash
-        Log.debug('module is a hash')
+        LOG.debug('module is a hash')
         if m.has_key?('type')
           begin
             self.send( m['type'], m )
           rescue NoMethodError => e
-            Log.fatal(format('Unknown method error: %s - %s', m['type'], e))
+            LOG.fatal(format('Unknown method error: %s - %s', m['type'], e))
             pp e.backtrace
             exit
           rescue => e
-            Log.fatal(format('Unknown error: %s', e ))
+            LOG.fatal(format('Unknown error: %s', e ))
             pp e.backtrace
             exit
           end
         end
 
       else
-        Log.debug('module is an unknown type ')
+        LOG.debug('module is an unknown type ')
       end
     end
     [@stack_tpl, @stack_params]
@@ -150,7 +150,7 @@ class ModulesProc
           found_tags += 1
         end
       end
-      Log.debug(format( 'Found tags: %i', found_tags ))
+      LOG.debug(format('Found tags: %i', found_tags ))
       return stack_info['stacks'].first if found_tags == filters.size
     end
     return nil
@@ -284,7 +284,7 @@ class ModulesProc
       route53.list_hosted_zones_by_name({ dns_name: m_config['params']['domain_name'] }).data.to_h.to_json
     end
     zone_id = zones['hosted_zones'].first['id'].split('/')[-1]
-    Log.debug(format('ZoneId: %s', zone_id))
+    LOG.debug(format('ZoneId: %s', zone_id))
 
     json['Resources']['DNSEntry']['Properties']['HostedZoneId'] = zone_id
     r_record = {
@@ -398,7 +398,7 @@ class ModulesProc
         name: 'vpc-id',
         values: [vpc_id]
       }]
-      Log.debug('Subnet filters: %s' % filters.inspect)
+      LOG.debug('Subnet filters: %s' % filters.inspect)
       creds = Aws::SharedCredentials.new()
       ec2_client = Aws::EC2::Client.new(credentials: creds)
       ec2_client.describe_subnets(filters: filters).data.to_h.to_json
@@ -481,7 +481,7 @@ class ModulesProc
           name: 'vpc-id',
           values: [vpc_id]
         }]
-        Log.debug('Subnet filters: %s' % filters.inspect)
+        LOG.debug('Subnet filters: %s' % filters.inspect)
         ec2_client = Aws::EC2::Client.new(credentials: creds)
         ec2_client.describe_subnets(filters: filters).data.to_h.to_json
       end
@@ -549,7 +549,7 @@ class ModulesProc
           'Private'
         end
 
-        #Log.debug('prefix: %s' % prefix)
+        #LOG.debug('prefix: %s' % prefix)
 
         subnet_rta_name = format('%sSubnetRTA%i', prefix, i)
         subnet_rta = deep_copy @stack_tpl['Resources'][format('%sSubnetRouteTableAssociation', prefix)]

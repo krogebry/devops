@@ -1,5 +1,6 @@
 {
   "variables": {
+    "image_version": "0.1.0",
     "debian_version": "9.2.1"
   },
 
@@ -22,33 +23,57 @@
       "console-keymaps-at/keymap=us <wait>",
       "<enter><wait>"
     ],
+
     "boot_wait": "10s",
-    "disk_size": 32768,
+    "disk_size": 8000,
+
     "guest_os_type": "Debian_64",
     "http_directory": "http",
+
     "iso_checksum_type": "sha512",
     "iso_checksum_url": "http://cdimage.debian.org/cdimage/release/{{user `debian_version`}}/amd64/iso-cd/SHA512SUMS",
     "iso_url": "http://cdimage.debian.org/cdimage/release/{{user `debian_version`}}/amd64/iso-cd/debian-{{user `debian_version`}}-amd64-netinst.iso",
+
+    "ssh_port": 22,
     "ssh_username": "krogebry",
     "ssh_password": "vagrant",
-    "ssh_port": 22,
     "ssh_wait_timeout": "10000s",
+
     "shutdown_command": "echo 'krogebry'|sudo -S /sbin/shutdown -hP now",
     "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
     "virtualbox_version_file": ".vbox_version",
-    "vm_name": "debian-{{user `debian_version`}}-dev",
+
+    "vm_name": "krogebry-dev-{{user `image_version`}}",
+    "export_opts": [
+      "--manifest",
+      "--vsys", "0",
+      "--description", "Debian - {{user `debian_version`}}",
+      "--version", "{{user `version`}}"
+    ],
+
     "vboxmanage": [
-      [ "modifyvm", "{{.Name}}", "--nic1", "nat" ],
-      [ "modifyvm", "{{.Name}}", "--nic2", "hostonly", "--hostonlyadapter2", "vboxnet0" ],
-      [ "modifyvm", "{{.Name}}", "--memory", "4096" ],
+      [ "modifyvm", "{{.Name}}", "--cpus", "4" ],
+      // [ "modifyvm", "{{.Name}}", "--nic1", "nat" ],
+      // [ "modifyvm", "{{.Name}}", "--nic2", "hostonly", "--hostonlyadapter2", "vboxnet0" ],
       [ "modifyvm", "{{.Name}}", "--audio", "none" ],
-      [ "modifyvm", "{{.Name}}", "--cpus", "4" ]
+      [ "modifyvm", "{{.Name}}", "--memory", "4096" ]
     ]
   }],
 
   "provisioners": [{
     "type": "shell",
-    "execute_command": "echo 'krogebry' | {{.Vars}} sudo -E -S bash '{{.Path}}'",
+    "scripts": ["scripts/krogebry.sh"]
+  },{
+    "type": "file",
+    "source": "files/bashrc",
+    "destination": "/home/krogebry/.bashrc"
+  },{
+    "type": "file",
+    "source": "files/ssh_config",
+    "destination": "/home/krogebry/.ssh_config"
+  },{
+    "type": "shell",
+    "execute_command": "echo 'PASSWORD' | {{.Vars}} sudo -E -S bash '{{.Path}}'",
     "scripts": [
         "scripts/bootstrap.sh",
         "scripts/dev_workstation.sh",
@@ -63,5 +88,9 @@
     "type": "file",
     "source": "scripts/rvm.sh",
     "destination": "/home/krogebry/rvm.sh"
+  },{
+    "type": "file",
+    "source": "scripts/mount_shared.sh",
+    "destination": "/home/krogebry/mount_shared.sh"
   }]
 }

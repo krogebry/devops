@@ -8,16 +8,23 @@ Log = Logger.new(STDOUT)
 
 namespace :packer do
 
+  desc 'Tune VM'
+  task :tune_dev_workstation, :version do |t,args|
+    # cmd_share = 'VBoxManage sharedfolder add krogebry-dev-0.2.0 --name dev --hostpath dev'
+    # cmd_encrypt = 'VBoxManage encryptmedium output-virtualbox-iso/krogebry-dev-0.2.0-disk001.vmdk --newpassword /tmp/pass'
+  end
+
   desc 'Build dev worktation'
   task :build_dev_workstation, :version do |t,args|
     preseed_tpl = File.read('http/preseed_jessie.erb')
     erb = Erubis::Eruby.new(preseed_tpl)
 
     params = {
-      root_pw: SecureRandom.base64(15),
+      root_pw: SecureRandom.base64(45),
+      # disk_enc: SecureRandom.base64(45),
       user: {
         username: 'krogebry',
-        password: SecureRandom.base64(15),
+        password: SecureRandom.base64(45),
         full_name: 'Bryan Kroger'
       }
     }
@@ -37,15 +44,17 @@ namespace :packer do
 
     packer_json = JSON.parse(File.read('debian_dev.json'))
     packer_json['builders'][0]['ssh_password'] = params[:user][:password]
-    packer_json['provisioners'][0]['execute_command'] = format('echo \'%s\' | {{.Vars}} sudo -E -S bash \'{{.Path}}\'', params[:user][:password])
+    packer_json['provisioners'][3]['execute_command'] = format('echo \'%s\' | {{.Vars}} sudo -E -S bash \'{{.Path}}\'', params[:user][:password])
     packer_json['builders'][0]['shutdown_command'] = format('echo \'%s\'|sudo -S /sbin/shutdown -hP now', params[:user][:password])
+
+    vars = {}
+    vars[:image_version] = args[:version]
 
     json_fs = 'debian_dev-build.json'
     File.open(json_fs, 'w') do |f|
       f.puts(packer_json.to_json)
     end
-    cmd_run_packer = format('packer build %s', json_fs)
+    cmd_run_packer = format('packer build %s %s', vars.map{|k,v| format('-var %s=%s', k,v)}.join(' '), json_fs)
     Log.debug(format('Packer: %s', cmd_run_packer))
-
   end
 end
