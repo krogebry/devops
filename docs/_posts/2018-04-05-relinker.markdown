@@ -1,9 +1,10 @@
 ---
 layout: post
 title:  "Relinker hackery"
-date:   2018-04-05 12:28:48 -0700
-categories: cloudformation automation hackery_dackery_doo
+date:   2018-04-05 10:00:00 -0700
+categories: cloudformation 
 ---
+{% assign docs = '/devops//code/2018-04-05' %}
 
 <h1>Overview</h1>
 
@@ -67,5 +68,61 @@ the case when we want to prove things out before we actually start playing with 
 </ol>
 
 <h1>Build locally</h1>
+
+<pre class="code">
+{{ bash }} cd web
+{{ bash }} ./api.rb
+</pre>
+
+Now we can play around with the UI.
+
+{% highlight shell %}
+    amazon-ecs:     Chef::Exceptions::Service
+    amazon-ecs:     -------------------------
+    amazon-ecs:     service[procps]: Service is not known to chkconfig.
+{% endhighlight %}
+
+{% highlight shell %}
+    amazon-ecs: Profile Summary: 48 successful controls, 4 control failures, 2 controls skipped
+    amazon-ecs: Test Summary: 117 successful, 6 failures, 2 skipped
+{% endhighlight %}
+
+{% highlight shell %}
+    amazon-ecs:   ×  package-08: Install auditd (1 failed)
+    amazon-ecs:      ✔  System Package audit should be installed
+    amazon-ecs:      ✔  Audit Daemon Config log_file should cmp == "/var/log/audit/audit.log"
+    amazon-ecs:      ✔  Audit Daemon Config log_format should cmp == "raw"
+    amazon-ecs:      ✔  Audit Daemon Config flush should match /^INCREMENTAL|INCREMENTAL_ASYNC$/
+    amazon-ecs:      ×  Audit Daemon Config max_log_file_action should cmp == "keep_logs"
+{% endhighlight %}
+
+{% highlight shell %}
+    amazon-ecs: Profile Summary: 52 successful controls, 0 control failures, 2 controls skipped
+    amazon-ecs: Test Summary: 123 successful, 0 failures, 2 skipped
+{% endhighlight %}
+
+{% highlight shell %}
+{% endhighlight %}
+
+{% highlight shell %}
+{% endhighlight %}
+
+{% highlight shell %}
+{% endhighlight %}
+
+
+
+<h1>Path</h1>
+
+<ul>
+    <li>/shatterdome</li>
+    <ul>
+        <li>/clusters</li>
+        <ul>
+            <li>/cluster_type_name</li>
+        </ul>
+    </ul>
+</ul>
+
 
 
