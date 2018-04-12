@@ -1,6 +1,0 @@
-source /etc/network/interfaces.d/*
-auto lo enp0s3 enp0s8
-iface lo inet loopback
-allow-hotplug enp0s3
-iface enp0s3 inet dhcp
-iface enp0s8 inet dhcp

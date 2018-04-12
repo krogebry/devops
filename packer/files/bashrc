@@ -122,10 +122,8 @@ export EDITOR=$(which vim)
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
 export PATH="$PATH:$HOME/.rvm/bin"
 
-export AWS_PROFILE='default'
+export AWS_PROFILE='krogebry'
 export AWS_DEFAULT_REGION='us-east-1'
-export AWS_ACCOUNT_ID='903369196314'
-export ENV_NAME='dev'
 
 alias dc="/usr/local/bin/docker-compose"
 

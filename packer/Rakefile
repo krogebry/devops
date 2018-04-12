@@ -44,7 +44,7 @@ namespace :packer do
 
     packer_json = JSON.parse(File.read('debian_dev.json'))
     packer_json['builders'][0]['ssh_password'] = params[:user][:password]
-    packer_json['provisioners'][3]['execute_command'] = format('echo \'%s\' | {{.Vars}} sudo -E -S bash \'{{.Path}}\'', params[:user][:password])
+    packer_json['provisioners'][4]['execute_command'] = format('echo \'%s\' | {{.Vars}} sudo -E -S bash \'{{.Path}}\'', params[:user][:password])
     packer_json['builders'][0]['shutdown_command'] = format('echo \'%s\'|sudo -S /sbin/shutdown -hP now', params[:user][:password])
 
     vars = {}
