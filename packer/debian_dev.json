@@ -1,7 +1,7 @@
 {
   "variables": {
     "image_version": "0.1.0",
-    "debian_version": "9.2.1"
+    "debian_version": "9.4.0"
   },
 
   "builders": [{
@@ -62,7 +62,11 @@
 
   "provisioners": [{
     "type": "shell",
-    "scripts": ["scripts/krogebry.sh"]
+    "inline": ["mkdir /home/krogebry/.ssh"]
+  },{
+    "type": "file",
+    "source": "/Users/krogebry/.ssh/id_rsa.pub",
+    "destination": "/home/krogebry/.ssh/authorized_keys"
   },{
     "type": "file",
     "source": "files/bashrc",
@@ -75,22 +79,21 @@
     "type": "shell",
     "execute_command": "echo 'PASSWORD' | {{.Vars}} sudo -E -S bash '{{.Path}}'",
     "scripts": [
-        "scripts/bootstrap.sh",
-        "scripts/dev_workstation.sh",
-        "scripts/docker.sh",
-        "scripts/docker_compose.sh",
-        "scripts/vbox.sh",
-        "scripts/vbaddguest.sh",
-        "scripts/networking.sh",
-        "scripts/cleanup.sh"
+      "scripts/bootstrap.sh",
+      "scripts/docker.sh",
+      "scripts/sudoers.sh",
+      "scripts/docker_compose.sh",
+      "scripts/vbox.sh",
+      "scripts/vbaddguest.sh",
+      "scripts/networking.sh",
+      "scripts/cleanup.sh"
     ]
   },{
-    "type": "file",
-    "source": "scripts/rvm.sh",
-    "destination": "/home/krogebry/rvm.sh"
+    "type": "shell",
+    "scripts": ["scripts/krogebry.sh"]
   },{
     "type": "file",
-    "source": "scripts/mount_shared.sh",
+    "source": "files/mount_shared.sh",
     "destination": "/home/krogebry/mount_shared.sh"
   }]
 }
