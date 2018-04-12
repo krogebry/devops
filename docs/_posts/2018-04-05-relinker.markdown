@@ -1,0 +1,128 @@
+---
+layout: post
+title:  "Relinker hackery"
+date:   2018-04-05 10:00:00 -0700
+categories: cloudformation 
+---
+{% assign docs = '/devops//code/2018-04-05' %}
+
+<h1>Overview</h1>
+
+<p>
+The idea of a relinker is pretty simple.  It's basically an internal version of <a href="https://goo.gl/">
+Google's URL shortner</a>.  The internal part is important because it's all about keeping things internal.
+</p>
+
+<p>
+What we want to create at the end of this is the ability to use or local browser and hit http://go/ to get
+to the webui for relinker.  Then, once we have a link loaded, we can simply type something like "go/s" in our
+browser and know that it'll go to wherever "s" is pointed at.
+</p>
+
+<p>
+This works really well for local develoopment, and in many ways it's basically just a weird way of creating
+a bizare kind of bookmarking system that runs in the cloud.  However, it gets really useful when we look
+at a few interesting aspects of why we would do this:
+</p>
+
+<ol>
+    <li>It proves out the container story, which can be useful for companies 
+        that are new to the containerization journey</li>
+    <li>It allows for something called telepresence which allows us to run the local container with the remote
+        database connection.</li>
+    <li>If we get the IT folks on board, they can wire in an office DNS entry so that we don't need
+        a local docker container to redirect to the cloud service.</li>
+    <li></li>
+</ol>
+
+<p>
+The trippy part about this is how we do the redirection.  This document assumes that we have a macbook running
+VirtualBox where VBox is running a debian VM ( or similar ).  You could probably do the same thing with 
+docker-engine or similar.  Basically we have to hack our local dns on the macbook as such:
+</p>
+
+<p>
+127.0.0.1   go
+</p>
+
+<p>
+Then we have a docker container on the debian VM that redirects :80 to our cloudy instance.  We'll get into
+how this is wired up later.  We use the local redir hack if we don't have IT buyin quite yet.  This is often
+the case when we want to prove things out before we actually start playing with things.
+</p>
+
+<h2>Layout</h2>
+
+* Mongodb for storing stuff.  We assume, at least for now, that this is going to be transient, which is fine.
+* Relinker docker container that connects to the mongodb container.
+* ECS because containers are awesome.
+* Local redir container running in debian.
+
+<h2>Plan</h2>
+
+<ol>
+    <li>First, we'll set up our local environment using docker-compose and the like.</li>
+    <li>Deploy ECS cluster</li>
+    <li>Deploy mongodb and relinker service.</li>
+    <li>Wire everything up end to end</li>
+</ol>
+
+<h1>Build locally</h1>
+
+<pre class="code">
+{{ bash }} cd web
+{{ bash }} ./api.rb
+</pre>
+
+Now we can play around with the UI.
+
+{% highlight shell %}
+    amazon-ecs:     Chef::Exceptions::Service
+    amazon-ecs:     -------------------------
+    amazon-ecs:     service[procps]: Service is not known to chkconfig.
+{% endhighlight %}
+
+{% highlight shell %}
+    amazon-ecs: Profile Summary: 48 successful controls, 4 control failures, 2 controls skipped
+    amazon-ecs: Test Summary: 117 successful, 6 failures, 2 skipped
+{% endhighlight %}
+
+{% highlight shell %}
+    amazon-ecs:   ×  package-08: Install auditd (1 failed)
+    amazon-ecs:      ✔  System Package audit should be installed
+    amazon-ecs:      ✔  Audit Daemon Config log_file should cmp == "/var/log/audit/audit.log"
+    amazon-ecs:      ✔  Audit Daemon Config log_format should cmp == "raw"
+    amazon-ecs:      ✔  Audit Daemon Config flush should match /^INCREMENTAL|INCREMENTAL_ASYNC$/
+    amazon-ecs:      ×  Audit Daemon Config max_log_file_action should cmp == "keep_logs"
+{% endhighlight %}
+
+{% highlight shell %}
+    amazon-ecs: Profile Summary: 52 successful controls, 0 control failures, 2 controls skipped
+    amazon-ecs: Test Summary: 123 successful, 0 failures, 2 skipped
+{% endhighlight %}
+
+{% highlight shell %}
+{% endhighlight %}
+
+{% highlight shell %}
+{% endhighlight %}
+
+{% highlight shell %}
+{% endhighlight %}
+
+
+
+<h1>Path</h1>
+
+<ul>
+    <li>/shatterdome</li>
+    <ul>
+        <li>/clusters</li>
+        <ul>
+            <li>/cluster_type_name</li>
+        </ul>
+    </ul>
+</ul>
+
+
+

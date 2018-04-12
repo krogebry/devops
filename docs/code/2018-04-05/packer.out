@@ -1,0 +1,208 @@
+    amazon-ecs: Profile: DevSec Linux Security Baseline (linux-baseline)
+    amazon-ecs: Version: 2.2.0
+    amazon-ecs: Target:  local://
+    amazon-ecs:
+    amazon-ecs:   ✔  os-01: Trusted hosts login
+    amazon-ecs:      ✔  File /etc/hosts.equiv should not exist
+    amazon-ecs:   ×  os-02: Check owner and permissions for /etc/shadow (2 failed)
+    amazon-ecs:      ✔  File /etc/shadow should exist
+    amazon-ecs:      ✔  File /etc/shadow should be file
+    amazon-ecs:      ✔  File /etc/shadow should be owned by "root"
+    amazon-ecs:      ✔  File /etc/shadow should not be executable
+    amazon-ecs:      ✔  File /etc/shadow should not be readable by other
+    amazon-ecs:      ✔  File /etc/shadow group should eq "root"
+    amazon-ecs:      ×  File /etc/shadow should not be writable by owner
+    amazon-ecs:      expected File /etc/shadow not to be writable by owner
+    amazon-ecs:      ×  File /etc/shadow should not be readable by owner
+    amazon-ecs:      expected File /etc/shadow not to be readable by owner
+    amazon-ecs:      ✔  File /etc/shadow should not be readable by group
+    amazon-ecs:   ✔  os-03: Check owner and permissions for /etc/passwd
+    amazon-ecs:      ✔  File /etc/passwd should exist
+    amazon-ecs:      ✔  File /etc/passwd should be file
+    amazon-ecs:      ✔  File /etc/passwd should be owned by "root"
+    amazon-ecs:      ✔  File /etc/passwd should not be executable
+    amazon-ecs:      ✔  File /etc/passwd should be writable by owner
+    amazon-ecs:      ✔  File /etc/passwd should not be writable by group
+    amazon-ecs:      ✔  File /etc/passwd should not be writable by other
+    amazon-ecs:      ✔  File /etc/passwd should be readable by owner
+    amazon-ecs:      ✔  File /etc/passwd should be readable by group
+    amazon-ecs:      ✔  File /etc/passwd should be readable by other
+    amazon-ecs:      ✔  File /etc/passwd group should eq "root"
+    amazon-ecs:   ✔  os-04: Dot in PATH variable
+    amazon-ecs:      ✔  Environment variable PATH split should not include ""
+    amazon-ecs:      ✔  Environment variable PATH split should not include "."
+    amazon-ecs:   ×  os-05: Check login.defs (1 failed)
+    amazon-ecs:      ✔  File /etc/login.defs should exist
+    amazon-ecs:      ✔  File /etc/login.defs should be file
+    amazon-ecs:      ✔  File /etc/login.defs should be owned by "root"
+    amazon-ecs:      ✔  File /etc/login.defs should not be executable
+    amazon-ecs:      ✔  File /etc/login.defs should be readable by owner
+    amazon-ecs:      ✔  File /etc/login.defs should be readable by group
+    amazon-ecs:      ✔  File /etc/login.defs should be readable by other
+    amazon-ecs:      ✔  File /etc/login.defs group should eq "root"
+    amazon-ecs:      ✔  login.defs ENV_SUPATH should include "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    amazon-ecs:      ✔  login.defs ENV_PATH should include "/usr/local/bin:/usr/bin:/bin"
+    amazon-ecs:      ×  login.defs UMASK should include "077"
+    amazon-ecs:      expected "027" to include "077"
+    amazon-ecs:      ✔  login.defs PASS_MAX_DAYS should eq "60"
+    amazon-ecs:      ✔  login.defs PASS_MIN_DAYS should eq "7"
+    amazon-ecs:      ✔  login.defs PASS_WARN_AGE should eq "7"
+    amazon-ecs:      ✔  login.defs LOGIN_RETRIES should eq "5"
+    amazon-ecs:      ✔  login.defs LOGIN_TIMEOUT should eq "60"
+    amazon-ecs:      ✔  login.defs UID_MIN should eq "1000"
+    amazon-ecs:      ✔  login.defs GID_MIN should eq "1000"
+    amazon-ecs:   ×  os-05b: Check login.defs - RedHat specific (2 failed)
+    amazon-ecs:      ✔  File /etc/login.defs should not be writable
+    amazon-ecs:      ×  login.defs SYS_UID_MIN should eq "201"
+    amazon-ecs:
+    amazon-ecs:      expected: "201"
+    amazon-ecs:           got: "100"
+    amazon-ecs:
+    amazon-ecs:      (compared using ==)
+    amazon-ecs:      
+    amazon-ecs:      ✔  login.defs SYS_UID_MAX should eq "999"
+    amazon-ecs:      ×  login.defs SYS_GID_MIN should eq "201"
+    amazon-ecs:
+    amazon-ecs:      expected: "201"
+    amazon-ecs:           got: "100"
+    amazon-ecs:
+    amazon-ecs:      (compared using ==)
+    amazon-ecs:      
+    amazon-ecs:      ✔  login.defs SYS_GID_MAX should eq "999"
+    amazon-ecs:   ✔  os-06: Check for SUID/ SGID blacklist
+    amazon-ecs:      ✔  suid_check diff should be empty
+    amazon-ecs:   ✔  os-07: Unique uid and gid
+    amazon-ecs:      ✔  /etc/passwd uids should not contain duplicates
+    amazon-ecs:      ✔  /etc/group gids should not contain duplicates
+    amazon-ecs:   ✔  os-08: Entropy
+    amazon-ecs:      ✔  3677 should >= 1000
+    amazon-ecs:   ✔  os-09: Check for .rhosts and .netrc file
+    amazon-ecs:      ✔  [] should be empty
+    amazon-ecs:   ✔  os-10: CIS: Disable unused filesystems
+    amazon-ecs:      ✔  File /etc/modprobe.d/dev-sec.conf content should match "install cramfs /bin/true"
+    amazon-ecs:      ✔  File /etc/modprobe.d/dev-sec.conf content should match "install freevxfs /bin/true"
+    amazon-ecs:      ✔  File /etc/modprobe.d/dev-sec.conf content should match "install jffs2 /bin/true"
+    amazon-ecs:      ✔  File /etc/modprobe.d/dev-sec.conf content should match "install hfs /bin/true"
+    amazon-ecs:      ✔  File /etc/modprobe.d/dev-sec.conf content should match "install hfsplus /bin/true"
+    amazon-ecs:      ✔  File /etc/modprobe.d/dev-sec.conf content should match "install squashfs /bin/true"
+    amazon-ecs:      ✔  File /etc/modprobe.d/dev-sec.conf content should match "install udf /bin/true"
+    amazon-ecs:      ✔  File /etc/modprobe.d/dev-sec.conf content should match "install vfat /bin/true"
+    amazon-ecs:   ✔  os-11: Protect log-directory
+    amazon-ecs:      ✔  File /var/log should be directory
+    amazon-ecs:      ✔  File /var/log should be owned by "root"
+    amazon-ecs:      ✔  File /var/log should be grouped into "root"
+    amazon-ecs:   ✔  package-01: Do not run deprecated inetd or xinetd
+    amazon-ecs:      ✔  System Package inetd should not be installed
+    amazon-ecs:      ✔  System Package xinetd should not be installed
+    amazon-ecs:   ✔  package-02: Do not install Telnet server
+    amazon-ecs:      ✔  System Package telnetd should not be installed
+    amazon-ecs:   ✔  package-03: Do not install rsh server
+    amazon-ecs:      ✔  System Package telnetd should not be installed
+    amazon-ecs:   ✔  package-05: Do not install ypserv server (NIS)
+    amazon-ecs:      ✔  System Package ypserv should not be installed
+    amazon-ecs:   ✔  package-06: Do not install tftp server
+    amazon-ecs:      ✔  System Package tftp-server should not be installed
+    amazon-ecs:   ✔  package-07: Install syslog server package
+    amazon-ecs:      ✔  System Package rsyslog should be installed
+    amazon-ecs:   ×  package-08: Install auditd (1 failed)
+    amazon-ecs:      ✔  System Package audit should be installed
+    amazon-ecs:      ✔  Audit Daemon Config log_file should cmp == "/var/log/audit/audit.log"
+    amazon-ecs:      ✔  Audit Daemon Config log_format should cmp == "raw"
+    amazon-ecs:      ✔  Audit Daemon Config flush should match /^INCREMENTAL|INCREMENTAL_ASYNC$/
+    amazon-ecs:      ×  Audit Daemon Config max_log_file_action should cmp == "keep_logs"
+    amazon-ecs:
+    amazon-ecs:      expected: "keep_logs"
+    amazon-ecs:           got: ROTATE
+    amazon-ecs:
+    amazon-ecs:      (compared using `cmp` matcher)
+    amazon-ecs:      
+    amazon-ecs:      ✔  Audit Daemon Config space_left should cmp == 75
+    amazon-ecs:      ✔  Audit Daemon Config action_mail_acct should cmp == "root"
+    amazon-ecs:      ✔  Audit Daemon Config space_left_action should cmp == "SYSLOG"
+    amazon-ecs:      ✔  Audit Daemon Config admin_space_left should cmp == 50
+    amazon-ecs:      ✔  Audit Daemon Config admin_space_left_action should cmp == "SUSPEND"
+    amazon-ecs:      ✔  Audit Daemon Config disk_full_action should cmp == "SUSPEND"
+    amazon-ecs:      ✔  Audit Daemon Config disk_error_action should cmp == "SUSPEND"
+    amazon-ecs:   ✔  package-09: CIS: Additional process hardening
+    amazon-ecs:      ✔  System Package prelink should not be installed
+    amazon-ecs:   ↺  sysctl-01: IPv4 Forwarding
+    amazon-ecs:      ↺  Skipped control due to only_if condition.
+    amazon-ecs:   ✔  sysctl-02: Reverse path filtering
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.conf.all.rp_filter value should eq 1
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.conf.default.rp_filter value should eq 1
+    amazon-ecs:   ✔  sysctl-03: ICMP ignore bogus error responses
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.icmp_ignore_bogus_error_responses value should eq 1
+    amazon-ecs:   ✔  sysctl-04: ICMP echo ignore broadcasts
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.icmp_echo_ignore_broadcasts value should eq 1
+    amazon-ecs:   ✔  sysctl-05: ICMP ratelimit
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.icmp_ratelimit value should eq 100
+    amazon-ecs:   ✔  sysctl-06: ICMP ratemask
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.icmp_ratemask value should eq 88089
+    amazon-ecs:   ✔  sysctl-07: TCP timestamps
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.tcp_timestamps value should eq 0
+    amazon-ecs:   ✔  sysctl-08: ARP ignore
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.conf.all.arp_ignore value should eq 1
+    amazon-ecs:   ✔  sysctl-09: ARP announce
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.conf.all.arp_announce value should eq 2
+    amazon-ecs:   ✔  sysctl-10: TCP RFC1337 Protect Against TCP Time-Wait
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.tcp_rfc1337 value should eq 1
+    amazon-ecs:   ✔  sysctl-11: Protection against SYN flood attacks
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.tcp_syncookies value should eq 1
+    amazon-ecs:   ✔  sysctl-12: Shared Media IP Architecture
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.conf.all.shared_media value should eq 1
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.conf.default.shared_media value should eq 1
+    amazon-ecs:   ✔  sysctl-13: Disable Source Routing
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.conf.all.accept_source_route value should eq 0
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.conf.default.accept_source_route value should eq 0
+    amazon-ecs:   ✔  sysctl-14: Disable acceptance of all IPv4 redirected packets
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.conf.default.accept_redirects value should eq 0
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.conf.all.accept_redirects value should eq 0
+    amazon-ecs:   ✔  sysctl-15: Disable acceptance of all secure redirected packets
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.conf.all.secure_redirects value should eq 0
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.conf.default.secure_redirects value should eq 0
+    amazon-ecs:   ✔  sysctl-16: Disable sending of redirects packets
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.conf.default.send_redirects value should eq 0
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.conf.all.send_redirects value should eq 0
+    amazon-ecs:   ✔  sysctl-17: Disable log martians
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.conf.all.log_martians value should eq 1
+    amazon-ecs:      ✔  Kernel Parameter net.ipv4.conf.default.log_martians value should eq 1
+    amazon-ecs:   ✔  sysctl-18: Disable IPv6 if it is not needed
+    amazon-ecs:      ✔  Kernel Parameter net.ipv6.conf.all.disable_ipv6 value should eq 1
+    amazon-ecs:   ✔  sysctl-19: IPv6 Forwarding
+    amazon-ecs:      ✔  Kernel Parameter net.ipv6.conf.all.forwarding value should eq 0
+    amazon-ecs:   ✔  sysctl-20: Disable acceptance of all IPv6 redirected packets
+    amazon-ecs:      ✔  Kernel Parameter net.ipv6.conf.default.accept_redirects value should eq 0
+    amazon-ecs:      ✔  Kernel Parameter net.ipv6.conf.all.accept_redirects value should eq 0
+    amazon-ecs:   ✔  sysctl-21: Disable acceptance of IPv6 router solicitations messages
+    amazon-ecs:      ✔  Kernel Parameter net.ipv6.conf.default.router_solicitations value should eq 0
+    amazon-ecs:   ✔  sysctl-22: Disable Accept Router Preference from router advertisement
+    amazon-ecs:      ✔  Kernel Parameter net.ipv6.conf.default.accept_ra_rtr_pref value should eq 0
+    amazon-ecs:   ✔  sysctl-23: Disable learning Prefix Information from router advertisement
+    amazon-ecs:      ✔  Kernel Parameter net.ipv6.conf.default.accept_ra_pinfo value should eq 0
+    amazon-ecs:   ✔  sysctl-24: Disable learning Hop limit from router advertisement
+    amazon-ecs:      ✔  Kernel Parameter net.ipv6.conf.default.accept_ra_defrtr value should eq 0
+    amazon-ecs:   ✔  sysctl-25: Disable the system`s acceptance of router advertisement
+    amazon-ecs:      ✔  Kernel Parameter net.ipv6.conf.all.accept_ra value should eq 0
+    amazon-ecs:      ✔  Kernel Parameter net.ipv6.conf.default.accept_ra value should eq 0
+    amazon-ecs:   ✔  sysctl-26: Disable IPv6 autoconfiguration
+    amazon-ecs:      ✔  Kernel Parameter net.ipv6.conf.default.autoconf value should eq 0
+    amazon-ecs:   ✔  sysctl-27: Disable neighbor solicitations to send out per address
+    amazon-ecs:      ✔  Kernel Parameter net.ipv6.conf.default.dad_transmits value should eq 0
+    amazon-ecs:   ✔  sysctl-28: Assign one global unicast IPv6 addresses to each interface
+    amazon-ecs:      ✔  Kernel Parameter net.ipv6.conf.default.max_addresses value should eq 1
+    amazon-ecs:   ✔  sysctl-29: Disable loading kernel modules
+    amazon-ecs:      ✔  Kernel Parameter kernel.modules_disabled value should eq 0
+    amazon-ecs:   ✔  sysctl-30: Magic SysRq
+    amazon-ecs:      ✔  Kernel Parameter kernel.sysrq value should eq 0
+    amazon-ecs:   ✔  sysctl-31a: Secure Core Dumps - dump settings
+    amazon-ecs:      ✔  Kernel Parameter fs.suid_dumpable value should cmp == /(0|2)/
+    amazon-ecs:   ↺  sysctl-31b: Secure Core Dumps - dump path
+    amazon-ecs:      ↺  Skipped control due to only_if condition.
+    amazon-ecs:   ✔  sysctl-32: kernel.randomize_va_space
+    amazon-ecs:      ✔  Kernel Parameter kernel.randomize_va_space value should eq 2
+    amazon-ecs:   ✔  sysctl-33: CPU No execution Flag or Kernel ExecShield
+    amazon-ecs:      ✔  /proc/cpuinfo Flags should include NX
+    amazon-ecs:
+    amazon-ecs: Profile Summary: 48 successful controls, 4 control failures, 2 controls skipped
+    amazon-ecs: Test Summary: 117 successful, 6 failures, 2 skipped
+
