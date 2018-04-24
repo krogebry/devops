@@ -65,8 +65,12 @@
     "inline": ["mkdir /home/krogebry/.ssh"]
   },{
     "type": "file",
-    "source": "/Users/krogebry/.ssh/id_rsa.pub",
+    "source": "/Users/bryan_kroger/.ssh/id_rsa.pub",
     "destination": "/home/krogebry/.ssh/authorized_keys"
+  },{
+    "type": "file",
+    "source": "files/vimrc",
+    "destination": "/home/krogebry/.vimrc"
   },{
     "type": "file",
     "source": "files/bashrc",

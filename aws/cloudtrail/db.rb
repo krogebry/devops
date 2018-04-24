@@ -1,7 +1,5 @@
 # DBConnector for the CloudTrail Mongodb data set
 class CloudTrailDB
-  @conn = nil
-
   attr_accessor :conn
   def initialize(hostname = 'localhost')
     Mongo::Logger.logger.level = ::Logger::FATAL
@@ -9,13 +7,13 @@ class CloudTrailDB
     # local_ip = '172.30.3.126'
     # local_ip = 'localhost'
     @conn = Mongo::Client.new(
-        format('mongodb://%s:27017' % hostname ),
-        database: 'cloudtrail'
+      format('mongodb://%s:27017' % hostname ),
+      database: 'cloudtrail'
     )
   end
 
   def build_indexes
-    @conn[:compressed_files].indexes.create_one({ filename: 1 }, { unique: true })
+    @conn[:compressed_files].indexes.create_one({ key: 1 }, { unique: true })
     @conn[:records].indexes.create_one({ requestID: 1, eventID: 1 }, { unique: true })
     @conn[:records].indexes.create_one({ eventTime: 1 })
     @conn[:records].indexes.create_one({ eventName: 1 })

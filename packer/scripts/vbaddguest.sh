@@ -1,16 +1,11 @@
-#!/bin/bash
-
-# Install additional guests
+#!/usr/bin/env bash
+set -xe
 mkdir /tmp/vbox
-VER=$(cat /home/vagrant/.vbox_version)
-mount -o loop /home/vagrant/VBoxGuestAdditions_$VER.iso /tmp/vbox 
-yes | sh /tmp/vbox/VBoxLinuxAdditions.run
-umount /tmp/vbox
-rmdir /tmp/vbox
-rm /home/vagrant/*.iso
-ln -s /opt/VBoxGuestAdditions-*/lib/VBoxGuestAdditions /usr/lib/VBoxGuestAdditions
-
-# Cleanup
-rm -rf VBoxGuestAdditions_*.iso VBoxGuestAdditions_*.iso.?
-rm -rf /usr/src/virtualbox-ose-guest*
-rm -rf /usr/src/vboxguest*
+cd /tmp
+wget "http://download.virtualbox.org/virtualbox/5.2.0_RC1/VBoxGuestAdditions_5.2.0_RC1.iso"
+mount -o loop VBoxGuestAdditions_5.2.0_RC1.iso /tmp/vbox
+apt-get install build-essential module-assistant linux-headers-amd64 -y
+mkdir /usr/src/linux-headers-4.9.0-6-amd64/include/linux
+ln -s /usr/src/linux-headers-4.9.0-6-amd64/include/generated/autoconf.h /usr/src/linux-headers-4.9.0-6-amd64/include/linux/
+cd /tmp/vbox ; yes | sh /tmp/vbox/VBoxLinuxAdditions.run
+modprobe vboxsf

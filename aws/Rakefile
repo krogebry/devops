@@ -70,11 +70,8 @@ task :update_bastion do
     }]
   )
 end
-<<<<<<< HEAD
 
 desc "Flush Cache."
 task :flush_cache do
   DevOps::Cache.flush
 end
-=======
->>>>>>> 0be7d2a7d83e8041790645f2710336f8897b2219

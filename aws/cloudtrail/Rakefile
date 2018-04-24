@@ -1,0 +1,109 @@
+require 'pp'
+require 'logger'
+require 'aws-sdk'
+require 'net/http'
+require 'fileutils'
+require 'zlib'
+require 'mongo'
+require 'resque'
+require 'resque/tasks'
+
+require './db.rb'
+
+LOG = Logger.new(STDOUT)
+S3Client = Aws::S3::Client.new
+
+DB = CloudTrailDB.new
+
+def get_objects_in_bucket(bucket_name, start_after)
+  objs = S3Client.list_objects_v2(bucket: bucket_name, start_after: start_after)
+  objs.contents.each do |obj|
+    if obj.size == 0
+      LOG.debug('found folder')
+    else
+      search = DB.conn[:compressed_files].find(key: obj.key)
+      if search.count == 1
+        # LOG.info(format('Skipping: %s', obj.key))
+        next
+      end
+
+      content = S3Client.get_object(bucket: bucket_name, key: obj.key).body.read
+      gz_reader = Zlib::GzipReader.new(StringIO.new(content))
+      json = JSON.parse(gz_reader.read)
+      json['Records'].each do |record|
+        begin
+          DB.conn[:records].insert_one(record)
+        rescue BSON::String::IllegalKey => e
+          puts "IllegalKey: %s" % e
+        rescue Mongo::Error::OperationFailure => e
+          puts 'OperationFailure: %s' % e
+        end
+      end
+      DB.conn[:compressed_files].insert_one(key: obj.key)
+    end
+  end
+  objs.contents[objs.contents.size-1].key
+end
+
+namespace :cw do
+  desc 'Update indexes'
+  task :index do
+    DB.build_indexes
+  end
+
+  desc 'Find human interactions on the AWS UI console'
+  task :find_human_console_interactions do
+    #ts_start = Time.new.to_f()
+
+    epoc_start = "2016-05-22T00:00:00Z"
+    epoc_end = "2018-05-23T00:00:00Z"
+
+    queries = {}
+
+    queries['human_consul_actions'] = {
+        "awsRegion" => "us-east-1",
+        "userAgent" => "signin.amazonaws.com",
+        "userIdentity.type" => "IAMUser",
+        "$and" => [
+            {"eventTime" => {"$gt" => epoc_start}},
+            {"eventTime" => {"$lt" => epoc_end}}
+        ]
+        #{ }"recipientAccountId" => "123"
+    }
+
+    pp queries
+
+    queries.each do |coll_name, query|
+      aggregate = DB.conn[:records].aggregate([
+                                             {"$match" => query},
+                                             {"$out": coll_name.to_s}
+                                         ])
+      aggregate.count()
+    end
+  end
+
+  desc "Breakdown human actions"
+  task :breakdown_human_actions do
+    queries = {}
+    queries['human_actions_by_event_type'] = {
+        '_id' => '$eventName',
+        'count' => { '$sum' => 1}
+    }
+    queries.each do |coll_name, query|
+      aggregate = DB.conn[:human_consul_actions].aggregate([
+        {"$group" => query},
+        {"$out": coll_name.to_s}
+      ])
+      aggregate.count()
+    end
+  end
+
+  desc 'Scrape S3'
+  task :scrape_s3 do
+    last_object = nil
+    100.times do |i|
+      LOG.debug(format('Scrapping: %i / %s', i, last_object))
+      last_object = get_objects_in_bucket('ll-dev-tf-trail-main', last_object)
+    end
+  end
+end
