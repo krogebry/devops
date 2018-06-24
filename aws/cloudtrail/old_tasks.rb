@@ -7,21 +7,21 @@ require 'resque/tasks'
 
 DATA_DIR = File.join('/', 'mnt', 'SecureDisk', 'cloudtrail')
 
-begin
-  if ENV['USE_AWS_CREDS']
-    creds = Aws::SharedCredentials.new()
-    S3Client = Aws::S3::Client.new(credentials: creds)
-    SQSClient = Aws::SQS::Client.new(credentials: creds)
-    DynamoClient = Aws::DynamoDB::Client.new(credentials: creds)
-  else
-    S3Client = Aws::S3::Client.new()
-    SQSClient = Aws::SQS::Client.new()
-    DynamoClient = Aws::DynamoDB::Client.new()
-  end
-rescue => e
-  LOG.fatal('Failed to create dynamodb client: %s' % e)
-  exit
-end
+# begin
+#   if ENV['USE_AWS_CREDS']
+#     creds = Aws::SharedCredentials.new()
+#     S3Client = Aws::S3::Client.new(credentials: creds)
+#     SQSClient = Aws::SQS::Client.new(credentials: creds)
+#     DynamoClient = Aws::DynamoDB::Client.new(credentials: creds)
+#   else
+#     S3Client = Aws::S3::Client.new()
+#     SQSClient = Aws::SQS::Client.new()
+#     DynamoClient = Aws::DynamoDB::Client.new()
+#   end
+# rescue => e
+#   LOG.fatal('Failed to create dynamodb client: %s' % e)
+#   exit
+# end
 
 def clean_json( json )
   json.each do |k,v|
@@ -29,7 +29,7 @@ def clean_json( json )
       if v.keys.size == 0
         json[k] = nil
       else
-        v = clean_json( v ) 
+        v = clean_json( v )
       end
     end
     json[k] = nil if v == ""
@@ -467,7 +467,7 @@ namespace :cloudtrail do
     queries['run_instance'] = {
       "awsRegion" => "us-west-2",
       "responseElements.instancesSet.items.instanceId" => args[:instance_id],
-      "eventName" => "RunInstances" 
+      "eventName" => "RunInstances"
     }
     pp queries
     queries.each do |coll_name, query|
