@@ -1,0 +1,83 @@
+---
+layout: post
+title:  "JQ tricks with AWS"
+date:   2018-07-30 10:00:00 -0700
+categories: aws jq
+---
+<h1>Overview</h1>
+
+<p>
+Handy tricks for pulling out AWS data.  From time to time I find myself needing some quick and dirty reports detailing
+aspects of a given AWS account.  These helper scripts have helped me in my cunsulting work as no two clients are ever
+using the same set of tools, and as a cunsultant I often find myself retrained by security contraints.
+</p>
+
+<p>
+In general most of my code ( be it ruby, or jq ) uses some kind of simple cache mechanism.  In most of these examples
+I'm making the aws cli call and passing the data to a file.  I then use the file with jq.  This helps me tune and debug
+the data as needed.  I can also, obviously, reuse the data for different queries.  Some day I might get around to making
+this a little more sophisticated, but for now I usually run the script once, then comment the line out and run it again
+as many times as is needed.
+</p>
+
+<h1>EC2 Instances</h1>
+
+<p>
+This gives me a mapping of the instance types used.  This is most often useful in environments where we're using mostly
+static instance builds without any clustering ( EKS, ECS ) or ASG's.  This is a sure sign the the client does not have
+a clean way to deploy code to newly created instances, which is a huge red flag.  
+</p>
+
+{% highlight shell %}
+aws ec2 describe-instances --query "Reservations[].Instances[].{InstanceType:InstanceType}" > /tmp/instance_types.json
+cat /tmp/instance_types.json | jq -r 'group_by(.InstanceType) | map({type: .[0].InstanceType, count: length}) | sort_by(.count)[] | [.type, .count|tostring] | join("\t")'
+{% endhighlight %}
+
+<h1>EBS Blocks</h1>
+
+<p>
+This is a great way to get a sense for the size and usage of EBS blocks.
+</p>
+
+{% highlight shell %}
+#!/bin/bash
+
+aws ec2 describe-volumes > /tmp/volumes.json
+
+## Report total size of all ebs volumes
+echo "---Total used---"
+cat /tmp/volumes.json|jq '.Volumes|reduce .[].Size as $item (0; . + $item)'
+
+## Report breakdown of types.
+echo "---Types---"
+cat /tmp/volumes.json|jq -r '.Volumes| group_by(.VolumeType)| map({volume: .[0].VolumeType, count: length}) | sort_by(.count)[] | [.volume, .count|tostring] | join("\t")'
+
+## Report on size of volumes
+echo "---Size (size in GiB / number )---"
+cat /tmp/volumes.json|jq -r '.Volumes| group_by(.Size)| map({size: .[0].Size, count: length}) | sort_by(.size)[] | [.size, .count|tostring] | join("\t")'
+
+echo "---Usage---"
+cat /tmp/volumes.json|jq -r '.Volumes| group_by(.State)| map({state: .[0].State, count: length}) | sort_by(.count)[] | [.state, .count|tostring] | join("\t")'
+{% endhighlight %}
+
+<h1>Snapshots</h1>
+
+<p>
+I've seen cases where Lambda functions are forgotten about and snapshots end up piling up over time.  It's usually
+not a big deal since snaps are cheap, but sometimes handy to know.
+</p>
+
+{% highlight shell %}
+#!/bin/bash
+
+aws ec2 describe-snapshots --owner-id=349250784145 > /tmp/snapshots.json
+
+## Report total size of all ebs volumes
+echo "---Total used---"
+cat /tmp/snapshots.json|jq '.Snapshots|reduce .[].VolumeSize as $item (0; . + $item)'
+
+## Report on size of volumes
+echo "---Size (size in GiB / count)---"
+cat /tmp/snapshots.json|jq -r '.Snapshots| group_by(.VolumeSize)| map({size: .[0].VolumeSize, count: length}) | sort_by(.size)[] | [.size, .count|tostring] | join("\t")'
+
+{% endhighlight %}
