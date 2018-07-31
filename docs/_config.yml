@@ -1,41 +1,76 @@
-# Welcome to Jekyll!
 #
-# This config file is meant for settings that affect your whole blog, values
-# which you are expected to set up once and rarely edit after that. If you find
-# yourself editing this file very often, consider using Jekyll's data files
-# feature for the data you need to update frequently.
+###################################
+# Site wide configuration
+####################################
 #
-# For technical reasons, this file is *NOT* reloaded automatically when you use
-# 'bundle exec jekyll serve'. If you change this file, please restart the server process.
-
-# Site settings
-# These are used to personalize your new site. If you look in the HTML files,
-# you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
-# You can create any custom variable you would like, and they will be accessible
-# in the templates via {{ site.myvariable }}.
-title: Krogebry - DevOps
+title: Bryan Kroger ( krogebry )
 email: bryan.kroger@gmail.com
-description: > 
-  Exploring the DevOps/SRE space.
-baseurl: "/devops" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site, e.g. http://example.com
-twitter_username: krogebry
-github_username:  krogebry
+description: Building teams.
+url: https://krogebry.github.io/devops/
+keywords: ["Ruby", "Linux", "DevOps", "Interviews", "Teams", "SRE", "Site Reliability Engineering", "Automation"]
+future: false
 
-# Build settings
-markdown: kramdown
-theme: minima
-plugins:
-  - jekyll-feed
+#
+###################################
+# Jekyll configuration
+####################################
+#
+timezone:           America/Chicago
+markdown:           kramdown
+highlighter:        rouge
+excerpt_separator:  <!--more-->
+permalink:          /articles/:year-:month/:title
+paginate:           5
+paginate_path:      /page:num/
+page:
+  comments: true
 
-# Exclude from processing.
-# The following items will not be processed, by default. Create a custom list
-# to override the default setting.
-# exclude:
-#   - Gemfile
-#   - Gemfile.lock
-#   - node_modules
-#   - vendor/bundle/
-#   - vendor/cache/
-#   - vendor/gems/
-#   - vendor/ruby/
+kramdown:
+  auto_ids: true
+  footnote_nr: 1
+  entity_output: as_char
+  toc_levels: 1..6
+  enable_coderay: false
+
+#
+###################################
+# Site Owner configuration
+####################################
+#
+owner:
+  name: Bryan Kroger
+  avatar: profile.jpg
+  job: "SRE Team Builder"
+  bio: "Helping teams find better outcomes."
+  email: bryan.kroger@gmail.com
+  disqus-shortname: krogebry
+  twitter: krogebry
+  facebook: Bryan Kroger
+  google:
+    plus: #username
+    analytics: UA-123-1
+    verify:
+    ad-client:
+    ad-slot:
+  bing-verify:
+  github: krogebry #username
+  # stackoverflow: 123/krogebry
+  linkedin: bryankroger #username
+  xing: #username
+  instagram: code_n_combovers #username
+  lastfm: #username
+  tumblr: #username
+  pinterest: #username
+  foursquare: #username
+  steam: #username
+  dribbble: #username
+  youtube: #username
+  soundcloud: #username
+  weibo: #username
+  flickr: #username
+  codepen: #username
+  telegram: #username
+
+webrick:
+  headers:
+    Access-Control-Allow-Origin: "*"

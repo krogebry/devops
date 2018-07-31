@@ -1,0 +1,65 @@
+
+<!-- Sidebar Widgets Column -->
+<div class="col-md-4">
+
+    <!-- Categories Widget -->
+    <div class="card my-4">
+        <h5 class="card-header">Social Media</h5>
+        <div class="card-body">
+            <ul class="list-group list-group-flush">
+                    {%- if site.owner.twitter -%}<li class="list-group-item"><a href="http://twitter.com/{{ site.owner.twitter }}" target="_blank"><i class="fa fa-twitter"></i></a> <strong>@</strong>{{ site.owner.twitter }}</li>{%- endif -%}
+                    {%- if site.owner.facebook -%}<li class="list-group-item"><a href="http://facebook.com/{{ site.owner.facebook }}" target="_blank"><i class="fa fa-fw fa-facebook"></i></a> {{ site.owner.facebook }}</li>{%- endif -%}
+                    {%- if site.owner.google.plus -%}<li class="list-group-item"><a href="http://plus.google.com/+{{ site.owner.google.plus }}" ctarget="_blank"><i class="fa fa-fw fa-google-plus"></i></a> {{ site.owner.google.plus }}</li>{%- endif -%}
+                    {%- if site.owner.linkedin -%}<li class="list-group-item"><a href="http://linkedin.com/in/{{ site.owner.linkedin }}" target="_blank"><i class="fa fa-fw fa-linkedin"></i></a> {{ site.owner.linkedin }}</li>{%- endif -%}
+                    {%- if site.owner.instagram -%}<li class="list-group-item"><a href="http://instagram.com/{{ site.owner.instagram }}" target="_blank"><i class="fa fa-fw fa-instagram"></i></a> {{ site.owner.instagram }}</li>{%- endif -%}
+                    {%- if site.owner.tumblr -%}<li class="list-group-item"><a href="http://{{ site.owner.tumblr }}.tumblr.com" target="_blank"><i class="fa fa-fw fa-tumblr"></i></a></li>{%- endif -%}
+                    {%- if site.owner.github -%}<li class="list-group-item"><a href="http://github.com/{{ site.owner.github }}" target="_blank"><i class="fa fa-fw fa-github"></i></a> {{ site.owner.github }}</li>{%- endif -%}
+                    {%- if site.owner.stackoverflow -%}<li class="list-group-item"><a href="http://stackoverflow.com/users/{{ site.owner.stackoverflow }}" target="_blank"><i class="fa fa-fw fa-stack-overflow"></i></a> {{ site.owner.stackoverflow }}</li>{%- endif -%}
+                    {%- if site.owner.lastfm -%}<li class="list-group-item"><a href="http://lastfm.com/user/{{ site.owner.lastfm }}" target="_blank"><i class="fa fa-fw fa-music"></i></a></li>{%- endif -%}
+                    {%- if site.owner.dribbble -%}<li class="list-group-item"><a href="http://dribbble.com/{{ site.owner.dribbble }}" target="_blank"><i class="fa fa-fw fa-dribbble"></i></a></li>{%- endif -%}
+                    {%- if site.owner.pinterest -%}<li class="list-group-item"><a href="http://www.pinterest.com/{{ site.owner.pinterest }}" target="_blank"><i class="fa fa-fw fa-pinterest"></i></a></li>{%- endif -%}
+                    {%- if site.owner.foursquare -%}<li class="list-group-item"><a href="http://foursquare.com/{{ site.owner.foursquare }}" target="_blank"><i class="fa fa-fw fa-foursquare"></i></a></li>{%- endif -%}
+                    {%- if site.owner.steam -%}<li class="list-group-item"><a href="http://steamcommunity.com/id/{{ site.owner.steam }}" target="_blank"><i class="fa fa-fw fa-steam"></i></a></li>{%- endif -%}
+                    {%- if site.owner.youtube -%}<li class="list-group-item"><a href="https://youtube.com/user/{{ site.owner.youtube }}" target="_blank"><i class="fa fa-fw fa-youtube"></i></a></li>{%- endif -%}
+                    {%- if site.owner.soundcloud -%}<li class="list-group-item"><a href="http://soundcloud.com/{{ site.owner.soundcloud }}" target="_blank"><i class="fa fa-fw fa-soundcloud"></i></a></li>{%- endif -%}
+                    {%- if site.owner.weibo -%}<li class="list-group-item"><a href="http://www.weibo.com/{{ site.owner.weibo }}" target="_blank"><i class="fa fa-fw fa-weibo"></i></a></li>{%- endif -%}
+                    {%- if site.owner.flickr -%}<li class="list-group-item"><a href="http://www.flickr.com/{{ site.owner.flickr }}" target="_blank"><i class="fa fa-fw fa-flickr"></i></a></li>{%- endif -%}
+                    {%- if site.owner.codepen -%}<li class="list-group-item"><a href="http://codepen.io/{{ site.owner.codepen }}" target="_blank"><i class="fa fa-fw fa-codepen"></i></a></li>{%- endif -%}
+                    {%- if site.owner.telegram -%}<li class="list-group-item"><a href="https://t.me/{{ site.owner.telegram }}" target="_blank"><i class="fa fa-fw fa-telegram"></i></a></li>{%- endif -%}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Categories Widget -->
+    <div class="card my-4">
+        <h5 class="card-header">Categories</h5>
+        <ul class="list-group list-group-flush border-light">
+            {%- assign categories_list = site.categories -%}
+            {%- if categories_list.first[0] == null -%}
+            {%- for category in categories_list -%}
+                <li class="list-group-item">
+                    <a href="/categories/#{{ category.name }}">{{ category | capitalize }} ({{ site.tags[category].size }})</a>
+                </li>
+                {%- assign cat_count = cat_count | plus: 1 -%}
+            {%- endfor -%}
+            {%- else -%}
+            {%- for category in categories_list -%}
+                <li class="list-group-item">
+                    <a href="/categories/#{{ category[0] | slugize }}">{{ category[0] | capitalize }} ({{ category[1].size }})</a>
+                </li>
+                {%- assign cat_count = cat_count | plus: 1 -%}
+            {%- endfor -%}
+            {%- endif -%}
+        </ul>
+            
+    </div>
+
+    {%- if site.owner.twitter -%}
+    <a class="twitter-timeline"
+    href="https://twitter.com/{{ site.owner.twitter }}"
+    data-tweet-limit="5">
+    Tweets by @{{ site.owner.twitter }}
+    </a>
+    {%- endif -%}
+
+</div>

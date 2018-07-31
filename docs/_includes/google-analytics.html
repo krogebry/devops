@@ -1,0 +1,11 @@
+{%- if site.owner.google.analytics -%}
+<!-- Asynchronous Google Analytics snippet -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ site.owner.google.analytics }}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments)};
+  gtag('js', new Date());
+  gtag('config', '{{ site.owner.google.analytics }}');
+</script>
+
+{%- endif -%}

@@ -1,0 +1,61 @@
+{%- if page.title -%}
+  {%- capture title -%}{{ page.title }} | {{ site.title }}{%- endcapture -%}
+{%- else -%}
+  {%- capture title -%}{{ site.title }}{%- endcapture -%}
+{%- endif -%}
+
+{%- if page.excerpt -%}
+  {%- capture description -%}{{ page.excerpt | strip_html | strip_newlines | truncate: 160 }}{%- endcapture -%}
+{%- else -%}
+  {%- capture description -%}{{ site.description }}{%- endcapture -%}
+{%- endif -%}
+
+{%- if page.image -%}
+  {%- capture image -%}{{ site.url }}/assets/{{ page.image.feature }}{%- endcapture -%}
+{%- else -%}
+  {%- capture image -%}{{ site.url }}/assets/mattouille-com-logo.png{%- endcapture -%}
+{%- endif -%}
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+    <title>{% if page.title %}{{ page.title | escape }}{% else %}{{ site.title | escape }}{% endif %}</title>
+    <meta name="description" content="{{ page.excerpt | default: site.description | strip_html | normalize_whitespace | truncate: 160 | escape }}">
+    <meta name="keywords" content="{{ site.keywords | array_to_sentence_string }}">
+    <meta name="author" content="{{ title }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f5f5f5">
+  
+    <!-- Twitter Tags -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ title }}">
+    <meta name="twitter:description" content="{{ description }}">
+    <meta name="twitter:image" content="{{ image }}">
+  
+    <!-- Open Graph Tags -->
+    <!--<meta property="fb:app_id" content="121846515176363">-->
+    <!--<meta property="og:type" content="article">-->
+    <!--<meta property="og:url" content="{{ page.url | replace:'index.html','' | prepend: site.url }}">-->
+    <!--<meta property="og:title" content="{{ title }}">-->
+    <!--<meta property="og:description" content="{{ description }}">-->
+    <!--<meta property="og:image" content="{{ image }}">-->
+
+    {% assign custom_url = site.url | append: site.baseurl %}
+    {% assign full_base_url = custom_url %}
+    <link rel="stylesheet" href="{{ "/assets/main.css" | prepend: full_base_url }}">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
+
+    <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: full_base_url }}">
+    <link rel="alternate" type="application/rss+xml" title="{{ site.title | escape }}" href="{{ "/feed.xml" | prepend: full_base_url }}">
+  
+    <!-- Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ site.url }}/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ site.url }}/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ site.url }}/favicon-16x16.png">
+    <link rel="manifest" href="{{ site.url }}/manifest.json">
+    <link rel="mask-icon" href="{{ site.url }}/safari-pinned-tab.svg" color="#5bbad5">
+
+    {% include google-analytics.html %}
+  </head>

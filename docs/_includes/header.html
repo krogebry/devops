@@ -1,0 +1,45 @@
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+<div class="container">
+  <a class="navbar-brand" href="{{ site.url }}"><strong>krogebry</strong>github<small>.com</small></a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarResponsive">
+    <ul class="navbar-nav ml-auto">
+      {%- if page.url == '/' -%}
+      <li class="nav-item active">
+      {%- else -%}
+      <li class="nav-item">
+      {%- endif -%}
+        <a class="nav-link" href="{{ site.url }}">Home
+            {%- if page.url == '/' -%}<span class="sr-only">(current)</span>{%- endif -%}
+        </a>
+      </li>
+      {%- assign number_of_pages = site.pages | size -%}
+      {%- assign excluded_pages = 0 -%}
+      {%- for page in site.pages -%}
+      {%- unless page.title and page.nav -%}
+        {%- assign excluded_pages = excluded_pages | plus: 1 -%}
+      {%- endunless -%}
+      {%- endfor -%}
+      {%- assign page_counter = 0 -%}
+      {%- assign total_pages = number_of_pages | minus: excluded_pages -%}
+
+      {%- for node in site.pages -%}
+      {%- if node.title and node.nav -%}
+      {%- assign page_counter = page_counter | plus: 1 -%}
+      {%- if page.url == node.url -%}
+      <li class="nav-item active">
+      {%- else -%}
+      <li class="nav-item">
+      {%- endif -%}
+        <a class="nav-link" href="{{ site.url }}{{ node.url }}">{{ node.title }}{%- if page.url == node.url -%}<span class="sr-only">(current)</span>{%- endif -%}</a>
+      </li>
+      </li>
+      {%- endif -%}
+      {%- endfor -%}
+    </ul>
+  </div>
+</div>
+</nav>

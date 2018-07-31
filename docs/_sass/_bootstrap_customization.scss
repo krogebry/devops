@@ -1,0 +1,21 @@
+// This is the place to place Bootstrap-related CSS customizations.
+// As example you can start by importing the _bootswatch.scss file from one of the
+// theme provided by https://bootswatch.com .
+
+body {
+    padding-top: 54px;
+}
+  
+@media (min-width: 768px) {
+    body {
+        padding-top: 56px;
+    }
+}
+
+.display-4 {
+    padding-top: 20px;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+}

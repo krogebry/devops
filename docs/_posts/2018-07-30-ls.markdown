@@ -1,0 +1,40 @@
+---
+layout: post
+title:  "ls > txt"
+date:   2018-08-20 11:00:00 -0700
+categories: linux kernel
+---
+<h1>Overview</h1>
+
+<p>
+At one point in my career I was interviewing for a company whos name I'm not going to mention.  The entire interview
+revolved around on tiny string of text:
+</p>
+
+{% highlight shell %}
+ls > txt
+{% endhighlight %}
+
+<p>
+That's it, that's the command.  The majority of the 1-hour interview was spent on talking about ever single thing
+that happens with this command.  This was probably one of my top 5 interviews because of how simple the command was
+but how difficult the answers ended up being.  And I do mean answers, like there are many questions that spring
+up from this command.  This post is my attempt at recreating every detail of this path as my way of practice.
+</p>
+
+<p>
+Before we begin, I want to say that this is probably the absolute worst way to determine long-term success at a company.
+Mainly because this is something that we don't use during our day-to-day operations.  Most of what we actually need
+at the job is a positive attitude and a sense of humor.
+</p>
+
+<p>
+With that said, this is meant to be fun and maybe a little entertaining.  It's possible that I'm missing out on some
+details, if you catch something, let me know so I can make the document as complete as possible.  I'll make sure I 
+put your name in the credits of any edits.
+</p>
+
+<h1>Phase 1: bash</h1>
+
+<a href="http://git.savannah.gnu.org/cgit/bash.git/tree/parse.y">Parse</a>
+

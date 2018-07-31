@@ -1,0 +1,131 @@
+---
+layout: default
+---
+
+<!-- JSON LD -->
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "Blog",
+  "name": "{{ site.title }}",
+  "url": "{{ site.url }}",
+  "description": "{{ site.description }}",
+  "publisher": {
+    "@type": "Organization",
+    "name": "{{ site.title }}"
+  },
+  "BlogPosts": [
+    {%- for post in site.posts -%}
+    {%- if post.author -%}
+      {%- assign author = site.data.authors[post.author] -%}
+    {%- else -%}
+      {%- assign author = site.owner.name -%}
+    {%- endif -%}
+    {%- assign date_published = post.date | date: "%Y-%m-%d" -%}
+    {%- assign date_modified = post.modified | date: "%Y-%m-%d" -%}
+    {
+      "@type": "blogPosting",
+      "mainEntityOfPage": "{{ site.url }}{{ post.url }}",
+      "headline": "{{ post.title }}",
+      "author": "{{ author }}",
+      "datePublished": "{{ date_published }}",
+      "dateCreated": "{{ date_published }}",
+      {% if page.modified -%}
+      "dateModified": "{{ date_modified }}",
+      {% endif -%}
+      "image": {
+        "@type": "imageObject",
+        {% if page.image.feature contains 'https' or page.image.feature contains 'http' -%}
+        "url": "{{ page.image.feature }}",
+        {%- elsif page.image.feature -%}"url": "{{ site.url }}/assets/{{ page.image.feature }}",
+        {%- else -%}"url": "{{ site.url }}/assets/mattouille-com-logo.png",
+        {% endif -%}
+        "width": 600,
+        "height": 400
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "{{ site.title }}",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "{{ site.url }}/assets/mattouille-com-google-logo.png",
+          "width": 90,
+          "height": 60
+        }
+      }
+    }{% unless post == site.posts.last %},{% endunless %}
+    {% endfor %}
+  ]
+}
+</script>
+<!-- End JSON LD -->
+
+<!-- Page Content -->
+<div class="container">
+    <div class="row">
+        <!-- Blog Entries Column -->
+        <div class="col-md-8">
+            <h1 class="display-4">Latest Posts
+            </h1>
+            {%- for post in paginator.posts -%}
+
+            <!-- Blog Post -->
+            <div class="card mb-4">
+                {%- if post.image -%}
+                <img class="card-img-top" src="/assets/{{ post.image.feature }}" alt="{{ post.image.alt }}">
+                {%- endif -%}
+                <div class="card-body">
+                    <h2 class="card-title">{{ post.title }}</h2>
+                    <p class="card-text">
+                        <i class="fa fa-folder-open"></i> {{ post.categories }}
+                        <i class="fa fa-tags"></i>
+                        {%- for tag in post.tags -%}
+                        &nbsp;<span class="badge badge-primary">{{ tag }}</span>
+                        {%- endfor -%}
+                    </p>
+                    <p class="card-text">{{ post.excerpt }}</p>
+                    <a href="{{ site.url }}{{ post.url }}" class="btn btn-primary">Read More &rarr;</a>
+                </div>
+                <div class="card-footer text-muted">
+                    {%- assign date_format = "%b %-d, %Y" -%}
+                    Posted on {{ post.date | date: date_format }}
+                </div>
+            </div>
+
+            {%- endfor -%}
+
+            <!-- Pagination -->
+            <ul class="pagination justify-content-center mb-4">
+                {%- if paginator.previous_page_path -%}
+                <li class="page-item">
+                    <a class="page-link" href="{{ site.url }}{{ paginator.previous_page_path }}">&larr; Older</a>
+                </li>
+                {%- endif -%}
+
+                {% for page in (1..paginator.total_pages) %}
+                {% if page == paginator.page %}
+                <li class="page-item">
+                    <a class="page-link disabled"><strong>{{ page }}</strong></a>
+                </li>
+                {% elsif page == 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="/">{{ page }}</a>
+                </li>
+                {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ site.paginate_path | prepend: site.baseurl | replace: '//', '/' | replace: ':num', page }}">{{ page }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+
+                {%- if paginator.next_page_path -%}
+                <li class="page-item">
+                    <a class="page-link" href="{{ site.url }}{{ paginator.next_page_path }}">Newer &rarr;</a>
+                </li>
+                {%- endif -%}
+            </ul>
+
+        </div>
+        {%- include sidebar.html -%}
+    </div>
+</div>
