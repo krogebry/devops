@@ -32,6 +32,10 @@ kramdown:
   toc_levels: 1..6
   enable_coderay: false
 
+sass:
+  sass_dir: _sass
+  style: :compressed
+
 #
 ###################################
 # Site Owner configuration
