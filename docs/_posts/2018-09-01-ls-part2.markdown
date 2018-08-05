@@ -1,0 +1,21 @@
+---
+layout: post
+title:  "ls > txt - part 2"
+date:   2018-9-1 11:00:00 -0700
+categories: linux kernel bash deep_dive
+---
+<h1>Part 2 - The kernel</h1>
+
+<p>
+In part 2 of this deep dive session I'm going to talk about what happens at the kernel level after bash has
+executed `fork()` or `open()`.
+</p>
+
+<h2>Open</h2>
+
+<p>
+We'll start with the easy part first.
+</p>
+
+
+
