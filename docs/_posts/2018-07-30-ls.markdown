@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "ls > txt"
-date:   2018-08-20 11:00:00 -0700
+date:   2019-8-1 11:00:00 -0700
 categories: linux kernel
 ---
 <h1>Overview</h1>
@@ -37,4 +37,92 @@ put your name in the credits of any edits.
 <h1>Phase 1: bash</h1>
 
 <a href="http://git.savannah.gnu.org/cgit/bash.git/tree/parse.y">Parse</a>
+
+<p>
+To start this journey we're going to assume that we're in an active bash shell.  We're going to skip over the parts
+about how we got to this point, as in, how the kernel came to be, and how shell was loaded into memory.  We'll get
+around to these mechanics in a latter part of this session.  For now we're going to focus on exactly what bash is going
+to do and how it's going to do it.
+</p>
+
+<p>
+One of my favorite moments of my career ( and there are many ) was watching Dr. Vogels give the keynote talk at Re:Invent
+2016.  This was the year AWS announced Lambda.  He described the purpose of Lambda by describing the high-level pardaigm
+for pretty much everything in computer science: input, business logic, and output ( or outcome ).  These 3 items are
+the basis for almost everything we do.  In this case, bash, the obiquitus workhorsse of IT and operations folks is no different.
+</p>
+
+<p>
+Our input is processed by the business logic and an outcome is created.  But let's really dive into what's going on here
+in our first phase of processing.  How does bash know what to do with this input?  What about sending input form one
+place into another?  How does bash handle failures?
+</p>
+
+<p>
+Before we talk about how bash actually works and its interations with the kernel, let's first take a step back from all
+of this.  A trick that I commonly use is to think about a complex system that might be a bit overwhelming, and think
+about what it's doing at the 10k foot view.  Then I try to map out how, at a very high level, I would go about trying
+to create a thing that does the basics of what I'm seeing in front of me.
+</p>
+
+<p>
+Basically bash is just a job control system with a complex parser system.  But we can break this down into a series
+of stages:
+</p>
+
+<ul>
+    <li>When the user hits enter, something should be able to interpret the input and break it down into parts that I can use later.</li>
+    <li>For each part, do something with the part.  Some parts with be commands, some parts will be files.</li>
+    <li>Ensure the proper execution order of each part.</li>
+    <li>Ensure that each part can be tracked and nothing gets lost.</li>
+    <li>Give the user some indication of success or failure of their input</li>
+</ul>
+
+<p>
+Bash is basically years of churning on these basic parts with lots of learnings baked into the process.  But at a high
+level it's basically just a an input processor, job controler, and output handler.  Which also describes almost all
+of the things in our world, from mobile devices to web sites and everything in between.
+</p>
+
+<p>
+Given the command above, when you hit enter you're invoking the text parsing functions within bash.  This part isn't actually
+any form of C or C++, it's actually YACC.  YACC is the thing that is going to interpret all parts of what we've just given
+as input.  The YACC scripts are giving us an incredably rich tapsitry of interpritation to build on.  This is how we can
+create control structures like if conditionals and for loops, and even send input from one thing into another thing.
+</p>
+
+<p>
+Once YACC has done the work to interpret the various symbols, bash will create a system of jobs for us that will help
+control the flow of things.  This is important because we can't have things running out of order.  Order really matters
+here, but it gets really tricky.  For example, we want the file handler to be created for the `txt` file, but we want
+to hold it open until we're ready and have data to send to the file.
+</p>
+
+<p>
+There are things that we can do to the operation of our command after we've hit enter.  We can stop the command all
+together, or we can alter its state in various ways.  We do this by sending signals.  Signals are more of a kernel
+level thing, but bash is doing quite a bit of work to ensure that we have proper signal handling at the proper time
+during the execution of any command.  In this case it's unlikely that we'd need to send a signal at all, but there
+might be cases where more long-running commands need to be killed off.  In that case we can send the kill signal
+( SIGHUP ) to the running process ( not bash itself! ) which will cause the command to terminate.  Bash will recognize
+that the process has been killed and flush it from the job list.  Anything that depends on the command that was killed
+is also terminated as it won't be able to finish its execution as requested.
+</p>
+
+<p>
+Once our input has been processed, we'll end up with a series of jobs that will be in variying states.  Bash is going
+to do the work to monitor each job and its state.  In this case, the first thing that will execute will be the `ls`
+command.  We'll get more into how things execute a little later, but for now we're going to state that two things are
+in our job queue at this point:
+</p>
+
+<ul>
+    <li>`ls`</li>
+    <li>open(txt)</li>
+</ul>
+
+<p>
+`ls` executes *before* the file open command.
+</p>
+
 
