@@ -13,6 +13,8 @@ mkdir /home/krogebry/.tmp
 curl -sSL https://rvm.io/mpapis.asc | gpg --import -
 curl -sSL https://get.rvm.io | bash -s stable
 
+touch /home/krogebry/.company_pass
+
 source ~/.bash_profile
 
 rvm install ruby-latest
