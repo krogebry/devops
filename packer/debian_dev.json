@@ -1,7 +1,7 @@
 {
   "variables": {
     "image_version": "0.1.0",
-    "debian_version": "9.4.0"
+    "debian_version": "9.5.0"
   },
 
   "builders": [{

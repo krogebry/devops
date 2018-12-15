@@ -127,5 +127,8 @@ export AWS_DEFAULT_REGION='us-east-1'
 
 alias dc="/usr/local/bin/docker-compose"
 
-alias t="sudo rdate -s time.nist.gov"
+# alias t="sudo rdate -s time.nist.gov"
+alias t="sudo htpdate -s google.com"
 alias n="sudo /etc/init.d/networking restart"
+
+alias s="sshpass -p \"$(cat ~/.company_pass)\" ssh "

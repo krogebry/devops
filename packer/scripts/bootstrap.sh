@@ -29,6 +29,8 @@ apt-get install -y \
     libgdbm-dev \
     libncurses5-dev \
     automake \
+    dnsutils \
+    unzip \
     libtool \
     bison \
     sudo \
