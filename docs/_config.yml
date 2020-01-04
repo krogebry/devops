@@ -15,7 +15,7 @@ future: false
 # Jekyll configuration
 ####################################
 #
-timezone:           America/Chicago
+timezone:           America/LosAngeles
 markdown:           kramdown
 highlighter:        rouge
 excerpt_separator:  <!--more-->
@@ -61,7 +61,7 @@ owner:
   # stackoverflow: 123/krogebry
   linkedin: bryankroger #username
   xing: #username
-  instagram: code_n_combovers #username
+  instagram: krogebry #username
   lastfm: #username
   tumblr: #username
   pinterest: #username

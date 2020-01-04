@@ -1,14 +1,14 @@
 ---
 layout: post
 title:  "ls > txt"
-date:   2019-8-1 11:00:00 -0700
-categories: linux kernel
+date:   2018-9-1 11:00:00 -0700
+categories: linux kernel bash deep_dive
 ---
 <h1>Overview</h1>
 
 <p>
 At one point in my career I was interviewing for a company whos name I'm not going to mention.  The entire interview
-revolved around on tiny string of text:
+revolved around one tiny string of text:
 </p>
 
 {% highlight shell %}
@@ -16,22 +16,18 @@ ls > txt
 {% endhighlight %}
 
 <p>
-That's it, that's the command.  The majority of the 1-hour interview was spent on talking about ever single thing
-that happens with this command.  This was probably one of my top 5 interviews because of how simple the command was
-but how difficult the answers ended up being.  And I do mean answers, like there are many questions that spring
-up from this command.  This post is my attempt at recreating every detail of this path as my way of practice.
-</p>
-
-<p>
-Before we begin, I want to say that this is probably the absolute worst way to determine long-term success at a company.
-Mainly because this is something that we don't use during our day-to-day operations.  Most of what we actually need
-at the job is a positive attitude and a sense of humor.
+That's it, that's the command.  The majority of the 1-hour interview was spent on talking about every single thing
+that happens with this command after the user presses enter.  Before we begin, I want to say that this is probably 
+the absolute worst way to determine long-term success at a company. Mainly because this is something that we 
+don't use during our day-to-day operations.  Most of what we actually need at the job is a positive 
+attitude and a sense of humor.  Everything else is usually taught or learned as needed.
 </p>
 
 <p>
 With that said, this is meant to be fun and maybe a little entertaining.  It's possible that I'm missing out on some
 details, if you catch something, let me know so I can make the document as complete as possible.  I'll make sure I 
-put your name in the credits of any edits.
+put your name in the credits of any edits.  I enjoy doing deep dives like this because it gives me a chance
+to really dig into the inner workings of what happens "behind the curtain."
 </p>
 
 <h1>Phase 1: bash</h1>
@@ -53,15 +49,15 @@ the basis for almost everything we do.  In this case, bash, the obiquitus workho
 </p>
 
 <p>
-Our input is processed by the business logic and an outcome is created.  But let's really dive into what's going on here
+Our input is processed and sent to the business logic and an outcome is created.  But let's really dive into what's going on here
 in our first phase of processing.  How does bash know what to do with this input?  What about sending input form one
-place into another?  How does bash handle failures?
+place into another as in pipes, or i/o redirects?
 </p>
 
 <p>
 Before we talk about how bash actually works and its interations with the kernel, let's first take a step back from all
 of this.  A trick that I commonly use is to think about a complex system that might be a bit overwhelming, and think
-about what it's doing at the 10k foot view.  Then I try to map out how, at a very high level, I would go about trying
+about what it's doing at the 10k foot view.  Then I try to map out how, at a very high level, how I would go about trying
 to create a thing that does the basics of what I'm seeing in front of me.
 </p>
 
@@ -71,11 +67,11 @@ of stages:
 </p>
 
 <ul>
-    <li>When the user hits enter, something should be able to interpret the input and break it down into parts that I can use later.</li>
-    <li>For each part, do something with the part.  Some parts with be commands, some parts will be files.</li>
+    <li>When the user hits enter, something should be able to interpret the input and break it down into parts that are used later.</li>
+    <li>For each part, do something with the part.  Some parts with be commands, some parts will be files handlers.</li>
     <li>Ensure the proper execution order of each part.</li>
     <li>Ensure that each part can be tracked and nothing gets lost.</li>
-    <li>Give the user some indication of success or failure of their input</li>
+    <li>Give the user some indication of success or failure.</li>
 </ul>
 
 <p>
@@ -117,12 +113,46 @@ in our job queue at this point:
 </p>
 
 <ul>
-    <li>`ls`</li>
+    <li>fork(ls) ( with some flags )</li>
     <li>open(txt)</li>
 </ul>
 
 <p>
-`ls` executes *before* the file open command.
+We'll get into what fork() and open() are doing later, but for now, let's focus on this example.  The fork() action
+is going to create a kernel process, this process and its lifecycle state is tracked by the bash process, which is also
+another process in the process table.  The job control process system also fires up a process for tracking the open
+file handle.  The file handle gives us us a few channels of operation.
 </p>
+
+<p>
+Bash is an evolution of Unix and POSIX just like you're an evolution of your grandparents.  To that end, in the beginning
+of the Unix world efficiency was the name of the game.  If we started bash in the world of dynamically allocated TB sized
+disks, then we would probalby write the output of `ls` to a tmp file, or even memory, then send the content to the
+output file.  Efficency means connecting the output of `ls` directly to the input of the file handler for `txt`.
+</p>
+
+<p>
+Now here's where it gets really interesting.  Let's switch this example up and change it slightly with the following
+command:
+</p>
+
+{% highlight shell %}
+grep "String" huge_file | head
+{% endhighlight %}
+
+<p>
+Note that in this case we're using "|" instead of ">" this is slightly different as bash will actualy fire up both
+commands with `fork()` which means both commands are running at the same time.  But, just like the previous example
+bash will connect the output from the left command to the input of the right command.
+</p>
+
+<p>
+The exciting part about this is that the `head` will close after 10 lines of input.  When `head` closes, bash will also
+close the `grep` process.  This is exciting because you don't end up wasting a ton of time and resources parsing data
+you don't need.  Once the requirements for `head` have been met, just close the entire pipeline.  That's very helpful.
+</p>
+
+
+
 
 
