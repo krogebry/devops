@@ -595,7 +595,7 @@ GEM
     mono_logger (1.1.0)
     multi_json (1.13.1)
     mustermann (1.0.2)
-    netaddr (2.0.3)
+    netaddr (2.0.4)
     rack (2.0.5)
     rack-protection (2.0.3)
       rack
